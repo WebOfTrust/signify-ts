@@ -26,6 +26,6 @@ jobs:
 
       - name: build
         run: |
-          yarn
-          yarn test
-          yarn build
+          npm ci
+          npm test
+          npm run build
