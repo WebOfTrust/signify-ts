@@ -5,31 +5,29 @@ import {b} from "../../src/keri/core/core";
 import {Authenticater} from "../../src/keri/core/authing";
 import * as utilApi from "../../src/keri/core/utils";
 import { Verfer } from "../../src/keri/core/verfer";
+// import { Signer } from "../../src/keri/core/signer";
 
 
 describe('Authenticater.verify', () => {
     it('verify signature on Response', async () => {
         await libsodium.ready;
-        let salt = '0123456789abcdef'
+        let salt = "0123456789abcdefghijk"
+        console.log(salt.length)
         let salter = new Salter({raw: b(salt)})
         let signer = salter.signer()
-        let aaid = "DDK2N5_fVCWIEO9d8JLhk7hKrkft6MbtkUhaHQsmABHY"
+        let aaid = "DMZh_y-H5C3cSbZZST-fqnsmdNTReZxIh0t2xSTOJQ8a" //does not matter
         let verfer = new Verfer({qb64: aaid})
 
         let headers = new Headers([
-            ['Connection', 'close'],
-            ['Content-Length', '256'],
-            ['Content-Type', 'application/json'],
-            ['Signature', ('indexed="?0";signify="bipHos8-XTOzLq0He4tz8mIeZGq4h5WdIndNVCSX2H5eYCqwYOQT7EysiMkgp0HwYBIgmg7wuTQgtJKJ__EBCA=="')],
-            ['Signature-Input', ('signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1609459200;keyid="EAM6vT0VYoaEWxRTgr24g0nZHmPSUBgs19WB43zEKHnz";alg="ed25519"')],
-            ['Signify-Resource', 'EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs'],
-            ['Signify-Timestamp', '2022-09-24T00:05:48.196795+00:00'],
-        ])
-
+            ['Signature', 'indexed="?0";signify="0BB2H3VBdtZS5yyKCScsStn4YMipBDAyf-dewNzIcjWBwO-cyOhvrzcR72lsb5Wdr_d0k5PTMuMwEg4szGtoPCYD"'], 
+            ['Signature-Input', 'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1684789479;keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei";alg="ed25519"'], 
+            ['Signify-Resource', 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'], 
+            ['Signify-Timestamp', '2023-05-22T21:04:39.936216+00:00']])
+        jest.spyOn(utilApi, "nowUTC").mockReturnValue(new Date("2023-05-22T21:04:39.936216+00:00"))
         let authn = new Authenticater(signer, verfer)
         assert.notEqual(authn, undefined)
-
-        assert.equal(authn.verify(new Headers(headers), "POST", "/boot"), true)
+        let res = authn.verify(new Headers(headers), "GET", "/identifiers")
+        assert.equal(res, true)
     })
 })
 
