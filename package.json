@@ -59,7 +59,6 @@
     "blake3": "^2.1.7",
     "buffer": "^6.0.3",
     "cbor": "^8.0.0",
-    "cesride-wasm": "^0.1.0",
     "collections": "^5.1.12",
     "libsodium-wrappers-sumo": "^0.7.9",
     "lodash": "^4.17.21",
