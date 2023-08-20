@@ -464,7 +464,7 @@ export interface RotateIdentifierArgs {
 }
 
 /** Identifier */
-class Identifier {
+export class Identifier {
     public client: SignifyClient
     /**
      * Identifier
@@ -785,7 +785,7 @@ class Identifier {
 /**
  * Oobis
  */
-class Oobis {
+export class Oobis {
     public client: SignifyClient
     /**
      * Oobis
@@ -836,7 +836,7 @@ class Oobis {
  * @remarks
  * Operations represent the status and result of long running tasks performed by KERIA agent
  */
-class Operations {
+export class Operations {
     public client: SignifyClient
     /**
      * Operations
@@ -865,7 +865,7 @@ class Operations {
 /**
  * KeyEvents
  */
-class KeyEvents {
+export class KeyEvents {
     public client: SignifyClient
     /**
      * KeyEvents
@@ -894,7 +894,7 @@ class KeyEvents {
 /**
  * KeyStates
  */
-class KeyStates {
+export class KeyStates {
     public client: SignifyClient
     /**
      * KeyStates
@@ -971,7 +971,7 @@ export interface CredentialFilter {
 /**
  * Credentials
  */
-class Credentials {
+export class Credentials {
     public client: SignifyClient
     /**
      * Credentials
@@ -1352,7 +1352,7 @@ class Credentials {
 /**
  * Registries
  */
-class Registries {
+export class Registries {
     public client: SignifyClient
     /**
      * Registries
@@ -1459,7 +1459,7 @@ class Registries {
 /**
  * Schemas
  */
-class Schemas {
+export class Schemas {
     client: SignifyClient
     /**
      * Schemas
@@ -1498,7 +1498,7 @@ class Schemas {
 /**
  * Challenges
  */
-class Challenges {
+export class Challenges {
     client: SignifyClient
     /**
      * Challenges
@@ -1596,7 +1596,7 @@ class Challenges {
 /**
  * Contacts
  */
-class Contacts {
+export class Contacts {
     client: SignifyClient
     /**
      * Contacts
@@ -1690,7 +1690,7 @@ class Contacts {
 /**
  * Notifications
  */
-class Notifications {
+export class Notifications {
     client: SignifyClient
 
     /**
@@ -1750,7 +1750,7 @@ class Notifications {
 /**
  * Escrows
  */
-class Escrows {
+export class Escrows {
     client: SignifyClient
 
     /**
