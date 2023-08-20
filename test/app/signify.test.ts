@@ -32,7 +32,11 @@ describe('SignifyClient', () => {
         const url = "http://127.0.0.1:3901"
         const boot_url = "http://127.0.0.1:3903"
         const bran = "0123456789abcdefghijk"
-        const client = new SignifyClient(url, bran, Tier.low, boot_url)
+
+        let t = () => {new SignifyClient(url, 'short', Tier.low, boot_url)}
+        expect(t).toThrow('bran must be 21 characters')
+
+        let client = new SignifyClient(url, bran, Tier.low, boot_url)
         assert.equal(client.bran, "0123456789abcdefghijk")
         assert.equal(client.url, url)
         assert.equal(client.bootUrl, boot_url)
@@ -102,10 +106,81 @@ describe('SignifyClient', () => {
         fetchMock.mockResponseOnce(connectResponse, { status: 202 })
         await client.connect()
 
-        // const resp = await client.fetch('/anypath','GET', {headers: {'Content-Type': 'application/json'}})
-        // console.log(resp)
+        let agentHeaders = {
+            'signify-resource': 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+            'signify-timestamp': '2023-08-20T15:34:31.534673+00:00',
+            'signature-input': 'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1692545671;keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei";alg="ed25519"',
+            'signature': 'indexed="?0";signify="0BDiSoxCv42h2BtGMHy_tpWAqyCgEoFwRa8bQy20mBB2D5Vik4gRp3XwkEHtqy6iy6SUYAytMUDtRbewotAfkCgN"',
+            'content-length': '2',
+            'content-type': 'application/json',
+            'server': 'Ioflo WSGI Server',
+            'date': 'Sun, 20 Aug 2023 15:34:31 GMT' 
+        }
+        fetchMock.mockResponseOnce('[]', { status: 202, headers: agentHeaders })
+        let resp = await client.fetch('/contacts','GET', undefined)
+        assert.equal(resp.status, 202)
+        let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/contacts')
+        assert.equal(lastCall[1]!.method,'GET')
+        let lastHeaders = new Headers((lastCall[1]!.headers!))
+        assert.equal(lastHeaders.get('signify-resource'),'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')
 
-        
-    
+        // Headers in error
+        agentHeaders = {
+            'signify-resource': 'bad_resource',
+            'signify-timestamp': '2023-08-20T15:34:31.534673+00:00',
+            'signature-input': 'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1692545671;keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei";alg="ed25519"',
+            'signature': 'indexed="?0";signify="0BDiSoxCv42h2BtGMHy_tpWAqyCgEoFwRa8bQy20mBB2D5Vik4gRp3XwkEHtqy6iy6SUYAytMUDtRbewotAfkCgN"',
+            'content-length': '2',
+            'content-type': 'application/json',
+            'server': 'Ioflo WSGI Server',
+            'date': 'Sun, 20 Aug 2023 15:34:31 GMT' 
+        }
+        fetchMock.mockResponseOnce('[]', { status: 202, headers: agentHeaders  })
+        let t = async () => await client.fetch('/contacts','GET', undefined)
+        expect(t).rejects.toThrowError('message from a different remote agent')
+
+        agentHeaders = {
+            'signify-resource': 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+            'signify-timestamp': '2023-08-20T15:34:31.534673+00:00',
+            'signature-input': 'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1692545671;keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei";alg="ed25519"',
+            'signature': 'indexed="?0";signify="0BDiSoxCv42h2BtGMHy_tpWAqyCgEoFwRa8bQy20mBB2D5Vik4gRp3XwkEHtqy6iy6SUYAytMUDtRbewotAfkCbad"',
+            'content-length': '2',
+            'content-type': 'application/json',
+            'server': 'Ioflo WSGI Server',
+            'date': 'Sun, 20 Aug 2023 15:34:31 GMT' 
+        }
+        fetchMock.mockResponseOnce('[]', { status: 202, headers: agentHeaders  })
+        t = async () => await client.fetch('/contacts','GET', undefined)
+        expect(t).rejects.toThrowError('Signature for EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei invalid.')
+
+        // Other calls
+        fetchMock.mockResponseOnce('[]', { status: 202, headers: agentHeaders })
+        resp = await client.saveOldPasscode('1234')
+        assert.equal(resp.status, 202)
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/salt/ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')
+        assert.equal(lastCall[1]!.method,'PUT')
+        assert.equal(lastCall[1]!.body,'{"salt":"1234"}')
+
+        fetchMock.mockResponseOnce('[]', { status: 202, headers: agentHeaders })
+        resp = await client.deletePasscode()
+        assert.equal(resp.status, 202)
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/salt/ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')
+        assert.equal(lastCall[1]!.method,'DELETE')
+
+        fetchMock.mockResponseOnce('[]', { status: 202, headers: agentHeaders })
+        resp = await client.rotate("abcdefghijk0123456789",[])
+        assert.equal(resp.status, 202)
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/agent/ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')
+        assert.equal(lastCall[1]!.method,'PUT')
+        let lastBody = JSON.parse(lastCall[1]!.body!)
+        assert.equal(lastBody.rot.t,'rot')
+        assert.equal(lastBody.rot.s,'1')
+        assert.deepEqual(lastBody.rot.kt,['1','0'])
+        assert.equal(lastBody.rot.d,'EGFi9pCcRaLK8dPh5S7JP9Em62fBMiR1l4gW1ZazuuAO')
+
     })
 })

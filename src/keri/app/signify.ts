@@ -314,7 +314,7 @@ export class SignifyClient {
     * @param {Array<string>} aids List of managed AIDs to be rotated
     * @returns {Promise<Response>} A promise to the result of the rotation
     */  
-    async rotate(nbran: string, aids: [string]): Promise<Response>{
+    async rotate(nbran: string, aids: string[]): Promise<Response>{
         let data = this.controller.rotate(nbran, aids)
         return await fetch(this.url + "/agent/" + this.controller.pre, {
             method: "PUT",
@@ -1512,9 +1512,9 @@ export class Challenges {
      * Generate a random challenge word list based on BIP39
      * @async
      * @param {number} strength Integer representing the strength of the challenge. Typically 128 or 256
-     * @returns {Promise<any>} A promise to the list of random words
+     * @returns {Promise<Response>} A promise to the list of random words
      */
-    async generate(strength: number = 128): Promise<any> {
+    async generate(strength: number = 128): Promise<Response> {
         let path = `/challenges?strength=${strength.toString()}`
         let method = 'GET'
         let res = await this.client.fetch(path, method, null)
@@ -1527,9 +1527,9 @@ export class Challenges {
      * @param {string} name Name or alias of the identifier
      * @param {string} recipient Prefix of the recipient of the response
      * @param {Array<string>} words List of words to embed in the signed response
-     * @returns {Promise<any>} A promise to the result of the response
+     * @returns {Promise<Response>} A promise to the result of the response
      */
-    async respond(name: string, recipient: string, words: string[]) {
+    async respond(name: string, recipient: string, words: string[]): Promise<Response> {
         let path = `/challenges/${name}`
         let method = 'POST'
 
