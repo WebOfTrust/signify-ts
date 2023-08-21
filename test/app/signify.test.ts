@@ -1,7 +1,8 @@
 import {strict as assert} from "assert"
 import { SignifyClient, Identifier, Operations, KeyEvents, KeyStates, Contacts, Notifications, Credentials, Registries, Schemas, Challenges, Escrows, Oobis} from "../../src/keri/app/signify"
 import { Authenticater } from "../../src/keri/core/authing"
-import { Salter, Tier } from "../../src/keri/core/salter";
+import { Salter, Tier } from "../../src/keri/core/salter"
+import { Algos } from "../../src/keri/core/manager"
 import libsodium from "libsodium-wrappers-sumo"
 import fetchMock from "jest-fetch-mock"
 import 'whatwg-fetch'
@@ -315,7 +316,33 @@ describe('SignifyClient', () => {
         assert.deepEqual(lastBody.ixn,{"v":"KERI10JSON000138_","t":"ixn","d":"EPtNJLDft3CB-oz3qIhe86fnTKs-GYWiWyx8fJv3VO5e","i":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","s":"1","p":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","a":[{"i":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","s":0,"d":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK"}]})
         assert.deepEqual(lastBody.sigs,["AADEzKk-5LT6vH-PWFb_1i1A8FW-KGHORtTOCZrKF4gtWkCr9vN1z_mDSVKRc6MKktpdeB3Ub1fWCGpnS50hRgoJ"])
 
+    })
 
+    it('Randy identifiers', async () => {
+        await libsodium.ready;
+        const bran = "0123456789abcdefghijk"
+
+        let client = new SignifyClient(url, bran, Tier.low, boot_url)
+
+        await client.boot()
+        await client.connect()
+
+        let identifiers = client.identifiers()
+
+        await identifiers.list()
+        let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/identifiers')
+        assert.equal(lastCall[1]!.method,'GET')
+
+        await client.identifiers().create('aid1', {bran: '0123456789abcdefghijk',algo: Algos.randy})
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        let lastBody = JSON.parse(lastCall[1]!.body!.toString())
+        assert.equal(lastCall[0]!,url+'/identifiers')
+        assert.equal(lastCall[1]!.method,'POST')
+        assert.equal(lastBody.name,'aid1')
+        assert.deepEqual(lastBody.icp.s,"0")
+        assert.deepEqual(lastBody.icp.kt,"1")
+        assert.deepEqual(lastBody.randy.transferable,true)
 
     })
 })
