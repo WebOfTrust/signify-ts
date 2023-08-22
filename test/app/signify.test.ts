@@ -346,7 +346,7 @@ describe('SignifyClient', () => {
 
     })
 
-    it('Registries', async () => {
+    it('Registries and schemas', async () => {
         await libsodium.ready;
         const bran = "0123456789abcdefghijk"
 
@@ -371,6 +371,21 @@ describe('SignifyClient', () => {
         assert.deepEqual(lastBody.vcp,{"v":"KERI10JSON000113_","t":"vcp","d":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p","i":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p","ii":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","s":"0","c":["NB"],"bt":"0","b":[],"n":"ALGn4yvn-VoiEuKgSZcAyM-QyPHIZFHn9CKZz0DOI5ue"})
         assert.deepEqual(lastBody.ixn,{"v":"KERI10JSON00013a_","t":"ixn","d":"EMMF0C7NyqdEUZwLhRqe6Ki4bEMwdmnDFKkejhQwQDUD","i":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","s":"1","p":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","a":[{"i":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p","s":"0","d":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p"}]})
         assert.deepEqual(lastBody.sigs,["AABtw7U9CsMBd5Iq9j5SsQsHSK3-E85SjzWCqakyTVGbO_8UrSDXjg2a6O5xsDwu2rVjhs8HsHYjMu5mOoriWQgD"])
+
+        let schemas = client.schemas()
+
+        await schemas.list()
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/schema')
+        assert.equal(lastCall[1]!.method,'GET')
+
+        const schemaSAID = "EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao"
+        await schemas.get(schemaSAID)
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/schema/'+schemaSAID)
+        assert.equal(lastCall[1]!.method,'GET')
+
+
     })
 
 })
