@@ -345,4 +345,32 @@ describe('SignifyClient', () => {
         assert.deepEqual(lastBody.randy.transferable,true)
 
     })
+
+    it('Registries', async () => {
+        await libsodium.ready;
+        const bran = "0123456789abcdefghijk"
+
+        let client = new SignifyClient(url, bran, Tier.low, boot_url)
+
+        await client.boot()
+        await client.connect()
+
+        let registries = client.registries()
+
+        await registries.list("aid")
+        let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        assert.equal(lastCall[0]!,url+'/identifiers/aid/registries')
+        assert.equal(lastCall[1]!.method,'GET')
+
+        await registries.create("aid", "reg1","ALGn4yvn-VoiEuKgSZcAyM-QyPHIZFHn9CKZz0DOI5ue")
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
+        let lastBody = JSON.parse(lastCall[1]!.body!.toString())
+        assert.equal(lastCall[0]!,url+'/identifiers/aid/registries')
+        assert.equal(lastCall[1]!.method,'POST')
+        assert.equal(lastBody.name,"reg1")
+        assert.deepEqual(lastBody.vcp,{"v":"KERI10JSON000113_","t":"vcp","d":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p","i":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p","ii":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","s":"0","c":["NB"],"bt":"0","b":[],"n":"ALGn4yvn-VoiEuKgSZcAyM-QyPHIZFHn9CKZz0DOI5ue"})
+        assert.deepEqual(lastBody.ixn,{"v":"KERI10JSON00013a_","t":"ixn","d":"EMMF0C7NyqdEUZwLhRqe6Ki4bEMwdmnDFKkejhQwQDUD","i":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","s":"1","p":"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK","a":[{"i":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p","s":"0","d":"EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p"}]})
+        assert.deepEqual(lastBody.sigs,["AABtw7U9CsMBd5Iq9j5SsQsHSK3-E85SjzWCqakyTVGbO_8UrSDXjg2a6O5xsDwu2rVjhs8HsHYjMu5mOoriWQgD"])
+    })
+
 })
