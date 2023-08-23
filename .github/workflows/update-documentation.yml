@@ -3,20 +3,12 @@ on:
   push:
     branches:
       - 'main'
-      - 'development'
-  pull_request:
-    branches:
-      - 'main'
-      - 'development'
   workflow_dispatch:
 jobs:
-  build:
-    name: Build, lint, and test on Node 18.12.1 and ${{ matrix.os }}
+  update:
+    name: Updater documentation
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ macOS-latest, ubuntu-latest]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
@@ -32,18 +24,13 @@ jobs:
           npm cache clean --force
           npm set registry https://registry.npmjs.org/
           npm i
-          npm test -- --coverage=true
-          npm run build
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          npx typedoc src/index.ts
 
       - name: Commit files
         run: |
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
+            git add .
             git commit -a -m "Update documentation"
       - name: Push changes
         uses: ad-m/github-push-action@master
