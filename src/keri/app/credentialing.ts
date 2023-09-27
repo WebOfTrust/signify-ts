@@ -1,17 +1,11 @@
 import { SignifyClient } from "./clienting"
 import { Salter } from "../core/salter"
-import { interact, issue } from "../core/eventing"
+import { interact } from "../core/eventing"
 import { b, Dict, Ident, Ilks, Serials, versify } from "../core/core"
 import { MtrDex } from "../core/matter"
 import { Saider } from "../core/saider"
-import { Serder } from "../core/serder"
-import { Siger } from "../core/siger"
 import { Prefixer } from "../core/prefixer"
 import { randomNonce } from "./coring"
-import { TextDecoder } from "util"
-import { Habery } from "./habery"
-import { SEMANTIC_TYPES } from "cbor/types/lib/encoder"
-
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -97,7 +91,15 @@ export class Credentials {
     * @param {string} [timestamp] - Timestamp for the credential
     */
 
-    async create(name: any, registry: string, credentialData: Dict<any>, schema: string, recipient: string | undefined, edges: Dict<any>, rules: Dict<any>, priv: boolean, timestamp: string) {
+    async create(
+        name: any, 
+        registry: string, 
+        credentialData: any, 
+        schema: string, 
+        recipient: string | undefined, 
+        edges: Dict<any> | undefined = undefined, 
+        rules: Dict<any> | undefined = undefined, 
+        priv: boolean) {
         // Create Credential
         let hab = await this.client.identifiers().get(name)
         let pre: string = hab.prefix
@@ -184,26 +186,27 @@ export class Credentials {
             sigs = keeper.sign(b(serder.raw))
             ixn = serder.ked
         }
-        let res = await this.createFromEvents(name, vc, iss.ked, ixn, sigs)
+        let res = await this.createFromEvents(name, vc, iss, ixn, sigs)
 
-        return [vc, iss, ixn, sigs, res.json()]
+        return [vc, iss, ixn, sigs, res]
 
     }
 
-    async createFromEvents(name: string, creder: Dict<any>, iss: Dict<any>, anc: Dict<any>, sigs: any[]) {
-        let body = {
-            acdc: creder,
+    async createFromEvents(name: string, creder:any, iss:any, anc: any, sigs: any[]) {
+        let data :any = {
             iss: iss,
+            acdc: creder,
             ixn: anc,
             sigs: sigs
         }
+        console.log(data)
 
-        let path = `/identifiers/${name}/credentials/`
-        let method = 'DELETE'
+        let path = `/identifiers/${name}/credentials`
+        let method = 'POST'
         let headers = new Headers({
             'Accept': 'application/json'
         })
-        let res = await this.client.fetch(path, method, body, headers)
+        let res = await this.client.fetch(path, method, data, headers)
         return await res.json()
 
     }
