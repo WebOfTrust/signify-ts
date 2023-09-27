@@ -427,7 +427,7 @@ interface InteractArgs  {
     kind: Serials | undefined
 }
 
-export function interact(args: InteractArgs): Serder {
+export function interact(args: InteractArgs): [Saider, Serder] {
     let { pre, dig, sn, data, version, kind } = args
     let vs = versify(Ident.KERI, version, kind, 0)
     let ilk = Ilks.ixn
@@ -448,10 +448,10 @@ export function interact(args: InteractArgs): Serder {
         p: dig,
         a: data
     } as Dict<any>
+    let kedSaid: Saider 
+    [kedSaid, ked] = Saider.saidify(ked)
 
-    [, ked] = Saider.saidify(ked)
-
-    return new Serder(ked)
+    return [kedSaid, new Serder(ked)]
 }
 
 export function reply(route: string="", data: any|undefined, stamp:string|undefined, version: Version|undefined, kind:Serials= Serials.JSON){

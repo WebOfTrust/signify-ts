@@ -1,12 +1,12 @@
 import { SignifyClient } from "./clienting"
-import { Tier} from "../core/salter"
-import {Algos} from '../core/manager'
-import {incept, interact, reply, rotate} from "../core/eventing"
-import {b,Serials, Versionage} from "../core/core"
-import {Tholder} from "../core/tholder"
-import {MtrDex} from "../core/matter"
-import {Serder} from "../core/serder"
-import {parseRangeHeaders} from "../core/httping"
+import { Tier } from "../core/salter"
+import { Algos } from '../core/manager'
+import { incept, interact, reply, rotate } from "../core/eventing"
+import { b, Serials, Versionage } from "../core/core"
+import { Tholder } from "../core/tholder"
+import { MtrDex } from "../core/matter"
+import { Serder } from "../core/serder"
+import { parseRangeHeaders } from "../core/httping"
 
 /** Arguments required to create an identfier */
 export interface CreateIdentiferArgs {
@@ -67,17 +67,17 @@ export class Identifier {
      * @param {number} [end=24] End index of list of notifications, defaults to 24
      * @returns {Promise<any>} A promise to the list of managed identifiers
      */
-    async list(start:number=0, end:number=24): Promise<any> {
+    async list(start: number = 0, end: number = 24): Promise<any> {
         let extraHeaders = new Headers()
         extraHeaders.append('Range', `aids=${start}-${end}`)
-        
+
         let path = `/identifiers`
         let data = null
         let method = 'GET'
         let res = await this.client.fetch(path, method, data, extraHeaders)
 
         let cr = res.headers.get('content-range')
-        let range = parseRangeHeaders(cr,"aids")
+        let range = parseRangeHeaders(cr, "aids")
         let aids = await res.json()
 
         return {
@@ -109,7 +109,7 @@ export class Identifier {
      * @param {CreateIdentiferArgs} [kargs] Optional parameters to create the identifier
      * @returns {EventResult} The inception result
      */
-    create(name: string, kargs:CreateIdentiferArgs={}): EventResult {
+    create(name: string, kargs: CreateIdentiferArgs = {}): EventResult {
 
         const algo = kargs.algo == undefined ? Algos.salty : kargs.algo
 
@@ -163,7 +163,7 @@ export class Identifier {
         let keeper = this.client.manager!.new(algo, this.client.pidx, xargs)
         let [keys, ndigs] = keeper!.incept(transferable)
         wits = wits !== undefined ? wits : []
-        let serder: Serder|undefined = undefined
+        let serder: Serder | undefined = undefined
         if (delpre == undefined) {
             serder = incept({
                 keys: keys!,
@@ -209,7 +209,7 @@ export class Identifier {
         }
         jsondata[algo] = keeper.params()
 
-            this.client.pidx = this.client.pidx + 1
+        this.client.pidx = this.client.pidx + 1
         let res = this.client.fetch("/identifiers", "POST", jsondata)
         return new EventResult(serder, sigs, res)
     }
@@ -232,7 +232,7 @@ export class Identifier {
 
         data = Array.isArray(data) ? data : [data]
 
-        let serder = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
+        let [ , serder] = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
         let keeper = this.client!.manager!.get(hab)
         let sigs = keeper.sign(b(serder.raw))
 
@@ -253,7 +253,7 @@ export class Identifier {
      * @param {RotateIdentifierArgs} [kargs] Optional parameters requiered to generate the rotation event
      * @returns {Promise<EventResult>} A promise to the rotation event result
      */
-    async rotate(name: string, kargs: RotateIdentifierArgs={}): Promise<EventResult> {
+    async rotate(name: string, kargs: RotateIdentifierArgs = {}): Promise<EventResult> {
 
         let transferable = kargs.transferable ?? true
         let ncode = kargs.ncode ?? MtrDex.Ed25519_Seed
@@ -277,16 +277,16 @@ export class Identifier {
         // if nsith is None:  # compute default from newly rotated digers above
         if (nsith == undefined) nsith = `${Math.max(1, Math.ceil(ncount / 2)).toString(16)}`
 
-        let cst = new Tholder({sith: isith}).sith  // current signing threshold
-        let nst = new Tholder({sith: nsith}).sith  // next signing threshold
+        let cst = new Tholder({ sith: isith }).sith  // current signing threshold
+        let nst = new Tholder({ sith: nsith }).sith  // next signing threshold
 
         // Regenerate next keys to sign rotation event
         let keeper = this.client.manager!.get(hab)
         // Create new keys for next digests
         let ncodes = kargs.ncodes ?? new Array(ncount).fill(ncode)
 
-        let states = kargs.states == undefined? [] : kargs.states
-        let rstates = kargs.rstates == undefined? [] : kargs.rstates
+        let states = kargs.states == undefined ? [] : kargs.states
+        let rstates = kargs.rstates == undefined ? [] : kargs.rstates
         let [keys, ndigs] = keeper!.rotate(ncodes, transferable, states, rstates)
 
         let cuts = kargs.cuts ?? []

@@ -1,9 +1,9 @@
-import {DigiDex, Matter, MatterArgs, MtrDex} from "./matter";
-import {deversify, Dict, Serials} from "./core";
-import {EmptyMaterialError} from "./kering";
-import {dumps, sizeify} from "./serder";
+import { DigiDex, Matter, MatterArgs, MtrDex } from "./matter";
+import { deversify, Dict, Serials } from "./core";
+import { EmptyMaterialError } from "./kering";
+import { dumps, sizeify } from "./serder";
 
-import {createHash} from "blake3"
+import { createHash } from "blake3"
 
 const Dummy = "#"
 
@@ -29,9 +29,10 @@ export class Saider extends Matter {
         [MtrDex.Blake3_256, new Digestage(Saider._derive_blake3_256, undefined, undefined)]
     ])
 
-    constructor({raw, code, qb64b, qb64, qb2}: MatterArgs, sad?: Dict<any>, kind?: Serials, label: string = Ids.d) {
+    constructor({ raw, code, qb64b, qb64, qb2 }: MatterArgs, sad?: Dict<any>, kind?: Serials, label: string = Ids.d) {
         try {
-            super({raw, code, qb64b, qb64, qb2});
+            super({ raw, code, qb64b, qb64, qb2 });
+
         } catch (e) {
             if (e instanceof EmptyMaterialError) {
                 if (sad == undefined || !(label in sad)) {
@@ -40,7 +41,7 @@ export class Saider extends Matter {
 
                 if (code == undefined) {
                     if (sad[label] != "") {
-                        super({qb64: sad[label], code: code})
+                        super({ qb64: sad[label], code: code })
                         code = this.code
                     } else {
                         code = MtrDex.Blake3_256
@@ -50,9 +51,8 @@ export class Saider extends Matter {
                 if (!DigiDex.has(code)) {
                     throw new Error(`Unsupported digest code = ${code}`)
                 }
-
-                [raw] = Saider._derive({...sad}, code, kind, label)
-                super({raw: raw, code: code})
+                [raw] = Saider._derive({ ...sad }, code, kind, label)
+                super({ raw: raw, code: code })
             } else {
                 throw e
             }
@@ -75,13 +75,13 @@ export class Saider extends Matter {
             throw new Error(`Unsupported digest code = ${code}.`)
         }
 
-        sad = {...sad}
+        sad = { ...sad }
         sad[label] = "".padStart(Matter.Sizes.get(code)!.fs!, Dummy)
         if ('v' in sad) {
-            [, , kind, sad, ] = sizeify(sad, kind)
+            [, , kind, sad,] = sizeify(sad, kind)
         }
 
-        let ser = {...sad}
+        let ser = { ...sad }
 
         let digestage = Saider.Digests.get(code)
 
@@ -98,16 +98,16 @@ export class Saider extends Matter {
         return [digestage!.klas(cpa, ...args), sad]
     }
 
-    public derive(sad: Dict<any>, code: string, kind: Serials | undefined, label: string) : [Uint8Array, Dict<any>]{
+    public derive(sad: Dict<any>, code: string, kind: Serials | undefined, label: string): [Uint8Array, Dict<any>] {
         code = code != undefined ? code : this.code
         return Saider._derive(sad, code, kind, label)
     }
 
     public verify(sad: Dict<any>, prefixed: boolean = false, versioned: boolean = false, kind?: Serials,
-                  label: string = Ids.d): boolean {
+        label: string = Ids.d): boolean {
         try {
             let [raw, dsad] = Saider._derive(sad, this.code, kind, label)
-            let saider = new Saider({raw: raw, code: this.code})
+            let saider = new Saider({ raw: raw, code: this.code })
             if (this.qb64 != saider.qb64) {
                 return false
             }
@@ -132,7 +132,7 @@ export class Saider extends Matter {
     private static _serialze(sad: Dict<any>, kind?: Serials): string {
         let knd = Serials.JSON
         if ('v' in sad) {
-            [,knd] = deversify(sad['v'])
+            [, knd] = deversify(sad['v'])
         }
 
         if (kind == undefined) {
@@ -143,13 +143,13 @@ export class Saider extends Matter {
     }
 
     public static saidify(sad: Dict<any>, code: string = MtrDex.Blake3_256, kind: Serials = Serials.JSON,
-                          label: string = Ids.d): [Saider, Dict<any>] {
+        label: string = Ids.d): [Saider, Dict<any>] {
         if (!(label in sad)) {
             throw new Error(`Missing id field labeled=${label} in sad.`)
         }
         let raw
-        [raw, sad]= Saider._derive(sad, code, kind, label)
-        let saider = new Saider({raw: raw, code: code}, undefined, kind, label)
+        [raw, sad] = Saider._derive(sad, code, kind, label)
+        let saider = new Saider({ raw: raw, code: code }, undefined, kind, label)
         sad[label] = saider.qb64
         return [saider, sad]
     }

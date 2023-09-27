@@ -92,13 +92,13 @@ export class Credentials {
     */
 
     async create(
-        name: any, 
-        registry: string, 
-        credentialData: any, 
-        schema: string, 
-        recipient: string | undefined, 
-        edges: Dict<any> | undefined = undefined, 
-        rules: Dict<any> | undefined = undefined, 
+        name: any,
+        registry: string,
+        credentialData: any,
+        schema: string,
+        recipient: string | undefined,
+        edges: Dict<any> | undefined = undefined,
+        rules: Dict<any> | undefined = undefined,
         priv: boolean) {
         // Create Credential
         let hab = await this.client.identifiers().get(name)
@@ -137,7 +137,7 @@ export class Credentials {
         if (rules !== undefined) {
             cred.r = rules
         }
-        const [, vc] = Saider.saidify(cred)
+        const [vcSaid, vc] = Saider.saidify(cred)
 
         // Create iss
         let _iss = {
@@ -151,15 +151,15 @@ export class Credentials {
 
         }
 
-        let [, iss] = Saider.saidify(_iss)
+        let [issSaid, iss] = Saider.saidify(_iss)
 
         // Create paths and sign
         let keeper = this.client!.manager!.get(hab)
 
         // Create ixn
         let ixn = {}
+        let ixnSaid = undefined
         let sigs = []
-        let serder = undefined
 
         let state = hab.state
         if (state.c !== undefined && state.c.includes("EO")) {
@@ -182,18 +182,19 @@ export class Credentials {
             throw new Error("Establishment only not implemented")
 
         } else {
-            serder = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
-            sigs = keeper.sign(b(serder.raw))
-            ixn = serder.ked
+            let [_ixnSaid, ixnSerder] = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
+            ixnSaid = _ixnSaid
+            sigs = keeper.sign(b(ixnSerder.raw))
+            ixn = ixnSerder.ked
         }
         let res = await this.createFromEvents(name, vc, iss, ixn, sigs)
 
-        return [vc, iss, ixn, sigs, res]
+        return [vcSaid, vc, issSaid, iss, ixnSaid, ixn, sigs, res]
 
     }
 
-    async createFromEvents(name: string, creder:any, iss:any, anc: any, sigs: any[]) {
-        let data :any = {
+    async createFromEvents(name: string, creder: any, iss: any, anc: any, sigs: any[]) {
+        let data: any = {
             iss: iss,
             acdc: creder,
             ixn: anc,
@@ -329,7 +330,7 @@ export class Registries {
                 d: prefixer.qb64
             }]
 
-            let serder = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
+            let [, serder] = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
             let keeper = this.client!.manager!.get(hab)
             sigs = keeper.sign(b(serder.raw))
             ixn = serder.ked

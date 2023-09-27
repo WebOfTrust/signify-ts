@@ -132,16 +132,18 @@ export class Controller {
 
     approveDelegation(_agent: Agent) {
 
-        let seqner = new Seqner({sn: _agent.sn})
-        let anchor = {i: _agent.pre, s: seqner.snh, d: _agent.said}
+        let seqner = new Seqner({ sn: _agent.sn })
+        let anchor = { i: _agent.pre, s: seqner.snh, d: _agent.said }
         let sn = new CesrNumber({}, undefined, this.serder.ked["s"]).num + 1
-        this.serder = interact({
+        let [ , serder] = interact({
             pre: this.serder.pre,
             dig: this.serder.ked["d"],
             sn: sn,
             data: [anchor],
             version: Versionage,
-            kind: Serials.JSON})
+            kind: Serials.JSON
+        })
+        this.serder = serder
         return [this.signer.sign(this.serder.raw, 0).qb64]
     }
 
@@ -221,13 +223,13 @@ export class Controller {
                 // Now we have the AID salt, use it to verify against the current public keys
                 let acreator = new SaltyCreator(dnxt, salty["tier"], salty["stem"])
                 let signers = acreator.create(
-                    salty["icodes"], 
-                    undefined, 
-                    MtrDex.Ed25519_Seed, 
-                    salty["transferable"], 
-                    salty["pidx"], 
-                    0, 
-                    salty["kidx"], 
+                    salty["icodes"],
+                    undefined,
+                    MtrDex.Ed25519_Seed,
+                    salty["transferable"],
+                    salty["pidx"],
+                    0,
+                    salty["kidx"],
                     false)
                 let _signers = []
                 for (let signer of signers.signers) {
@@ -262,7 +264,7 @@ export class Controller {
                 for (let signer of signers) {
                     _signers.push(signer.verfer.qb64)
                 }
-       
+
                 if (pubs.join(",") != _signers.join(",")) {
                     throw new Error(`unable to rotate, validation of encrypted public keys ${pubs} failed`)
                 }
