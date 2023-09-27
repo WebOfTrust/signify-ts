@@ -29,7 +29,7 @@ export class Exchanges {
      * @param payload
      * @param embeds
      */
-    createExchangeMessage(sender: Dict<any>, route: string, payload: Dict<any>, embeds: Dict<any>, date: string): [Serder, string[], string] {
+    createExchangeMessage(sender: Dict<any>, route: string, payload: Dict<any>, embeds: Dict<any>, date: string | undefined): [Serder, string[], string] {
         let keeper = this.client.manager!.get(sender)
         let [exn, end] = exchange(route,
             payload,
@@ -52,9 +52,9 @@ export class Exchanges {
      * @param recipients
      */
     async send(name: string, topic: string, sender: Dict<any>, route: string, payload: Dict<any>, embeds: Dict<any>,
-        recipients: string[], date: string): Promise<any> {
+        recipients: string[], date: string | undefined): Promise<any> {
 
-        let [exn, sigs, atc] = this.createExchangeMessage(sender, route, payload, embeds,date)
+        let [exn, sigs, atc] = this.createExchangeMessage(sender, route, payload, embeds, date)
         return await this.sendFromEvents(name, topic, exn, sigs, atc, recipients)
 
     }
@@ -92,7 +92,7 @@ export function exchange(route: string,
     payload: Dict<any>,
     sender: string,
     recipient?: string,
-    date?: string,
+    date?: string | undefined,
     dig?: string,
     modifiers?: Dict<any>,
     embeds?: Dict<any>): [Serder, Uint8Array] {
@@ -100,7 +100,7 @@ export function exchange(route: string,
 
     const vs = versify(Ident.KERI, undefined, Serials.JSON, 0)
     const ilk = Ilks.exn
-    const dt = date !== undefined ? date : nowUTC().toISOString().replace("Z","000+00:00")
+    const dt = date !== undefined ? date : nowUTC().toISOString().replace("Z", "000+00:00")
     const p = dig !== undefined ? dig : ""
     const q = modifiers !== undefined ? modifiers : {}
     const ems = embeds != undefined ? embeds : {}
