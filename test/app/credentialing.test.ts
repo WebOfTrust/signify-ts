@@ -144,68 +144,25 @@ describe('Credentialing', () => {
         const registry = "EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX"
         const schema = "EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao"
         const isuee = "EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p"
-        await credentials.issue('aid1',registry,schema,isuee,{LEI: '1234'},{},{},false)
+
+        await credentials.create('aid1',registry,{LEI: '1234'},schema,isuee,{},{},false)
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
         lastBody = JSON.parse(lastCall[1]!.body!.toString())
         assert.equal(lastCall[0]!,url+'/identifiers/aid1/credentials')
         assert.equal(lastCall[1]!.method,'POST')
-        assert.equal(lastBody.cred.ri,registry)
-        assert.equal(lastBody.cred.s,schema)
-        assert.equal(lastBody.cred.a.i,isuee)
-        assert.equal(lastBody.cred.a.LEI,'1234')
+        assert.equal(lastBody.acdc.ri,registry)
+        assert.equal(lastBody.acdc.s,schema)
+        assert.equal(lastBody.acdc.a.i,isuee)
+        assert.equal(lastBody.acdc.a.LEI,'1234')
         assert.equal(lastBody.iss.s,"0")
         assert.equal(lastBody.iss.t,"iss")
         assert.equal(lastBody.iss.ri,registry)
-        assert.equal(lastBody.iss.i,lastBody.cred.d)
+        assert.equal(lastBody.iss.i,lastBody.acdc.d)
         assert.equal(lastBody.ixn.t,"ixn")
-        assert.equal(lastBody.ixn.i,lastBody.cred.i)
-        assert.equal(lastBody.ixn.p,lastBody.cred.i)
-        assert.equal(lastBody.path,'6AABAAA-')
-        assert.equal(lastBody.csigs[0].substring(0,2),'AA')
-        assert.equal(lastBody.csigs[0].length,88)
+        assert.equal(lastBody.ixn.i,lastBody.acdc.i)
+        assert.equal(lastBody.ixn.p,lastBody.acdc.i)
         assert.equal(lastBody.sigs[0].substring(0,2),'AA')
         assert.equal(lastBody.sigs[0].length,88)
-
-        const credential = lastBody.cred.i
-        await credentials.revoke('aid1',credential)
-        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
-        lastBody = JSON.parse(lastCall[1]!.body!.toString())
-        assert.equal(lastCall[0]!,url+'/identifiers/aid1/credentials/'+credential)
-        assert.equal(lastCall[1]!.method,'DELETE')
-        assert.equal(lastBody.rev.s,"1")
-        assert.equal(lastBody.rev.t,"rev")
-        assert.equal(lastBody.rev.ri,"EGK216v1yguLfex4YRFnG7k1sXRjh3OKY7QqzdKsx7df")
-        assert.equal(lastBody.rev.i,"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK")
-        assert.equal(lastBody.ixn.t,"ixn")
-        assert.equal(lastBody.ixn.i,"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK")
-        assert.equal(lastBody.ixn.p,"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK")
-        assert.equal(lastBody.sigs[0].substring(0,2),'AA')
-        assert.equal(lastBody.sigs[0].length,88)
-
-        await credentials.present('aid1',credential, "EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX",false)
-        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
-        lastBody = JSON.parse(lastCall[1]!.body!.toString())
-        assert.equal(lastCall[0]!,url+'/identifiers/aid1/credentials/'+credential+'/presentations')
-        assert.equal(lastCall[1]!.method,'POST')
-        assert.equal(lastBody.exn.t,"exn")
-        assert.equal(lastBody.exn.r,"/presentation")
-        assert.equal(lastBody.exn.a.n,"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK")
-        assert.equal(lastBody.exn.a.s,schema)
-        assert.equal(lastBody.sig.length,144)
-        assert.equal(lastBody.recipient,"EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX")
-        assert.equal(lastBody.include, false)
-
-        await credentials.request('aid1', "EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX", credential,"EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX")
-        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length-1]!
-        lastBody = JSON.parse(lastCall[1]!.body!.toString())
-        assert.equal(lastCall[0]!,url+'/identifiers/aid1/requests')
-        assert.equal(lastCall[1]!.method,'POST')
-        assert.equal(lastBody.exn.t,"exn")
-        assert.equal(lastBody.exn.r,"/presentation/request")
-        assert.equal(lastBody.exn.a.i,registry)
-        assert.equal(lastBody.exn.a.s,"ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK")
-        assert.equal(lastBody.sig.length,144)
-        assert.equal(lastBody.recipient,"EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX")
 
     })
 
