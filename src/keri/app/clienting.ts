@@ -6,7 +6,7 @@ import { KeyManager } from "../core/keeping"
 import { Identifier } from "./aiding"
 import { Contacts, Challenges } from "./contacting"
 import { Oobis, Operations, KeyEvents, KeyStates } from "./coring"
-import { Credentials, Registries, Schemas, } from './credentialing'
+import { Credentials, Registries, Schemas, Ipex } from './credentialing'
 import { Notifications } from "./notifying"
 import { Escrows } from "./escrowing"
 import { Groups } from "./grouping"
@@ -424,5 +424,13 @@ export class SignifyClient {
     */
     exchanges(): Exchanges {
         return new Exchanges(this)
+    }
+
+    /**
+     * Get ipex resource
+     * @returns {Ipex}
+     * */
+    ipex(): Ipex {
+        return new Ipex(this)
     }
 }
