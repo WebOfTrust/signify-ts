@@ -100,7 +100,7 @@ export function exchange(route: string,
 
     const vs = versify(Ident.KERI, undefined, Serials.JSON, 0)
     const ilk = Ilks.exn
-    const dt = date !== undefined ? date : nowUTC().toISOString()
+    const dt = date !== undefined ? date : nowUTC().toISOString().replace("Z","000+00:00")
     const p = dig !== undefined ? dig : ""
     const q = modifiers !== undefined ? modifiers : {}
     const ems = embeds != undefined ? embeds : {}
