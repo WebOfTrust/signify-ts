@@ -1,12 +1,12 @@
 import { SignifyClient } from "./clienting"
+import { Counter, CtrDex } from "../core/counter";
+import { Seqner } from "../core/seqner";
 import { Salter } from "../core/salter"
-import { interact, messagize } from "../core/eventing"
+import { interact } from "../core/eventing"
 import { vdr } from "../core/vdring"
 import { b, Dict, Ident, Ilks, Serials, versify, Versionage } from "../core/core"
 import { Saider } from "../core/saider"
 import { Serder } from "../core/serder"
-import { Siger } from "../core/siger"
-import { TextDecoder } from "util"
 import { TraitDex } from "./habery"
 
 
@@ -279,130 +279,185 @@ export class Credentials {
         return await res.json()
 
     }
-
-    /**
-     * Present a credential
-     * @async
-     * @param {string} name Name or alias of the identifier
-     * @param {string} said SAID of the credential
-     * @param {string} recipient Identifier prefix of the receiver of the presentation
-     * @param {boolean} [include=true] Flag to indicate whether to stream credential alongside presentation exchange message
-     * @returns {Promise<string>} A promise to the long-running operation
-     */
-    async present(name: string, said: string, recipient: string, include: boolean=true): Promise<string> {
-
+    
+    /** 
+    * Create a credential
+    * @async
+    * @param {any} name - Identifier
+    * @param {string} registry - Registry
+    * @param {Dict<any>} credentialData - Data for the credential
+    * @param string schema - Schema
+    * @param {string} [recipient] - Recipient of the credential
+    * @param {Dict<any>} [edges] - Edges for the credential
+    * @param {Dict<any>} [rules] - Rules for the credential
+    * @param {boolean} [priv] - Private credential
+    * @param {string} [timestamp] - Timestamp for the credential
+    */
+    async create(
+        name: any,
+        registry: string,
+        credentialData: any,
+        schema: string,
+        recipient: string | undefined,
+        edges: Dict<any> | undefined = undefined,
+        rules: Dict<any> | undefined = undefined,
+        priv: boolean) {
+        // Create Credential
         let hab = await this.client.identifiers().get(name)
         let pre: string = hab.prefix
+        const dt = new Date().toISOString().replace('Z', '000+00:00')
 
-        let cred = await this.get(name, said)
+        const vsacdc = versify(Ident.ACDC, undefined, Serials.JSON, 0)
+        const vs = versify(Ident.KERI, undefined, Serials.JSON, 0)
+
+        let cred: any = {
+            v: vsacdc,
+            d: ""
+        }
+        let subject: any = {
+            d: "",
+        }
+        if (priv) {
+            cred.u = new Salter({})
+            subject.u = new Salter({})
+        }
+        if (recipient != undefined) {
+            subject.i = recipient
+        }
+        subject.dt = dt
+        subject = { ...subject, ...credentialData }
+
+        const [, a] = Saider.saidify(subject, undefined, undefined, "d")
+
+        cred = { ...cred, i: pre }
+        cred.ri = registry
+        cred = { ...cred, ...{ s: schema }, ...{ a: a } }
+
+        if (edges !== undefined) {
+            cred.e = edges
+        }
+        if (rules !== undefined) {
+            cred.r = rules
+        }
+        const [, vc] = Saider.saidify(cred)
+
+        // Create iss
+        let _iss = {
+            v: vs,
+            t: Ilks.iss,
+            d: "",
+            i: vc.d,
+            s: "0",
+            ri: registry,
+            dt: dt
+
+        }
+
+        let [, iss] = Saider.saidify(_iss)
+
+        // Create paths and sign
+        let keeper = this.client!.manager!.get(hab)
+
+        // Create ixn
+        let ixn = {}
+        let sigs = []
+
+        let state = hab.state
+        if (state.c !== undefined && state.c.includes("EO")) {
+            var estOnly = true
+        }
+        else {
+            var estOnly = false
+        }
+        let sn = Number(state.s)
+        let dig = state.d
+
+        let data: any = [{
+            i: iss.i,
+            s: iss.s,
+            d: iss.d
+        }]
+
+        if (estOnly) {
+            // TODO implement rotation event
+            throw new Error("Establishment only not implemented")
+
+        } else {
+            let ixnSerder = interact({ pre: pre, sn: sn + 1, data: data, dig: dig, version: undefined, kind: undefined })
+            sigs = keeper.sign(b(ixnSerder.raw))
+            ixn = ixnSerder.ked
+        }
+        let res = await this.createFromEvents(name, vc, iss, ixn, sigs)
+
+        return [ vc, iss, ixn, sigs, res]
+
+    }
+
+    async createFromEvents(name: string, creder: any, iss: any, anc: any, sigs: any[]) {
+        let data: any = {
+            iss: iss,
+            acdc: creder,
+            ixn: anc,
+            sigs: sigs
+        }
+
+        let path = `/identifiers/${name}/credentials`
+        let method = 'POST'
+        let headers = new Headers({
+            'Accept': 'application/json'
+        })
+        let res = await this.client.fetch(path, method, data, headers)
+        return await res.json()
+
+    }
+
+    serialize(serder: Serder, anc: any) {
+        let seqner = new Seqner({sn: anc.sn})
+        let couple = b(seqner.qb64b + anc.saider.qb64b)
+        let atc = new Uint8Array()
+        atc.set(new Counter({code:CtrDex.SealSourceCouples, count:1}).qb64b)
+        atc.set(couple)
+
+        if (atc.length % 4) {
+            throw new Error(`Invalid attachments size=${atc.length}, nonintegral quadlets.`)
+        }
+        let pcnt = new Counter({code:CtrDex.AttachedMaterialQuadlets, count:(atc.length / 4)}).qb64b
+        let msg = b(serder.raw)
+        msg.set(pcnt)
+        msg.set(atc)
+        return msg
+    }
+}
+
+export class Ipex {
+    public client: SignifyClient
+    /**
+     * Ipex
+     * @param {SignifyClient} client 
+     */
+    constructor(client: SignifyClient) {
+        this.client = client
+    }
+
+    async grant(name: string, recp: string, message: string, acdc: any, iss: any, anc: any, date: string) {
+        let exchanges = this.client.exchanges()
+        let hab = await this.client.identifiers().get(name)
+        let sender = hab.prefix
+
         let data = {
-            i: cred.sad.i,
-            s: cred.sad.s,
-            n: said
+            m: message,
+            i: recp
         }
-
-        const vs = versify(Ident.KERI, undefined, Serials.JSON, 0)
-
-        const _sad = {
-            v: vs,
-            t: Ilks.exn,
-            d: "",
-            dt: new Date().toISOString().replace("Z","000+00:00"),
-            r: "/presentation",
-            q: {},
-            a: data
+        let embeds = {
+            acdc: acdc,
+            iss: iss,
+            anc: anc
         }
-        const [, sad] = Saider.saidify(_sad)
-        const exn = new Serder(sad)
+        let [grant, gsigs, end] = exchanges.createExchangeMessage(sender, "/ipex/grant", data, embeds, date)
 
-        let keeper = this.client!.manager!.get(hab)
-
-        let sig = keeper.sign(b(exn.raw),true)
-
-        let siger = new Siger({qb64:sig[0]})
-        let seal = ["SealLast" , {i:pre}]
-        let ims = messagize(exn,[siger],seal, undefined, undefined, true)
-        ims = ims.slice(JSON.stringify(exn.ked).length)
-
-
-        let body = {
-            exn: exn.ked,
-            sig: new TextDecoder().decode(ims),
-            recipient: recipient,
-            include: include
-        }
-
-        let path = `/identifiers/${name}/credentials/${said}/presentations`
-        let method = 'POST'
-        let headers = new Headers({
-            'Accept': 'application/json+cesr'
-
-        })
-        let res = await this.client.fetch(path, method, body, headers)
-        return await res.text()
-
+        return [grant, gsigs, end]
     }
 
-    /**
-     * Request a presentation of a credential
-     * @async
-     * @param {string} name Name or alias of the identifier
-     * @param {string} recipient Identifier prefix of the receiver of the presentation
-     * @param {string} schema SAID of the schema
-     * @param {string} [issuer] Optional prefix of the issuer of the credential
-     * @returns {Promise<string>} A promise to the long-running operation
-     */
-    async request(name: string, recipient: string, schema: string, issuer?: string): Promise<string> {
-        let hab = await this.client.identifiers().get(name)
-        let pre: string = hab.prefix
-
-        let data:any = {
-            s: schema
-        }
-        if (issuer !== undefined) {
-            data["i"] = issuer
-        }
-
-        const vs = versify(Ident.KERI, undefined, Serials.JSON, 0)
-
-        const _sad = {
-            v: vs,
-            t: Ilks.exn,
-            d: "",
-            dt: new Date().toISOString().replace("Z","000+00:00"),
-            r: "/presentation/request",
-            q: {},
-            a: data
-        }
-        const [, sad] = Saider.saidify(_sad)
-        const exn = new Serder(sad)
-
-        let keeper = this.client!.manager!.get(hab)
-
-        let sig = keeper.sign(b(exn.raw),true)
-
-        let siger = new Siger({qb64:sig[0]})
-        let seal = ["SealLast" , {i:pre}]
-        let ims = messagize(exn,[siger],seal, undefined, undefined, true)
-        ims = ims.slice(JSON.stringify(exn.ked).length)
-
-
-        let body = {
-            exn: exn.ked,
-            sig: new TextDecoder().decode(ims),
-            recipient: recipient,
-        }
-
-        let path = `/identifiers/${name}/requests`
-        let method = 'POST'
-        let headers = new Headers({
-            'Accept': 'application/json+cesr'
-
-        })
-        let res = await this.client.fetch(path, method, body, headers)
-        return await res.text()
-
-    }
 }
 
 export interface CreateRegistryArgs {
