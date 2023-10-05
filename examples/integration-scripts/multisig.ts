@@ -83,7 +83,7 @@ async function run() {
     let oobi1 = await client1.oobis().get("member1","agent")
     let oobi2 = await client2.oobis().get("member2","agent")
     let oobi3 = await client3.oobis().get("member3","agent")
-    
+
     op1 = await client1.oobis().resolve(oobi2.oobis[0],"member2")
     while (!op1["done"]) {
         op1 = await client1.operations().get(op1.name);
@@ -95,7 +95,7 @@ async function run() {
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
     console.log("Member1 resolved 2 OOBIs")
-    
+
     op2 = await client2.oobis().resolve(oobi1.oobis[0],"member1")
     while (!op2["done"]) {
         op2 = await client2.operations().get(op2.name);
@@ -159,7 +159,7 @@ async function run() {
     icpResult1 = client1.identifiers().create("multisig",{
         algo: signify.Algos.group,
         mhab: aid1,
-        isith: 3, 
+        isith: 3,
         nsith: 3,
         toad: 3,
         wits: [
@@ -171,7 +171,7 @@ async function run() {
     })
     op1 = await icpResult1.op()
     let serder = icpResult1.serder
-    
+
     let sigs = icpResult1.sigs
     let sigers = sigs.map((sig: any) => new signify.Siger({qb64: sig}))
 
@@ -188,10 +188,10 @@ async function run() {
         {'gid': serder.pre, smids: smids, rmids: smids}, embeds, recp)
     console.log("Member1 initiated multisig, waiting for others to join...")
 
-    // Second member check notifications and join the multisig  
+    // Second member check notifications and join the multisig
     let msgSaid = ""
     while (msgSaid=="") {
-        let notifications = await client2.notifications().list()        
+        let notifications = await client2.notifications().list()
         for (let notif of notifications.notes){
             if (notif.a.r == '/multisig/icp') {
                 msgSaid = notif.a.d
@@ -205,11 +205,11 @@ async function run() {
     let res = await client2.groups().getRequest(msgSaid)
     let exn = res[0].exn
     let icp = exn.e.icp
-    
+
     icpResult2 = client2.identifiers().create("multisig",{
         algo: signify.Algos.group,
         mhab: aid2,
-        isith: icp.kt, 
+        isith: icp.kt,
         nsith: icp.nt,
         toad: parseInt(icp.bt),
         wits: icp.b,
@@ -235,7 +235,7 @@ async function run() {
     console.log("Member2 joined multisig, waiting for others...")
 
 
-    // Third member check notifications and join the multisig  
+    // Third member check notifications and join the multisig
     msgSaid = ""
     while (msgSaid=="") {
         let notifications = await client3.notifications().list()
@@ -255,7 +255,7 @@ async function run() {
     icpResult3 = client3.identifiers().create("multisig",{
         algo: signify.Algos.group,
         mhab: aid3,
-        isith: icp.kt, 
+        isith: icp.kt,
         nsith: icp.nt,
         toad: parseInt(icp.bt),
         wits: icp.b,
@@ -310,11 +310,11 @@ async function run() {
     assert.equal(identifiers3.aids[0].name, "member3")
     assert.equal(identifiers3.aids[1].name, "multisig")
 
-    console.log("Client 1 managed AIDs:\n",   identifiers1.aids[0].name, `[${identifiers1.aids[0].prefix}]\n`, 
+    console.log("Client 1 managed AIDs:\n",   identifiers1.aids[0].name, `[${identifiers1.aids[0].prefix}]\n`,
                                             identifiers1.aids[1].name, `[${identifiers1.aids[1].prefix}]`)
-    console.log("Client 2 managed AIDs:\n",   identifiers2.aids[0].name, `[${identifiers2.aids[0].prefix}]\n`, 
+    console.log("Client 2 managed AIDs:\n",   identifiers2.aids[0].name, `[${identifiers2.aids[0].prefix}]\n`,
                                             identifiers2.aids[1].name, `[${identifiers2.aids[1].prefix}]`)
-    console.log("Client 3 managed AIDs:\n",   identifiers3.aids[0].name, `[${identifiers3.aids[0].prefix}]\n`, 
+    console.log("Client 3 managed AIDs:\n",   identifiers3.aids[0].name, `[${identifiers3.aids[0].prefix}]\n`,
                                             identifiers3.aids[1].name, `[${identifiers3.aids[1].prefix}]`)
 
     let multisig = identifiers3.aids[1].prefix
@@ -359,7 +359,7 @@ async function run() {
     exn = res[0].exn
     let ixn = exn.e.ixn
     data = ixn.a
-    
+
     icpResult2 = await client2.identifiers().interact("multisig",data)
     op2 = await icpResult2.op()
     serder = icpResult2.serder
@@ -396,7 +396,7 @@ async function run() {
     exn = res[0].exn
     ixn = exn.e.ixn
     data = ixn.a
-    
+
     icpResult3 = await client3.identifiers().interact("multisig",data)
     op3 = await icpResult3.op()
     serder = icpResult3.serder
@@ -458,7 +458,7 @@ async function run() {
     }
     aid3 = await client3.identifiers().get("member3")
     console.log("Member3 rotated keys")
-    
+
     // Update new key states
     op1 = await client1.keyStates().query(aid2.prefix,1)
     while (!op1["done"]) {
@@ -538,7 +538,7 @@ async function run() {
     await new Promise(resolve => setTimeout(resolve, 5000));
     res = await client2.groups().getRequest(msgSaid)
     exn = res[0].exn
-    
+
     icpResult2 = await client2.identifiers().rotate("multisig",{states: states,rstates: rstates})
     op2 = await icpResult2.op()
     serder = icpResult2.serder
@@ -573,7 +573,7 @@ async function run() {
     }
     res = await client3.groups().getRequest(msgSaid)
     exn = res[0].exn
-    
+
     icpResult3 = await client3.identifiers().rotate("multisig",{states: states,rstates: rstates})
     op3 = await icpResult3.op()
     serder = icpResult3.serder
@@ -609,7 +609,7 @@ async function run() {
     console.log("Multisig rotation completed!")
 
     console.log("Starting multisig registry creation")
-    
+
     let vcpRes1 = await client1.registries().create({name: "member1", registryName: "vLEI Registry", nonce: "AHSNDV3ABI6U8OIgKaj3aky91ZpNL54I5_7-qwtC6q2s"});
     op1 = await vcpRes1.op();
     serder = vcpRes1.regser
@@ -665,7 +665,7 @@ async function run() {
     }
 
     recp = [aid1["state"], aid3["state"]].map((state) =>  state['i'])
-    await client2.exchanges().send("member2", "registry", aid2, "/multisig/vcp", 
+    await client2.exchanges().send("member2", "registry", aid2, "/multisig/vcp",
         {gid:multisig, usage:"Issue vLEIs"}, regbeds, recp);
     console.log("Member2 joins rotation event, waiting for others...")
 
@@ -703,7 +703,7 @@ async function run() {
     }
 
     recp = [aid1["state"], aid2["state"]].map((state) =>  state['i'])
-    await client3.exchanges().send("member3", "multisig", aid3, "/multisig/vcp", 
+    await client3.exchanges().send("member3", "multisig", aid3, "/multisig/vcp",
         {gid:multisig, usage:"Issue vLEIs"}, regbeds, recp);
 
     // Done
