@@ -142,7 +142,7 @@ export class Credentials {
      * @param {string} name Name or alias of the identifier
      * @param {string} registy qb64 AID of credential registry
      * @param {string} schema SAID of the schema
-     * @param {string} [recipient] Optional prefix of recipient identifier
+     * @param {string} recipient Optional prefix of recipient identifier
      * @param {any} [credentialData] Optional credential data
      * @param {any} [rules] Optional credential rules
      * @param {any} [source] Optional credential sources
