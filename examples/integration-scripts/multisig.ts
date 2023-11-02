@@ -8,10 +8,11 @@ await run();
 
 async function run() {
     await signify.ready();
-    // Boot three clients
+    // Boot Four clients
     const bran1 = signify.randomPasscode();
     const bran2 = signify.randomPasscode();
     const bran3 = signify.randomPasscode();
+    const bran4 = signify.randomPasscode();
     const client1 = new signify.SignifyClient(
         url,
         bran1,
@@ -30,15 +31,24 @@ async function run() {
         signify.Tier.low,
         boot_url
     );
+    const client4 = new signify.SignifyClient(
+        url,
+        bran4,
+        signify.Tier.low,
+        boot_url
+    );
     await client1.boot();
     await client2.boot();
     await client3.boot();
+    await client4.boot();
     await client1.connect();
     await client2.connect();
     await client3.connect();
+    await client4.connect();
     const state1 = await client1.state();
     const state2 = await client2.state();
     const state3 = await client3.state();
+    const state4 = await client4.state();
     console.log(
         'Client 1 connected. Client AID:',
         state1.controller.state.i,
@@ -57,8 +67,14 @@ async function run() {
         'Agent AID: ',
         state3.agent.i
     );
+    console.log(
+        'Client 4 connected. Client AID:',
+        state4.controller.state.i,
+        'Agent AID: ',
+        state4.agent.i
+    );
 
-    // Create three identifiers, one for each client
+    // Create four identifiers, one for each client
     let icpResult1 = await client1.identifiers().create('member1', {
         toad: 3,
         wits: [
@@ -116,6 +132,25 @@ async function run() {
         .addEndRole('member3', 'agent', client3!.agent!.pre);
     console.log("Member3's AID:", aid3.prefix);
 
+    let icpResult4 = await client4.identifiers().create('holder', {
+        toad: 3,
+        wits: [
+            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+        ],
+    });
+    let op4 = await icpResult4.op();
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    let aid4 = await client4.identifiers().get('holder');
+    await client4
+        .identifiers()
+        .addEndRole('holder', 'agent', client4!.agent!.pre);
+    console.log("Holder's AID:", aid4.prefix);
+
     // Exchange OOBIs
     let schemaSAID = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
     let schemaOobi = 'http://127.0.0.1:7723/oobi/' + schemaSAID;
@@ -123,6 +158,7 @@ async function run() {
     let oobi1 = await client1.oobis().get('member1', 'agent');
     let oobi2 = await client2.oobis().get('member2', 'agent');
     let oobi3 = await client3.oobis().get('member3', 'agent');
+    let oobi4 = await client4.oobis().get('holder', 'agent');
 
     op1 = await client1.oobis().resolve(oobi2.oobis[0], 'member2');
     while (!op1['done']) {
@@ -139,7 +175,12 @@ async function run() {
         op1 = await client1.operations().get(op1.name);
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    console.log('Member1 resolved 3 OOBIs');
+    op1 = await client1.oobis().resolve(oobi4.oobis[0], 'holder');
+    while (!op1['done']) {
+        op1 = await client1.operations().get(op1.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    console.log('Member1 resolved 4 OOBIs');
 
     op2 = await client2.oobis().resolve(oobi1.oobis[0], 'member1');
     while (!op2['done']) {
@@ -156,7 +197,12 @@ async function run() {
         op2 = await client2.operations().get(op2.name);
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    console.log('Member2 resolved 3 OOBIs');
+    op2 = await client2.oobis().resolve(oobi4.oobis[0], 'holder');
+    while (!op2['done']) {
+        op2 = await client2.operations().get(op2.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    console.log('Member2 resolved 4 OOBIs');
 
     op3 = await client3.oobis().resolve(oobi1.oobis[0], 'member1');
     while (!op3['done']) {
@@ -173,7 +219,36 @@ async function run() {
         op3 = await client3.operations().get(op3.name);
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    console.log('Member3 resolved 3 OOBIs');
+    op3 = await client3.oobis().resolve(oobi4.oobis[0], 'holder');
+    while (!op3['done']) {
+        op3 = await client3.operations().get(op3.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    console.log('Member3 resolved 4 OOBIs');
+
+    op4 = await client4.oobis().resolve(oobi1.oobis[0], 'member1');
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    op4 = await client4.oobis().resolve(oobi2.oobis[0], 'member2');
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    op4 = await client4.oobis().resolve(oobi3.oobis[0], 'member3');
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    op4 = await client4.oobis().resolve(schemaOobi, 'schema');
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    console.log('Holder resolved 4 OOBIs');
 
     // First member challenge the other members with a random list of words
     // List of words should be passed to the other members out of band
@@ -607,6 +682,15 @@ async function run() {
     }
     console.log(`End role authorization for agent ${eid1}completed!`);
 
+    // Holder resolve multisig OOBI
+    let oobimultisig = await client1.oobis().get('multisig', 'agent');
+    op4 = await client4.oobis().resolve(oobimultisig.oobis[0], 'multisig');
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    console.log(`Holder resolved multisig OOBI`);
+
     // // MultiSig Interaction
 
     // // Member1 initiates an interaction event
@@ -1026,7 +1110,6 @@ async function run() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
     res = await client2.groups().getRequest(msgSaid);
     exn = res[0].exn;
 
@@ -1080,7 +1163,6 @@ async function run() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
 
@@ -1140,7 +1222,7 @@ async function run() {
     const vcdata = {
         LEI: '5493001KJTIIGC8Y1R17',
     };
-    let holder = 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k';
+    let holder = aid4.prefix
 
     let TIME = new Date().toISOString().replace('Z', '000+00:00');;
     let credRes = await client1
@@ -1164,12 +1246,12 @@ async function run() {
 
     sigers = isigs.map((sig: any) => new signify.Siger({ qb64: sig }));
     ims = signify.d(signify.messagize(ianc, sigers));
-    atc = ims.substring(anc.size);
+    let atc1 = ims.substring(ianc.size);
 
     let vcembeds = {
         acdc: [acdc, ''],
         iss: [iss, ''],
-        anc: [ianc, atc],
+        anc: [ianc, atc1],
     };
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
     await client1
@@ -1186,27 +1268,26 @@ async function run() {
 
     console.log('Member1 initiated credential creation, waiting for others to join...');
 
-     // Member2 check for notifications and join the credential create  event
-     msgSaid = '';
-     while (msgSaid == '') {
-         let notifications = await client2.notifications().list();
-         for (let notif of notifications.notes) {
-             if (notif.a.r == '/multisig/iss') {
-                 msgSaid = notif.a.d;
-                 await client2.notifications().mark(notif.i);
-                 console.log(
-                     'Member2 received exchange message to join the credential create event'
-                 );
-             }
-         }
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-     }
- 
-     await new Promise((resolve) => setTimeout(resolve, 5000));
-     res = await client2.groups().getRequest(msgSaid);
-     exn = res[0].exn;
+    // Member2 check for notifications and join the credential create  event
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client2.notifications().list();
+        for (let notif of notifications.notes) {
+            if (notif.a.r == '/multisig/iss') {
+                msgSaid = notif.a.d;
+                await client2.notifications().mark(notif.i);
+                console.log(
+                    'Member2 received exchange message to join the credential create event'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
 
-     let credRes2 = await client2
+    res = await client2.groups().getRequest(msgSaid);
+    exn = res[0].exn;
+
+    let credRes2 = await client2
         .credentials()
         .issue(
             'multisig',
@@ -1221,56 +1302,55 @@ async function run() {
 
     op2 = await credRes2.op();
 
-     acdc = new signify.Serder(credRes2.acdc);
-     iss = credRes2.iserder;
-     ianc = credRes2.anc;
-     isigs = credRes2.sigs;
- 
-     sigers = isigs.map((sig: any) => new signify.Siger({ qb64: sig }));
-     ims = signify.d(signify.messagize(ianc, sigers));
-     atc = ims.substring(anc.size);
- 
-     vcembeds = {
-         acdc: [acdc, ''],
-         iss: [iss, ''],
-         anc: [ianc, atc],
-     };
- 
-     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
-     await client2
-         .exchanges()
-         .send(
-             'member2',
-             'multisig',
-             aid2,
-             '/multisig/iss',
+    acdc = new signify.Serder(credRes2.acdc);
+    iss = credRes2.iserder;
+    ianc = credRes2.anc;
+    isigs = credRes2.sigs;
+
+    sigers = isigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+    ims = signify.d(signify.messagize(ianc, sigers));
+    let atc2 = ims.substring(ianc.size);
+
+    vcembeds = {
+        acdc: [acdc, ''],
+        iss: [iss, ''],
+        anc: [ianc, atc2],
+    };
+
+    recp = [aid1['state'], aid3['state']].map((state) => state['i']);
+    await client2
+        .exchanges()
+        .send(
+            'member2',
+            'multisig',
+            aid2,
+            '/multisig/iss',
             { gid: aid },
             vcembeds,
             recp
-         );
-     console.log('Member2 joins credential create event, waiting for others...');
- 
-     // Member3 check for notifications and join the create registry event
-     msgSaid = '';
-     while (msgSaid == '') {
-         let notifications = await client3.notifications().list();
-         for (let notif of notifications.notes) {
-             if (notif.a.r == '/multisig/iss') {
-                 msgSaid = notif.a.d;
-                 await client3.notifications().mark(notif.i);
-                 console.log(
-                     'Member3 received exchange message to join the create credential event'
-                 );
-             }
-         }
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-     }
- 
-     await new Promise((resolve) => setTimeout(resolve, 5000));
-     res = await client3.groups().getRequest(msgSaid);
-     exn = res[0].exn;
- 
-     let credRes3 = await client3
+        );
+    console.log('Member2 joins credential create event, waiting for others...');
+
+    // Member3 check for notifications and join the create registry event
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client3.notifications().list();
+        for (let notif of notifications.notes) {
+            if (notif.a.r == '/multisig/iss') {
+                msgSaid = notif.a.d;
+                await client3.notifications().mark(notif.i);
+                console.log(
+                    'Member3 received exchange message to join the create credential event'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    res = await client3.groups().getRequest(msgSaid);
+    exn = res[0].exn;
+
+    let credRes3 = await client3
         .credentials()
         .issue(
             'multisig',
@@ -1283,50 +1363,211 @@ async function run() {
             exn.e.acdc.a.dt
         );
 
-     op3 = await credRes3.op();
-     acdc = new signify.Serder(credRes3.acdc);
-     iss = credRes3.iserder;
-     ianc = credRes3.anc;
-     isigs = credRes3.sigs;
- 
-     sigers = isigs.map((sig: any) => new signify.Siger({ qb64: sig }));
-     ims = signify.d(signify.messagize(ianc, sigers));
-     atc = ims.substring(anc.size);
- 
-     vcembeds = {
-         acdc: [acdc, ''],
-         iss: [iss, ''],
-         anc: [ianc, atc],
-     };
- 
-     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
-     await client3
-         .exchanges()
-         .send(
+    op3 = await credRes3.op();
+    acdc = new signify.Serder(credRes3.acdc);
+    iss = credRes3.iserder;
+    ianc = credRes3.anc;
+    isigs = credRes3.sigs;
+
+    sigers = isigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+    ims = signify.d(signify.messagize(ianc, sigers));
+    let atc3 = ims.substring(ianc.size);
+
+    vcembeds = {
+        acdc: [acdc, ''],
+        iss: [iss, ''],
+        anc: [ianc, atc3],
+    };
+
+    recp = [aid1['state'], aid2['state']].map((state) => state['i']);
+    await client3
+        .exchanges()
+        .send(
             'member3',
             'multisig',
             aid3,
             '/multisig/iss',
-           { gid: aid },
-           vcembeds,
-           recp
-         );
+            { gid: aid },
+            vcembeds,
+            recp
+        );
     console.log('Member3 joins credential create event, waiting for others...');
- 
-     // Done
-     while (!op1['done']) {
-         op1 = await client1.operations().get(op1.name);
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-     }
- 
-     while (!op2['done']) {
-         op2 = await client2.operations().get(op2.name);
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-     }
- 
-     while (!op3['done']) {
-         op3 = await client3.operations().get(op3.name);
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-     }
-     console.log('Multisig create credential completed!');
+
+    // Done
+    while (!op1['done']) {
+        op1 = await client1.operations().get(op1.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    while (!op2['done']) {
+        op2 = await client2.operations().get(op2.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    while (!op3['done']) {
+        op3 = await client3.operations().get(op3.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    console.log('Multisig create credential completed!');
+
+
+    // IPEX grant message
+    console.log('Starting grant message');
+    stamp = new Date().toISOString().replace('Z', '000+00:00');
+
+    let [grant, gsigs, end] = await client1
+        .ipex()
+        .grant('multisig', holder, '', acdc, iss, ianc, atc1, undefined, stamp);
+
+
+    let m = await client1.identifiers().get('multisig');
+
+    mstate = m['state'];
+    seal = [
+        'SealEvent',
+        { i: m['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },
+    ];
+    sigers = gsigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+
+    let gims = signify.d(
+        signify.messagize(grant, sigers, seal)
+    );
+    atc = gims.substring(grant.size);
+    atc += end;
+
+    let gembeds: any = {
+        exn: [grant, atc],
+    };
+    recp = [aid2['state'], aid3['state']].map((state) => state['i']);
+    await client1
+        .exchanges()
+        .send(
+            'member1',
+            'multisig',
+            aid1,
+            '/multisig/exn',
+            { gid: m['prefix'] },
+            gembeds,
+            recp
+        );
+
+    console.log('Member1 initiated grant message, waiting for others to join...');
+
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client2.notifications().list();
+        for (let notif of notifications.notes) {
+            if (notif.a.r == '/multisig/exn') {
+                msgSaid = notif.a.d;
+                await client2.notifications().mark(notif.i);
+                console.log(
+                    'Member2 received exchange message to join the grant message'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    res = await client2.groups().getRequest(msgSaid);
+    exn = res[0].exn;
+
+    let [grant2, gsigs2, end2] = await client2
+        .ipex()
+        .grant('multisig', holder, '', acdc, iss, ianc, atc2, undefined, stamp);
+    
+    sigers = gsigs2.map((sig: any) => new signify.Siger({ qb64: sig }));
+
+    gims = signify.d(
+        signify.messagize(grant2, sigers, seal)
+    );
+    atc = gims.substring(grant2.size);
+    atc += end2;
+
+    gembeds = {
+        exn: [grant2, atc],
+    };
+    recp = [aid1['state'], aid3['state']].map((state) => state['i']);
+    await client2
+        .exchanges()
+        .send(
+            'member2',
+            'multisig',
+            aid2,
+            '/multisig/exn',
+            { gid: m['prefix'] },
+            gembeds,
+            recp
+        );
+
+    console.log('Member2 joined grant message, waiting for others to join...');
+
+
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client3.notifications().list();
+        for (let notif of notifications.notes) {
+            
+            if (notif.a.r == '/multisig/exn') {
+                
+                msgSaid = notif.a.d;
+                await client3.notifications().mark(notif.i);
+                console.log(
+                    'Member3 received exchange message to join the grant message'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    res = await client3.groups().getRequest(msgSaid);
+    exn = res[0].exn;
+
+    let [grant3, gsigs3, end3] = await client3
+        .ipex()
+        .grant('multisig', holder, '', acdc, iss, ianc, atc3, undefined, stamp);
+    sigers = gsigs3.map((sig: any) => new signify.Siger({ qb64: sig }));
+
+    gims = signify.d(
+        signify.messagize(grant3, sigers, seal)
+    );
+    atc = gims.substring(grant3.size);
+    atc += end3;
+
+    gembeds = {
+        exn: [grant3, atc],
+    };
+    recp = [aid1['state'], aid2['state']].map((state) => state['i']);
+    await client3
+        .exchanges()
+        .send(
+            'member3',
+            'multisig',
+            aid3,
+            '/multisig/exn',
+            { gid: m['prefix'] },
+            gembeds,
+            recp
+        );
+
+    console.log('Member3 joined grant message, waiting for others to join...');
+
+
+
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client4.notifications().list();
+        for (let notif of notifications.notes) {
+            console.log(notif)
+            console.log(notif.a)
+            if (notif.a.r == '/multisig/exn') {
+                msgSaid = notif.a.d;
+                await client4.notifications().mark(notif.i);
+                console.log(
+                    'Holder received exchange message with the grant message'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
 }
