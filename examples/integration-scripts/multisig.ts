@@ -1592,9 +1592,8 @@ async function run() {
     msgSaid = '';
     while (msgSaid == '') {
         let notifications = await client4.notifications().list();
+        console.log(JSON.stringify(notifications))
         for (let notif of notifications.notes) {
-            console.log(notif)
-            console.log(notif.a)
             if (notif.a.r == '/exn/ipex/grant') {
                 msgSaid = notif.a.d;
                 await client4.notifications().mark(notif.i);
@@ -1605,5 +1604,8 @@ async function run() {
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+
+    res = await client4.exchanges().get('holder',msgSaid);
+    console.log(JSON.stringify(res))
 
 }
