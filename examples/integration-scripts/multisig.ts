@@ -1587,12 +1587,9 @@ async function run() {
 
     console.log('Member3 joined grant message, waiting for others to join...');
 
-
-
     msgSaid = '';
     while (msgSaid == '') {
         let notifications = await client4.notifications().list();
-        console.log(JSON.stringify(notifications))
         for (let notif of notifications.notes) {
             if (notif.a.r == '/exn/ipex/grant') {
                 msgSaid = notif.a.d;
@@ -1607,5 +1604,49 @@ async function run() {
 
     res = await client4.exchanges().get('holder',msgSaid);
     console.log(JSON.stringify(res))
+
+
+    let [admit, asigs, aend] = await client4
+        .ipex()
+        .admit('holder', '', res.exn.d);
+
+
+        await client4
+            .exchanges()
+            .sendFromEvents(
+                'holder',
+                'credential',
+                admit,
+                asigs,
+                aend,
+                [m['prefix']]
+        );
+    
+        console.log('Holder creates and sends admit message');
+
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        let creds = await client4.credentials().list('holder');
+        console.log(JSON.stringify(creds))
+
+
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client1.notifications().list();
+        for (let notif of notifications.notes) {
+            if (notif.a.r == '/exn/ipex/admit') {
+                msgSaid = notif.a.d;
+                await client1.notifications().mark(notif.i);
+                console.log(
+                    'Member1 received exchange message with the admit response'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    creds = await client4.credentials().list('holder');
+    console.log(JSON.stringify(creds))
+
 
 }
