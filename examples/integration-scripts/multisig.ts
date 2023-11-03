@@ -1419,6 +1419,17 @@ async function run() {
         .ipex()
         .grant('multisig', holder, '', acdc, iss, ianc, atc1, undefined, stamp);
 
+    await client1
+        .exchanges()
+        .sendFromEvents(
+            'multisig',
+            'credential',
+            grant,
+            gsigs,
+            end,
+            [holder]
+        );
+
 
     let m = await client1.identifiers().get('multisig');
 
@@ -1450,6 +1461,8 @@ async function run() {
             gembeds,
             recp
         );
+    
+
 
     console.log('Member1 initiated grant message, waiting for others to join...');
 
@@ -1474,6 +1487,17 @@ async function run() {
     let [grant2, gsigs2, end2] = await client2
         .ipex()
         .grant('multisig', holder, '', acdc, iss, ianc, atc2, undefined, stamp);
+    
+    await client2
+        .exchanges()
+        .sendFromEvents(
+            'multisig',
+            'credential',
+            grant2,
+            gsigs2,
+            end2,
+            [holder]
+        );
     
     sigers = gsigs2.map((sig: any) => new signify.Siger({ qb64: sig }));
 
@@ -1525,6 +1549,18 @@ async function run() {
     let [grant3, gsigs3, end3] = await client3
         .ipex()
         .grant('multisig', holder, '', acdc, iss, ianc, atc3, undefined, stamp);
+    
+    await client3
+        .exchanges()
+        .sendFromEvents(
+            'multisig',
+            'credential',
+            grant3,
+            gsigs3,
+            end3,
+            [holder]
+        );
+
     sigers = gsigs3.map((sig: any) => new signify.Siger({ qb64: sig }));
 
     gims = signify.d(
@@ -1559,7 +1595,7 @@ async function run() {
         for (let notif of notifications.notes) {
             console.log(notif)
             console.log(notif.a)
-            if (notif.a.r == '/multisig/exn') {
+            if (notif.a.r == '/exn/ipex/grant') {
                 msgSaid = notif.a.d;
                 await client4.notifications().mark(notif.i);
                 console.log(
