@@ -496,6 +496,7 @@ export class Credentials {
         let res = await this.client.fetch(path, method, body, headers);
         return await res.text();
     }
+
 }
 
 export interface CreateRegistryArgs {
@@ -793,5 +794,35 @@ export class Ipex {
                 datetime,
                 grant
             );
+    }
+
+
+    /**
+     * Send IPEX admit message to a recipient
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @param {Serder} exn exchange message
+     * @param {string[]} sigs signatures
+     * @param {any} atc attachment
+     * @param {string} recipient Identifier prefix of the receiver of the admit message
+     * @returns {Promise<string>} A promise to the response
+     */
+
+    async submitAdmit(name:string, exn: Serder, sigs: string[], atc: any,recp:string){
+
+        let body = {
+            exn: exn.ked,
+            sigs: sigs,
+            atc: atc,
+            rec: [recp]
+        };
+
+        let path = `/identifiers/${name}/ipex/admit`;
+        let method = 'POST';
+        let headers = new Headers({
+            Accept: 'application/json+cesr',
+        });
+        let res = await this.client.fetch(path, method, body, headers);
+        return await res.json()
     }
 }

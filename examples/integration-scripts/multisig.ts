@@ -1610,24 +1610,9 @@ async function run() {
         .ipex()
         .admit('holder', '', res.exn.d);
 
-
-        await client4
-            .exchanges()
-            .sendFromEvents(
-                'holder',
-                'credential',
-                admit,
-                asigs,
-                aend,
-                [m['prefix']]
-        );
+    await client4.ipex().submitAdmit('holder', admit, asigs, aend, m['prefix'] );
     
-        console.log('Holder creates and sends admit message');
-
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        let creds = await client4.credentials().list('holder');
-        console.log(JSON.stringify(creds))
-
+    console.log('Holder creates and sends admit message');
 
     msgSaid = '';
     while (msgSaid == '') {
@@ -1645,7 +1630,7 @@ async function run() {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    creds = await client4.credentials().list('holder');
+    let creds = await client4.credentials().list('holder');
     console.log(JSON.stringify(creds))
 
 
