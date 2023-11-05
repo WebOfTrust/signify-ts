@@ -76,13 +76,15 @@ export class Exchanges {
         route: string,
         payload: Dict<any>,
         embeds: Dict<any>,
-        recipients: string[]
+        recipients: string[],
+        grant?: string
     ): Promise<any> {
         let [exn, sigs, atc] = await this.createExchangeMessage(
             sender,
             route,
             payload,
-            embeds
+            embeds,
+            grant
         );
         return await this.sendFromEvents(
             name,
@@ -95,7 +97,7 @@ export class Exchanges {
     }
 
     /**
-     * Send exn messaget to list of recipients
+     * Send exn messages to list of recipients
      * @async
      * @returns {Promise<any>} A promise to the list of replay messages
      * @param name
@@ -127,6 +129,13 @@ export class Exchanges {
         return await res.json();
     }
 
+    /**
+     * Get exn messages
+     * @async
+     * @returns {Promise<any>} A promise to the exn message
+     * @param name
+     * @param said
+     */
     async get(name:string, said:string) {
         let path = `/identifiers/${name}/exchanges/${said}`;
         let method = 'GET';

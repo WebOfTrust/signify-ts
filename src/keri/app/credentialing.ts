@@ -523,6 +523,7 @@ export class Credentials {
         let res = await this.client.fetch(path, method, body, headers);
         return await res.text();
     }
+
 }
 
 export interface CreateRegistryArgs {
