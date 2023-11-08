@@ -84,10 +84,7 @@ async function run() {
         ],
     });
     let op1 = await icpResult1.op();
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     let aid1 = await client1.identifiers().get('member1');
     await client1
         .identifiers()
@@ -103,10 +100,7 @@ async function run() {
         ],
     });
     let op2 = await icpResult2.op();
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
     let aid2 = await client2.identifiers().get('member2');
     await client2
         .identifiers()
@@ -122,10 +116,7 @@ async function run() {
         ],
     });
     let op3 = await icpResult3.op();
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     let aid3 = await client3.identifiers().get('member3');
     await client3
         .identifiers()
@@ -141,10 +132,7 @@ async function run() {
         ],
     });
     let op4 = await icpResult4.op();
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
     let aid4 = await client4.identifiers().get('holder');
     await client4
         .identifiers()
@@ -161,92 +149,44 @@ async function run() {
     let oobi4 = await client4.oobis().get('holder', 'agent');
 
     op1 = await client1.oobis().resolve(oobi2.oobis[0], 'member2');
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     op1 = await client1.oobis().resolve(oobi3.oobis[0], 'member3');
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     op1 = await client1.oobis().resolve(schemaOobi, 'schema');
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     op1 = await client1.oobis().resolve(oobi4.oobis[0], 'holder');
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     console.log('Member1 resolved 4 OOBIs');
 
     op2 = await client2.oobis().resolve(oobi1.oobis[0], 'member1');
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
     op2 = await client2.oobis().resolve(oobi3.oobis[0], 'member3');
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
     op2 = await client2.oobis().resolve(schemaOobi, 'schema');
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
     op2 = await client2.oobis().resolve(oobi4.oobis[0], 'holder');
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
     console.log('Member2 resolved 4 OOBIs');
 
     op3 = await client3.oobis().resolve(oobi1.oobis[0], 'member1');
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     op3 = await client3.oobis().resolve(oobi2.oobis[0], 'member2');
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     op3 = await client3.oobis().resolve(schemaOobi, 'schema');
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     op3 = await client3.oobis().resolve(oobi4.oobis[0], 'holder');
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     console.log('Member3 resolved 4 OOBIs');
 
     op4 = await client4.oobis().resolve(oobi1.oobis[0], 'member1');
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
     op4 = await client4.oobis().resolve(oobi2.oobis[0], 'member2');
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
     op4 = await client4.oobis().resolve(oobi3.oobis[0], 'member3');
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
 
     op4 = await client4.oobis().resolve(schemaOobi, 'schema');
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
 
     console.log('Holder resolved 4 OOBIs');
 
@@ -263,10 +203,7 @@ async function run() {
     console.log('Member3 responded challenge with signed words');
 
     op1 = await client1.challenges().verify('member1', aid2.prefix, words);
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     console.log('Member1 verified challenge response from member2');
     let exnwords = new Serder(op1.response.exn);
     op1 = await client1
@@ -275,10 +212,7 @@ async function run() {
     console.log('Member1 marked challenge response as accepted');
 
     op1 = await client1.challenges().verify('member1', aid3.prefix, words);
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
     console.log('Member1 verified challenge response from member3');
     exnwords = new Serder(op1.response.exn);
     op1 = await client1
@@ -445,18 +379,9 @@ async function run() {
     console.log('Member3 joined, multisig waiting for others...');
 
     // Check for completion
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
+    op2 = await waitForOp(client2, op2);
+    op3 = await waitForOp(client3, op3);
     console.log('Multisig created!');
     const identifiers1 = await client1.identifiers().list();
     assert.equal(identifiers1.aids.length, 2);
@@ -666,29 +591,17 @@ async function run() {
     );
 
     // Check for completion
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
 
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
 
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     console.log(`End role authorization for agent ${eid1}completed!`);
 
     // Holder resolve multisig OOBI
     let oobimultisig = await client1.oobis().get('multisig', 'agent');
     op4 = await client4.oobis().resolve(oobimultisig.oobis[0], 'multisig');
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
     console.log(`Holder resolved multisig OOBI`);
 
     // MultiSig Interaction
@@ -826,84 +739,48 @@ async function run() {
     console.log('Member3 joins interaction event, waiting for others...');
 
     // Check for completion
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
+    op2 = await waitForOp(client2, op2);
+    op3 = await waitForOp(client3, op3);
     console.log('Multisig interaction completed!');
 
     // // Members agree out of band to rotate keys
     // console.log('Members agree out of band to rotate keys');
     // icpResult1 = await client1.identifiers().rotate('member1');
     // op1 = await icpResult1.op();
-    // while (!op1['done']) {
-    //     op1 = await client1.operations().get(op1.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op1 = await waitForOp(client1, op1);
     // aid1 = await client1.identifiers().get('member1');
 
     // console.log('Member1 rotated keys');
     // icpResult2 = await client2.identifiers().rotate('member2');
     // op2 = await icpResult2.op();
-    // while (!op2['done']) {
-    //     op2 = await client2.operations().get(op2.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op2 = await waitForOp(client2, op2);
     // aid2 = await client2.identifiers().get('member2');
     // console.log('Member2 rotated keys');
     // icpResult3 = await client3.identifiers().rotate('member3');
     // op3 = await icpResult3.op();
-    // while (!op3['done']) {
-    //     op3 = await client3.operations().get(op3.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op3 = await waitForOp(client3, op3);
     // aid3 = await client3.identifiers().get('member3');
     // console.log('Member3 rotated keys');
 
     // // Update new key states
     // op1 = await client1.keyStates().query(aid2.prefix, 1);
-    // while (!op1['done']) {
-    //     op1 = await client1.operations().get(op1.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op1 = await waitForOp(client1, op1);
     // let aid2State = op1['response'];
     // op1 = await client1.keyStates().query(aid3.prefix, 1);
-    // while (!op1['done']) {
-    //     op1 = await client1.operations().get(op1.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op1 = await waitForOp(client1, op1);
     // let aid3State = op1['response'];
 
     // op2 = await client2.keyStates().query(aid3.prefix, 1);
-    // while (!op2['done']) {
-    //     op2 = await client2.operations().get(op2.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op2 = await waitForOp(client2, op2);
     // op2 = await client2.keyStates().query(aid1.prefix, 1);
-    // while (!op2['done']) {
-    //     op2 = await client2.operations().get(op2.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op2 = await waitForOp(client2, op2);
     // let aid1State = op2['response'];
 
     // op3 = await client3.keyStates().query(aid1.prefix, 1);
-    // while (!op3['done']) {
-    //     op3 = await client3.operations().get(op3.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op3 = await waitForOp(client3, op3);
     // op3 = await client3.keyStates().query(aid2.prefix, 1);
-    // while (!op3['done']) {
-    //     op3 = await client3.operations().get(op3.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op3 = await waitForOp(client3, op3);
 
     // rstates = [aid1State, aid2State, aid3State];
     // states = rstates;
@@ -1042,18 +919,9 @@ async function run() {
     // console.log('Member3 joins rotation event, waiting for others...');
 
     // // Check for completion
-    // while (!op1['done']) {
-    //     op1 = await client1.operations().get(op1.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // while (!op2['done']) {
-    //     op2 = await client2.operations().get(op2.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // while (!op3['done']) {
-    //     op3 = await client3.operations().get(op3.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op1 = await waitForOp(client1, op1);
+    // op2 = await waitForOp(client2, op2);
+    // op3 = await waitForOp(client3, op3);
     // console.log('Multisig rotation completed!');
 
     hab = await client1.identifiers().get('multisig');
@@ -1207,20 +1075,11 @@ async function run() {
         );
 
     // Done
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
 
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
 
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     console.log('Multisig create registry completed!');
 
     //Create Credential
@@ -1403,30 +1262,24 @@ async function run() {
     console.log('Member3 joins credential create event, waiting for others...');
 
     // Done
-    while (!op1['done']) {
-        op1 = await client1.operations().get(op1.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op1 = await waitForOp(client1, op1);
 
-    while (!op2['done']) {
-        op2 = await client2.operations().get(op2.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op2 = await waitForOp(client2, op2);
 
-    while (!op3['done']) {
-        op3 = await client3.operations().get(op3.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op3 = await waitForOp(client3, op3);
     console.log('Multisig create credential completed!');
 
     // Update latest key states from multisig
     let m = await client1.identifiers().get('multisig');
 
+    op1 = await client1.keyStates().query(m.prefix, 2);
+    op1 = await waitForOp(client1, op1);
+    op2 = await client2.keyStates().query(m.prefix, 2);
+    op2 = await waitForOp(client2, op2);
+    op3 = await client3.keyStates().query(m.prefix, 2);
+    op3 = await waitForOp(client3, op3);
     op4 = await client4.keyStates().query(m.prefix, 2);
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    op4 = await waitForOp(client4, op4);
 
     // IPEX grant message
     console.log('Starting grant message');
@@ -1606,10 +1459,7 @@ async function run() {
 
 
     // op4 = await client4.keyStates().query(m.prefix, 4);
-    // while (!op4['done']) {
-    //     op4 = await client4.operations().get(op4.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
+    // op4 = await waitForOp(client4, op4);
 
     msgSaid = '';
     while (msgSaid == '') {
@@ -1627,8 +1477,6 @@ async function run() {
     }
 
     res = await client4.exchanges().get('holder',msgSaid);
-    console.log(JSON.stringify(res))
-
 
     let [admit, asigs, aend] = await client4
         .ipex()
@@ -1654,8 +1502,15 @@ async function run() {
     }
 
     let creds = await client4.credentials().list('holder');
-    console.log("Holder holds the credential in the database")
-    console.log(JSON.stringify(creds))
+    console.log(`Holder holds ${creds.length} credential`)
 
 
+}
+
+async function waitForOp(client:any, op:any) {
+    while (!op['done']) {
+        op = await client.operations().get(op.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    return op
 }
