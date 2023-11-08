@@ -16,69 +16,10 @@ async function run() {
     const client4 = await bootClient();
 
     // Create four identifiers, one for each client
-    let icpResult1 = await client1.identifiers().create('member1', {
-        toad: 3,
-        wits: [
-            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-        ],
-    });
-    let op1 = await icpResult1.op();
-    op1 = await waitForOp(client1, op1);
-    let aid1 = await client1.identifiers().get('member1');
-    await client1
-        .identifiers()
-        .addEndRole('member1', 'agent', client1!.agent!.pre);
-    console.log("Member1's AID:", aid1.prefix);
-
-    let icpResult2 = await client2.identifiers().create('member2', {
-        toad: 3,
-        wits: [
-            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-        ],
-    });
-    let op2 = await icpResult2.op();
-    op2 = await waitForOp(client2, op2);
-    let aid2 = await client2.identifiers().get('member2');
-    await client2
-        .identifiers()
-        .addEndRole('member2', 'agent', client2!.agent!.pre);
-    console.log("Member2's AID:", aid2.prefix);
-
-    let icpResult3 = await client3.identifiers().create('member3', {
-        toad: 3,
-        wits: [
-            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-        ],
-    });
-    let op3 = await icpResult3.op();
-    op3 = await waitForOp(client3, op3);
-    let aid3 = await client3.identifiers().get('member3');
-    await client3
-        .identifiers()
-        .addEndRole('member3', 'agent', client3!.agent!.pre);
-    console.log("Member3's AID:", aid3.prefix);
-
-    let icpResult4 = await client4.identifiers().create('holder', {
-        toad: 3,
-        wits: [
-            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-        ],
-    });
-    let op4 = await icpResult4.op();
-    op4 = await waitForOp(client4, op4);
-    let aid4 = await client4.identifiers().get('holder');
-    await client4
-        .identifiers()
-        .addEndRole('holder', 'agent', client4!.agent!.pre);
-    console.log("Holder's AID:", aid4.prefix);
+    let aid1 = await createAID(client1, 'member1');
+    let aid2 = await createAID(client2, 'member2');
+    let aid3 = await createAID(client3, 'member3');
+    let aid4 = await createAID(client4, 'holder');
 
     // Exchange OOBIs
     let schemaSAID = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
@@ -89,7 +30,7 @@ async function run() {
     let oobi3 = await client3.oobis().get('member3', 'agent');
     let oobi4 = await client4.oobis().get('holder', 'agent');
 
-    op1 = await client1.oobis().resolve(oobi2.oobis[0], 'member2');
+    let op1 = await client1.oobis().resolve(oobi2.oobis[0], 'member2');
     op1 = await waitForOp(client1, op1);
     op1 = await client1.oobis().resolve(oobi3.oobis[0], 'member3');
     op1 = await waitForOp(client1, op1);
@@ -99,7 +40,7 @@ async function run() {
     op1 = await waitForOp(client1, op1);
     console.log('Member1 resolved 4 OOBIs');
 
-    op2 = await client2.oobis().resolve(oobi1.oobis[0], 'member1');
+    let op2 = await client2.oobis().resolve(oobi1.oobis[0], 'member1');
     op2 = await waitForOp(client2, op2);
     op2 = await client2.oobis().resolve(oobi3.oobis[0], 'member3');
     op2 = await waitForOp(client2, op2);
@@ -109,7 +50,7 @@ async function run() {
     op2 = await waitForOp(client2, op2);
     console.log('Member2 resolved 4 OOBIs');
 
-    op3 = await client3.oobis().resolve(oobi1.oobis[0], 'member1');
+    let op3 = await client3.oobis().resolve(oobi1.oobis[0], 'member1');
     op3 = await waitForOp(client3, op3);
     op3 = await client3.oobis().resolve(oobi2.oobis[0], 'member2');
     op3 = await waitForOp(client3, op3);
@@ -119,7 +60,7 @@ async function run() {
     op3 = await waitForOp(client3, op3);
     console.log('Member3 resolved 4 OOBIs');
 
-    op4 = await client4.oobis().resolve(oobi1.oobis[0], 'member1');
+    let op4 = await client4.oobis().resolve(oobi1.oobis[0], 'member1');
     op4 = await waitForOp(client4, op4);
     op4 = await client4.oobis().resolve(oobi2.oobis[0], 'member2');
     op4 = await waitForOp(client4, op4);
@@ -164,7 +105,7 @@ async function run() {
     // First member start the creation of a multisig identifier
     let rstates = [aid1['state'], aid2['state'], aid3['state']];
     let states = rstates;
-    icpResult1 = await client1.identifiers().create('multisig', {
+    let icpResult1 = await client1.identifiers().create('multisig', {
         algo: signify.Algos.group,
         mhab: aid1,
         isith: 3,
@@ -215,7 +156,7 @@ async function run() {
     let exn = res[0].exn;
     let icp = exn.e.icp;
 
-    icpResult2 = await client2.identifiers().create('multisig', {
+    let icpResult2 = await client2.identifiers().create('multisig', {
         algo: signify.Algos.group,
         mhab: aid2,
         isith: icp.kt,
@@ -259,7 +200,7 @@ async function run() {
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
     icp = exn.e.icp;
-    icpResult3 = await client3.identifiers().create('multisig', {
+    let icpResult3 = await client3.identifiers().create('multisig', {
         algo: signify.Algos.group,
         mhab: aid3,
         isith: icp.kt,
@@ -1283,10 +1224,29 @@ async function bootClient():Promise<SignifyClient>{
     await client.connect();
     let state = await client.state();
     console.log(
-        'Client connected. Client AID:',
+        'Client AID:',
         state.controller.state.i,
         'Agent AID: ',
         state.agent.i
     );
     return client
+}
+
+async function createAID(client:SignifyClient, name:string){
+    let icpResult1 = await client.identifiers().create(name, {
+        toad: 3,
+        wits: [
+            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+        ],
+    });
+    let op = await icpResult1.op();
+    op = await waitForOp(client, op);
+    let aid = await client.identifiers().get(name);
+    await client
+        .identifiers()
+        .addEndRole(name, 'agent', client!.agent!.pre);
+    console.log(name, "AID:", aid.prefix);
+    return aid
 }
