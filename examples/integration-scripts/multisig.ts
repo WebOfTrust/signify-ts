@@ -691,154 +691,154 @@ async function run() {
     }
     console.log(`Holder resolved multisig OOBI`);
 
-    // // MultiSig Interaction
+    // MultiSig Interaction
 
-    // // Member1 initiates an interaction event
-    // let data = {
-    //     i: 'EBgew7O4yp8SBle0FU-wwN3GtnaroI0BQfBGAj33QiIG',
-    //     s: '0',
-    //     d: 'EBgew7O4yp8SBle0FU-wwN3GtnaroI0BQfBGAj33QiIG'
-    //   };
-    // let eventResponse1 = await client1.identifiers().interact('multisig', data);
-    // op1 = await eventResponse1.op();
-    // serder = eventResponse1.serder;
-    // sigs = eventResponse1.sigs;
-    // sigers = sigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+    // Member1 initiates an interaction event
+    let data = {
+        i: 'EBgew7O4yp8SBle0FU-wwN3GtnaroI0BQfBGAj33QiIG',
+        s: '0',
+        d: 'EBgew7O4yp8SBle0FU-wwN3GtnaroI0BQfBGAj33QiIG'
+      };
+    let eventResponse1 = await client1.identifiers().interact('multisig', data);
+    op1 = await eventResponse1.op();
+    serder = eventResponse1.serder;
+    sigs = eventResponse1.sigs;
+    sigers = sigs.map((sig: any) => new signify.Siger({ qb64: sig }));
 
-    // ims = signify.d(signify.messagize(serder, sigers));
-    // atc = ims.substring(serder.size);
-    // let xembeds = {
-    //     ixn: [serder, atc],
-    // };
+    ims = signify.d(signify.messagize(serder, sigers));
+    atc = ims.substring(serder.size);
+    let xembeds = {
+        ixn: [serder, atc],
+    };
 
-    // smids = states.map((state) => state['i']);
-    // recp = [aid2['state'], aid3['state']].map((state) => state['i']);
+    smids = states.map((state) => state['i']);
+    recp = [aid2['state'], aid3['state']].map((state) => state['i']);
 
-    // await client1
-    //     .exchanges()
-    //     .send(
-    //         'member1',
-    //         'multisig',
-    //         aid1,
-    //         '/multisig/ixn',
-    //         { gid: serder.pre, smids: smids, rmids: smids },
-    //         xembeds,
-    //         recp
-    //     );
-    // console.log(
-    //     'Member1 initiates interaction event, waiting for others to join...'
-    // );
+    await client1
+        .exchanges()
+        .send(
+            'member1',
+            'multisig',
+            aid1,
+            '/multisig/ixn',
+            { gid: serder.pre, smids: smids, rmids: smids },
+            xembeds,
+            recp
+        );
+    console.log(
+        'Member1 initiates interaction event, waiting for others to join...'
+    );
 
-    // // Member2 check for notifications and join the interaction event
-    // msgSaid = '';
-    // while (msgSaid == '') {
-    //     let notifications = await client2.notifications().list();
-    //     for (let notif of notifications.notes) {
-    //         if (notif.a.r == '/multisig/ixn') {
-    //             msgSaid = notif.a.d;
-    //             await client2.notifications().mark(notif.i);
-    //             console.log(
-    //                 'Member2 received exchange message to join the interaction event'
-    //             );
-    //         }
-    //     }
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // res = await client2.groups().getRequest(msgSaid);
-    // exn = res[0].exn;
-    // let ixn = exn.e.ixn;
-    // data = ixn.a;
+    // Member2 check for notifications and join the interaction event
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client2.notifications().list();
+        for (let notif of notifications.notes) {
+            if (notif.a.r == '/multisig/ixn') {
+                msgSaid = notif.a.d;
+                await client2.notifications().mark(notif.i);
+                console.log(
+                    'Member2 received exchange message to join the interaction event'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    res = await client2.groups().getRequest(msgSaid);
+    exn = res[0].exn;
+    let ixn = exn.e.ixn;
+    data = ixn.a;
 
-    // icpResult2 = await client2.identifiers().interact('multisig', data);
-    // op2 = await icpResult2.op();
-    // serder = icpResult2.serder;
-    // sigs = icpResult2.sigs;
-    // sigers = sigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+    icpResult2 = await client2.identifiers().interact('multisig', data);
+    op2 = await icpResult2.op();
+    serder = icpResult2.serder;
+    sigs = icpResult2.sigs;
+    sigers = sigs.map((sig: any) => new signify.Siger({ qb64: sig }));
 
-    // ims = signify.d(signify.messagize(serder, sigers));
-    // atc = ims.substring(serder.size);
-    // xembeds = {
-    //     ixn: [serder, atc],
-    // };
+    ims = signify.d(signify.messagize(serder, sigers));
+    atc = ims.substring(serder.size);
+    xembeds = {
+        ixn: [serder, atc],
+    };
 
-    // smids = exn.a.smids;
-    // recp = [aid1['state'], aid3['state']].map((state) => state['i']);
+    smids = exn.a.smids;
+    recp = [aid1['state'], aid3['state']].map((state) => state['i']);
 
-    // await client2
-    //     .exchanges()
-    //     .send(
-    //         'member2',
-    //         'multisig',
-    //         aid2,
-    //         '/multisig/ixn',
-    //         { gid: serder.pre, smids: smids, rmids: smids },
-    //         xembeds,
-    //         recp
-    //     );
-    // console.log('Member2 joins interaction event, waiting for others...');
+    await client2
+        .exchanges()
+        .send(
+            'member2',
+            'multisig',
+            aid2,
+            '/multisig/ixn',
+            { gid: serder.pre, smids: smids, rmids: smids },
+            xembeds,
+            recp
+        );
+    console.log('Member2 joins interaction event, waiting for others...');
 
-    // // Member3 check for notifications and join the interaction event
-    // msgSaid = '';
-    // while (msgSaid == '') {
-    //     let notifications = await client3.notifications().list();
-    //     for (let notif of notifications.notes) {
-    //         if (notif.a.r == '/multisig/ixn') {
-    //             msgSaid = notif.a.d;
-    //             await client3.notifications().mark(notif.i);
-    //             console.log(
-    //                 'Member3 received exchange message to join the interaction event'
-    //             );
-    //         }
-    //     }
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // res = await client3.groups().getRequest(msgSaid);
-    // exn = res[0].exn;
-    // ixn = exn.e.ixn;
-    // data = ixn.a;
+    // Member3 check for notifications and join the interaction event
+    msgSaid = '';
+    while (msgSaid == '') {
+        let notifications = await client3.notifications().list();
+        for (let notif of notifications.notes) {
+            if (notif.a.r == '/multisig/ixn') {
+                msgSaid = notif.a.d;
+                await client3.notifications().mark(notif.i);
+                console.log(
+                    'Member3 received exchange message to join the interaction event'
+                );
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    res = await client3.groups().getRequest(msgSaid);
+    exn = res[0].exn;
+    ixn = exn.e.ixn;
+    data = ixn.a;
 
-    // icpResult3 = await client3.identifiers().interact('multisig', data);
-    // op3 = await icpResult3.op();
-    // serder = icpResult3.serder;
-    // sigs = icpResult3.sigs;
-    // sigers = sigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+    icpResult3 = await client3.identifiers().interact('multisig', data);
+    op3 = await icpResult3.op();
+    serder = icpResult3.serder;
+    sigs = icpResult3.sigs;
+    sigers = sigs.map((sig: any) => new signify.Siger({ qb64: sig }));
 
-    // ims = signify.d(signify.messagize(serder, sigers));
-    // atc = ims.substring(serder.size);
-    // xembeds = {
-    //     ixn: [serder, atc],
-    // };
+    ims = signify.d(signify.messagize(serder, sigers));
+    atc = ims.substring(serder.size);
+    xembeds = {
+        ixn: [serder, atc],
+    };
 
-    // smids = exn.a.smids;
-    // recp = [aid1['state'], aid2['state']].map((state) => state['i']);
+    smids = exn.a.smids;
+    recp = [aid1['state'], aid2['state']].map((state) => state['i']);
 
-    // await client3
-    //     .exchanges()
-    //     .send(
-    //         'member3',
-    //         'multisig',
-    //         aid3,
-    //         '/multisig/ixn',
-    //         { gid: serder.pre, smids: smids, rmids: smids },
-    //         xembeds,
-    //         recp
-    //     );
-    // console.log('Member3 joins interaction event, waiting for others...');
+    await client3
+        .exchanges()
+        .send(
+            'member3',
+            'multisig',
+            aid3,
+            '/multisig/ixn',
+            { gid: serder.pre, smids: smids, rmids: smids },
+            xembeds,
+            recp
+        );
+    console.log('Member3 joins interaction event, waiting for others...');
 
-    // // Check for completion
-    // while (!op1['done']) {
-    //     op1 = await client1.operations().get(op1.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // while (!op2['done']) {
-    //     op2 = await client2.operations().get(op2.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // while (!op3['done']) {
-    //     op3 = await client3.operations().get(op3.name);
-    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-    // }
-    // console.log('Multisig interaction completed!');
+    // Check for completion
+    while (!op1['done']) {
+        op1 = await client1.operations().get(op1.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    while (!op2['done']) {
+        op2 = await client2.operations().get(op2.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    while (!op3['done']) {
+        op3 = await client3.operations().get(op3.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    console.log('Multisig interaction completed!');
 
     // // Members agree out of band to rotate keys
     // console.log('Members agree out of band to rotate keys');
@@ -1250,6 +1250,8 @@ async function run() {
     let iss = credRes.iserder;
     let ianc = credRes.anc;
     let isigs = credRes.sigs;
+    let acdcSaider = credRes.acdcSaider;
+    let issExnSaider = credRes.issExnSaider;
 
     sigers = isigs.map((sig: any) => new signify.Siger({ qb64: sig }));
     ims = signify.d(signify.messagize(ianc, sigers));
@@ -1419,7 +1421,6 @@ async function run() {
 
     // Update latest key states from multisig
     let m = await client1.identifiers().get('multisig');
-    console.log(JSON.stringify(m));
 
     op4 = await client4.keyStates().query(m.prefix, 2);
     while (!op4['done']) {
@@ -1427,15 +1428,13 @@ async function run() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-
-
     // IPEX grant message
     console.log('Starting grant message');
     stamp = new Date().toISOString().replace('Z', '000+00:00');
 
     let [grant, gsigs, end] = await client1
         .ipex()
-        .grant('multisig', holder, '', acdc, iss, ianc, atc1, undefined, stamp);
+        .grant('multisig', holder, '', acdc, acdcSaider, iss, issExnSaider, ianc, atc1, undefined, stamp);
 
     await client1
         .exchanges()
@@ -1501,7 +1500,7 @@ async function run() {
 
     let [grant2, gsigs2, end2] = await client2
         .ipex()
-        .grant('multisig', holder, '', acdc, iss, ianc, atc2, undefined, stamp);
+        .grant('multisig', holder, '', acdc, acdcSaider, iss, issExnSaider, ianc, atc2, undefined, stamp);
     
     await client2
         .exchanges()
@@ -1563,7 +1562,7 @@ async function run() {
 
     let [grant3, gsigs3, end3] = await client3
         .ipex()
-        .grant('multisig', holder, '', acdc, iss, ianc, atc3, undefined, stamp);
+        .grant('multisig', holder, '', acdc, acdcSaider, iss, issExnSaider, ianc, atc3, undefined, stamp);
     
     await client3
         .exchanges()
@@ -1606,11 +1605,11 @@ async function run() {
     // // Update latest key states from multisig
 
 
-    op4 = await client4.keyStates().query(m.prefix, 4);
-    while (!op4['done']) {
-        op4 = await client4.operations().get(op4.name);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    // op4 = await client4.keyStates().query(m.prefix, 4);
+    // while (!op4['done']) {
+    //     op4 = await client4.operations().get(op4.name);
+    //     await new Promise((resolve) => setTimeout(resolve, 1000));
+    // }
 
     msgSaid = '';
     while (msgSaid == '') {
@@ -1635,22 +1634,9 @@ async function run() {
         .ipex()
         .admit('holder', '', res.exn.d);
 
-    // sigers = asigs.map((sig: any) => new signify.Siger({ qb64: sig }));
-
-    // let aims = signify.d(
-    //     signify.messagize(admit, sigers)
-    // );
-    // atc = aims.substring(admit.size);
-    // atc += aend;
-
-    res = await client4.ipex().submitAdmit('holder', admit, asigs, aend, m['prefix'] );
-    console.log(JSON.stringify(res))
+    res = await client4.ipex().submitAdmit('holder', admit, asigs, aend, [m['prefix']] );
     
     console.log('Holder creates and sends admit message');
-
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    let creds = await client4.credentials().list('holder');
-    console.log(JSON.stringify(creds))
 
     msgSaid = '';
     while (msgSaid == '') {
@@ -1667,8 +1653,8 @@ async function run() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    creds = await client4.credentials().list('holder');
+    let creds = await client4.credentials().list('holder');
+    console.log("Holder holds the credential in the database")
     console.log(JSON.stringify(creds))
 
 
