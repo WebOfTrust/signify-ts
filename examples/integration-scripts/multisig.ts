@@ -694,7 +694,11 @@ async function run() {
     // // MultiSig Interaction
 
     // // Member1 initiates an interaction event
-    // let data = { i: 'EE77q3_zWb5ojgJr-R1vzsL5yiL4Nzm-bfSOQzQl02dy' };
+    // let data = {
+    //     i: 'EBgew7O4yp8SBle0FU-wwN3GtnaroI0BQfBGAj33QiIG',
+    //     s: '0',
+    //     d: 'EBgew7O4yp8SBle0FU-wwN3GtnaroI0BQfBGAj33QiIG'
+    //   };
     // let eventResponse1 = await client1.identifiers().interact('multisig', data);
     // op1 = await eventResponse1.op();
     // serder = eventResponse1.serder;
@@ -1056,6 +1060,9 @@ async function run() {
     aid = hab['prefix'];
 
     // Multisig Registry creation
+    aid1 = await client1.identifiers().get('member1');
+    aid2 = await client2.identifiers().get('member2');
+    aid3 = await client3.identifiers().get('member3');
 
     console.log('Starting multisig registry creation');
 
@@ -1410,6 +1417,17 @@ async function run() {
     }
     console.log('Multisig create credential completed!');
 
+    // Update latest key states from multisig
+    let m = await client1.identifiers().get('multisig');
+    console.log(JSON.stringify(m));
+
+    op4 = await client4.keyStates().query(m.prefix, 2);
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+
 
     // IPEX grant message
     console.log('Starting grant message');
@@ -1431,7 +1449,6 @@ async function run() {
         );
 
 
-    let m = await client1.identifiers().get('multisig');
 
     mstate = m['state'];
     seal = [
@@ -1462,8 +1479,6 @@ async function run() {
             recp
         );
     
-
-
     console.log('Member1 initiated grant message, waiting for others to join...');
 
     msgSaid = '';
@@ -1587,6 +1602,16 @@ async function run() {
 
     console.log('Member3 joined grant message, waiting for others to join...');
 
+
+    // // Update latest key states from multisig
+
+
+    op4 = await client4.keyStates().query(m.prefix, 4);
+    while (!op4['done']) {
+        op4 = await client4.operations().get(op4.name);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
     msgSaid = '';
     while (msgSaid == '') {
         let notifications = await client4.notifications().list();
@@ -1610,9 +1635,22 @@ async function run() {
         .ipex()
         .admit('holder', '', res.exn.d);
 
-    await client4.ipex().submitAdmit('holder', admit, asigs, aend, m['prefix'] );
+    // sigers = asigs.map((sig: any) => new signify.Siger({ qb64: sig }));
+
+    // let aims = signify.d(
+    //     signify.messagize(admit, sigers)
+    // );
+    // atc = aims.substring(admit.size);
+    // atc += aend;
+
+    res = await client4.ipex().submitAdmit('holder', admit, asigs, aend, m['prefix'] );
+    console.log(JSON.stringify(res))
     
     console.log('Holder creates and sends admit message');
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    let creds = await client4.credentials().list('holder');
+    console.log(JSON.stringify(creds))
 
     msgSaid = '';
     while (msgSaid == '') {
@@ -1630,7 +1668,7 @@ async function run() {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    let creds = await client4.credentials().list('holder');
+    creds = await client4.credentials().list('holder');
     console.log(JSON.stringify(creds))
 
 
