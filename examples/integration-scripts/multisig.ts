@@ -10,70 +10,10 @@ await run();
 async function run() {
     await signify.ready();
     // Boot Four clients
-    const bran1 = signify.randomPasscode();
-    const bran2 = signify.randomPasscode();
-    const bran3 = signify.randomPasscode();
-    const bran4 = signify.randomPasscode();
-    const client1 = new signify.SignifyClient(
-        url,
-        bran1,
-        signify.Tier.low,
-        boot_url
-    );
-    const client2 = new signify.SignifyClient(
-        url,
-        bran2,
-        signify.Tier.low,
-        boot_url
-    );
-    const client3 = new signify.SignifyClient(
-        url,
-        bran3,
-        signify.Tier.low,
-        boot_url
-    );
-    const client4 = new signify.SignifyClient(
-        url,
-        bran4,
-        signify.Tier.low,
-        boot_url
-    );
-    await client1.boot();
-    await client2.boot();
-    await client3.boot();
-    await client4.boot();
-    await client1.connect();
-    await client2.connect();
-    await client3.connect();
-    await client4.connect();
-    const state1 = await client1.state();
-    const state2 = await client2.state();
-    const state3 = await client3.state();
-    const state4 = await client4.state();
-    console.log(
-        'Client 1 connected. Client AID:',
-        state1.controller.state.i,
-        'Agent AID: ',
-        state1.agent.i
-    );
-    console.log(
-        'Client 2 connected. Client AID:',
-        state2.controller.state.i,
-        'Agent AID: ',
-        state2.agent.i
-    );
-    console.log(
-        'Client 3 connected. Client AID:',
-        state3.controller.state.i,
-        'Agent AID: ',
-        state3.agent.i
-    );
-    console.log(
-        'Client 4 connected. Client AID:',
-        state4.controller.state.i,
-        'Agent AID: ',
-        state4.agent.i
-    );
+    const client1 = await bootClient();
+    const client2 = await bootClient();
+    const client3 = await bootClient();
+    const client4 = await bootClient();
 
     // Create four identifiers, one for each client
     let icpResult1 = await client1.identifiers().create('member1', {
@@ -1329,4 +1269,24 @@ async function waitForMessage(client:SignifyClient, route:string) {
     }
     return msgSaid
     
+}
+
+async function bootClient():Promise<SignifyClient>{
+    let bran = signify.randomPasscode();
+    let client = new signify.SignifyClient(
+        url,
+        bran,
+        signify.Tier.low,
+        boot_url
+    );
+    await client.boot();
+    await client.connect();
+    let state = await client.state();
+    console.log(
+        'Client connected. Client AID:',
+        state.controller.state.i,
+        'Agent AID: ',
+        state.agent.i
+    );
+    return client
 }
