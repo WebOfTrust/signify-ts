@@ -593,6 +593,13 @@ async function run() {
     // op3 = await client3.keyStates().query(aid2.prefix, 1);
     // op3 = await waitForOp(client3, op3);
 
+    // op4 = await client4.keyStates().query(aid1.prefix, 1);
+    // op4 = await waitForOp(client4, op4);
+    // op4 = await client4.keyStates().query(aid2.prefix, 1);
+    // op4 = await waitForOp(client4, op4);
+    // op4 = await client4.keyStates().query(aid3.prefix, 1);
+    // op4 = await waitForOp(client4, op4);
+    
     // rstates = [aid1State, aid2State, aid3State];
     // states = rstates;
 
@@ -711,8 +718,8 @@ async function run() {
     // op3 = await waitForOp(client3, op3);
     // console.log('Multisig rotation completed!');
 
-    hab = await client1.identifiers().get('multisig');
-    aid = hab['prefix'];
+    // hab = await client1.identifiers().get('multisig');
+    // aid = hab['prefix'];
 
     // Multisig Registry creation
     aid1 = await client1.identifiers().get('member1');
@@ -838,9 +845,7 @@ async function run() {
 
     // Done
     op1 = await waitForOp(client1, op1);
-
     op2 = await waitForOp(client2, op2);
-
     op3 = await waitForOp(client3, op3);
     console.log('Multisig create registry completed!');
 
@@ -997,25 +1002,13 @@ async function run() {
         );
     console.log('Member3 joins credential create event, waiting for others...');
 
-    // Done
+    // Check completion
     op1 = await waitForOp(client1, op1);
-
     op2 = await waitForOp(client2, op2);
-
     op3 = await waitForOp(client3, op3);
     console.log('Multisig create credential completed!');
 
-    // Update latest key states from multisig
     let m = await client1.identifiers().get('multisig');
-
-    op1 = await client1.keyStates().query(m.prefix, 2);
-    op1 = await waitForOp(client1, op1);
-    op2 = await client2.keyStates().query(m.prefix, 2);
-    op2 = await waitForOp(client2, op2);
-    op3 = await client3.keyStates().query(m.prefix, 2);
-    op3 = await waitForOp(client3, op3);
-    op4 = await client4.keyStates().query(m.prefix, 2);
-    op4 = await waitForOp(client4, op4);
 
     // IPEX grant message
     console.log('Starting grant message');
@@ -1035,8 +1028,6 @@ async function run() {
             end,
             [holder]
         );
-
-
 
     mstate = m['state'];
     seal = [
