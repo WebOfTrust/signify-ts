@@ -385,15 +385,12 @@ describe('exchange', () => {
         await client.boot();
         await client.connect();
         let exchanges = client.exchanges();
-        await exchanges.get(
-            'aid1',
-            'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
-        );
+        await exchanges.get('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0]!,
             url +
-                '/identifiers/aid1/exchanges/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+                '/exchanges/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
         assert.equal(lastCall[1]!.method, 'GET');
 
