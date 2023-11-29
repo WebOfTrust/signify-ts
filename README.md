@@ -51,5 +51,13 @@ Account Creation Workflow
 
 ![Account Creation](/diagrams/account-creation-workflow.png)
 
-
 ![Account Creation Webpage](/diagrams/account-creation-webpage-workflow.png)
+
+#### Cesride-WASM (experimental)
+If using cesride-wasm you must follow the instructions in the cesride repository in the wasm directory for integrating.  Note that these instructions may change in the near future so always be sure to check that README as to the instructions for integrating cesride-wasm into signify-ts.
+
+Typically the instructions go:
+1. Build cesride
+2. Build cesride-wasm
+3. Add the `/pkg` directory (containing the artifacts of wasm-pack) of cesride-wasm as a dependency to this library
+4. Signify-ts should now be able to use cesride-wasm interface.  (For debugging cesride\_wasm.d.ts contains the typed interface for the whole crate)
