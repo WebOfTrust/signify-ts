@@ -33,6 +33,7 @@ export class MatterCodex extends Codex {
     StrB64_L2: string = '6A'; // String Base64 Only Lead Size 2
     ECDSA_256k1N: string = '1AAA'; // ECDSA secp256k1 verification key non-transferable, basic derivation.
     ECDSA_256k1: string = '1AAB'; // ECDSA public verification or encryption key, basic derivation
+    DateTime: string = '1AAG';  // Base64 custom encoded 32 char ISO-8601 DateTime
     X25519_Cipher_Salt: string = '1AAH'; // X25519 100 char b64 Cipher of 24 char qb64 Salt
     ECDSA_256r1N: string = '1AAI'; // ECDSA secp256r1 verification key non-transferable, basic derivation.
     ECDSA_256r1: string = '1AAJ'; // ECDSA secp256r1 verification or encryption key, basic derivation
