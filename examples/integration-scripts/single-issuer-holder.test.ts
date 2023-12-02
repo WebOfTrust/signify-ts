@@ -104,6 +104,7 @@ async function issueCredential(
             acdc: result.acdc,
             anc: result.anc,
             iss: result.iss,
+            sigs: result.sigs,
         });
 
         await client

@@ -334,7 +334,7 @@ describe('Ipex', () => {
         const ipex = client.ipex();
 
         const holder = 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k';
-        const [acdcSaider, acdc] = Saider.saidify(mockCredential.sad);
+        const [, acdc] = Saider.saidify(mockCredential.sad);
 
         // Create iss
         const vs = versify(Ident.KERI, undefined, Serials.JSON, 0);
@@ -348,7 +348,7 @@ describe('Ipex', () => {
             dt: mockCredential.sad.a.dt,
         };
 
-        const [issSaider, iss] = Saider.saidify(_iss);
+        const [, iss] = Saider.saidify(_iss);
         const iserder = new Serder(iss);
         const anc = interact({
             pre: mockCredential.sad.i,
@@ -359,6 +359,9 @@ describe('Ipex', () => {
             kind: undefined,
         });
 
+        const hab = await client.identifiers().get('multisig');
+        const sigs = client.manager?.get(hab).sign(b(anc.raw));
+
         const [grant, gsigs, end] = await ipex.grant({
             senderName: 'multisig',
             recipient: holder,
@@ -366,6 +369,7 @@ describe('Ipex', () => {
             acdc: new Serder(acdc),
             iss: iserder,
             anc,
+            sigs,
             datetime: mockCredential.sad.a.dt,
         });
 

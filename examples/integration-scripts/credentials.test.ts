@@ -310,6 +310,7 @@ test('credentials', async () => {
         acdc: issResult.acdc,
         anc: issResult.anc,
         iss: issResult.iss,
+        sigs: issResult.sigs,
         recipient: holderAID,
         datetime: dt,
     });
@@ -363,6 +364,7 @@ test('credentials', async () => {
         acdc: issResult.acdc,
         anc: issResult.anc,
         iss: issResult.iss,
+        sigs: issResult.sigs,
         datetime: createTimestamp(),
     });
     await holderClient

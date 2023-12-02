@@ -88,6 +88,7 @@ export interface IssueCredentialResult {
     acdc: Serder;
     anc: Serder;
     iss: Serder;
+    sigs: string[];
     op: Operation;
 }
 
@@ -112,6 +113,7 @@ export interface IpexGrantArgs {
      */
     agree?: string;
     datetime?: string;
+    sigs: string[];
     acdc: Serder;
     iss: Serder;
     anc: Serder;
@@ -266,6 +268,7 @@ export class Credentials {
             acdc: new Serder(acdc),
             iss: new Serder(iss),
             anc,
+            sigs,
             op,
         };
     }
@@ -705,9 +708,7 @@ export class Ipex {
             i: args.recipient,
         };
 
-        const keeper = this.client.manager?.get(hab);
-        const sigs = await keeper.sign(b(args.anc.raw));
-        const sigers = sigs.map((sig: string) => new Siger({ qb64: sig }));
+        const sigers = args.sigs.map((sig: string) => new Siger({ qb64: sig }));
         const ims = d(messagize(args.anc, sigers));
         const atc = ims.substring(args.anc.size);
 
