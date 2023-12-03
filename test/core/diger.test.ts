@@ -13,9 +13,10 @@ describe('Diger', () => {
             'abcdefghijklmnopqrstuvwxyz0123456789',
             'binary'
         );
-        const digest = Buffer.from(blake3.create({dkLen: 32 }).update(ser).digest());
+        const digest = Buffer.from(
+            blake3.create({ dkLen: 32 }).update(ser).digest()
+        );
 
-        
         let diger = new Diger({ raw: digest });
         assert.deepStrictEqual(diger.code, MtrDex.Blake3_256);
 

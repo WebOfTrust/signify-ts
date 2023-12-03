@@ -74,7 +74,7 @@ export class Saider extends Matter {
         _digest_size: number,
         _length: number
     ) {
-        return Buffer.from(blake3.create({dkLen: 32 }).update(ser).digest())
+        return Buffer.from(blake3.create({ dkLen: 32 }).update(ser).digest());
     }
 
     private static _derive(
