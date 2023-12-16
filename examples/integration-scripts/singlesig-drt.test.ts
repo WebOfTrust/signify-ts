@@ -54,8 +54,9 @@ describe('singlesig-drt', () => {
         op = await waitOperation(client2, op);
         expect(delegate1.prefix).toEqual(op.response.i);
     });
+    // https://github.com/WebOfTrust/signify-ts/issues/159
     // TODO: identifiers.rotate fails with 500 server error
-    test.failing('delegate1c', async () => {
+    test('delegate1c', async () => {
         // delegate rotates identifier
         let kargs: RotateIdentifierArgs = {};
         let result = await client2.identifiers().rotate('delegate1', kargs);
