@@ -447,4 +447,17 @@ test('single signature credentials', async () => {
 
         assert.equal(issuerCredential.status.s, '1');
     });
+
+    await step('Holder has revoked QVI credential', async () => {
+        await retry(
+            async () => {
+                const holderCredential = await holderClient
+                    .credentials()
+                    .get(holderAid.name, qviCredentialId);
+
+                assert.equal(holderCredential.status.s, '1');
+            },
+            { timeout: 3000 }
+        );
+    });
 }, 90000);
