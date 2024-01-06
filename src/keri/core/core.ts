@@ -324,3 +324,10 @@ export function readInt(array: Uint8Array) {
     }
     return value;
 }
+
+export interface Registry {
+    name: string;
+    regk: string;
+    pre: string;
+    state: any;
+}

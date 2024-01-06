@@ -97,10 +97,15 @@ test('single signature credentials', async () => {
 
         await waitOperation(issuerClient, await regResult.op());
         const registries = await issuerClient.registries().list(issuerAid.name);
+        const reg = await holderClient
+          .registries()
+          .get(holderAid.name, registryName)
+        assert.equal(reg.name, registryName)
+        assert.equal(registries[0].name, reg.name)
         const registry: { name: string; regk: string } = registries[0];
         assert.equal(registries.length, 1);
         assert.equal(registry.name, registryName);
-        return registry;
+        return reg;
     });
 
     await step('issuer can get schemas', async () => {
@@ -328,8 +333,13 @@ test('single signature credentials', async () => {
             const registries = await holderClient
                 .registries()
                 .list(holderAid.name);
+            const reg = await holderClient
+              .registries()
+              .get(holderAid.name, registryName)
+            assert.equal(reg.name, registryName)
+            assert.equal(registries[0].name, reg.name)
             assert(registries.length >= 1);
-            return registries[0];
+            return reg;
         }
     );
 

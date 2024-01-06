@@ -7,11 +7,11 @@ import {
     d,
     Dict,
     Ident,
-    Ilks,
+    Ilks, Registry,
     Serials,
     versify,
-    Versionage,
-} from '../core/core';
+    Versionage
+} from "../core/core";
 import { Saider } from '../core/saider';
 import { Serder } from '../core/serder';
 import { Siger } from '../core/siger';
@@ -542,12 +542,24 @@ export class Registries {
     }
 
     /**
+     * Get a registry
+     * @param name Name or alias of the identifier
+     * @param registryName Name of the registry to get
+     */
+    async get(name: string, registryName: string): Promise<Registry> {
+        const path = `/identifiers/${name}/registries/${registryName}`;
+        const method = 'GET';
+        const res = await this.client.fetch(path, method, null);
+        return await res.json();
+    }
+
+    /**
      * List registries
      * @async
      * @param {string} name Name or alias of the identifier
      * @returns {Promise<any>} A promise to the list of registries
      */
-    async list(name: string): Promise<any> {
+    async list(name: string): Promise<Registry[]> {
         const path = `/identifiers/${name}/registries`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
