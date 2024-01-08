@@ -97,9 +97,9 @@ test('single signature credentials', async () => {
 
         await waitOperation(issuerClient, await regResult.op());
 
-        const reg = await holderClient
+        const reg = await issuerClient
             .registries()
-            .get(holderAid.name, registryName);
+            .get(issuerAid.name, registryName);
         assert.equal(reg.name, registryName);
         return reg;
     });
