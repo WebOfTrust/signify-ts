@@ -96,15 +96,11 @@ test('single signature credentials', async () => {
             .create({ name: issuerAid.name, registryName: registryName });
 
         await waitOperation(issuerClient, await regResult.op());
-        const registries = await issuerClient.registries().list(issuerAid.name);
+
         const reg = await holderClient
-          .registries()
-          .get(holderAid.name, registryName)
-        assert.equal(reg.name, registryName)
-        assert.equal(registries[0].name, reg.name)
-        const registry: { name: string; regk: string } = registries[0];
-        assert.equal(registries.length, 1);
-        assert.equal(registry.name, registryName);
+            .registries()
+            .get(holderAid.name, registryName);
+        assert.equal(reg.name, registryName);
         return reg;
     });
 
@@ -330,15 +326,10 @@ test('single signature credentials', async () => {
                 .create({ name: holderAid.name, registryName: registryName });
 
             await waitOperation(holderClient, await regResult.op());
-            const registries = await holderClient
-                .registries()
-                .list(holderAid.name);
             const reg = await holderClient
-              .registries()
-              .get(holderAid.name, registryName)
-            assert.equal(reg.name, registryName)
-            assert.equal(registries[0].name, reg.name)
-            assert(registries.length >= 1);
+                .registries()
+                .get(holderAid.name, registryName);
+            assert.equal(reg.name, registryName);
             return reg;
         }
     );

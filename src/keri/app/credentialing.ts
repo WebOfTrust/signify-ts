@@ -7,11 +7,11 @@ import {
     d,
     Dict,
     Ident,
-    Ilks, Registry,
+    Ilks,
     Serials,
     versify,
-    Versionage
-} from "../core/core";
+    Versionage,
+} from '../core/core';
 import { Saider } from '../core/saider';
 import { Serder } from '../core/serder';
 import { Siger } from '../core/siger';
@@ -526,6 +526,16 @@ export class RegistryResult {
         const res = await this.promise;
         return await res.json();
     }
+}
+
+/**
+ * Data for a registry
+ */
+export interface Registry {
+    name: string;
+    regk: string;
+    pre: string;
+    state: any;
 }
 
 /**
