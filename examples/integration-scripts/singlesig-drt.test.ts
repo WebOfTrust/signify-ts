@@ -41,7 +41,7 @@ describe('singlesig-drt', () => {
         let delegate1 = await client2.identifiers().get('delegate1');
         let seal = {
             i: delegate1.prefix,
-            s: 0,
+            s: '0',
             d: delegate1.prefix,
         };
         let result = await client1.identifiers().interact('name1', seal);
