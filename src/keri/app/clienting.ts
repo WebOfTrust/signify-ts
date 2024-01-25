@@ -210,7 +210,9 @@ export class SignifyClient {
         });
         if (!res.ok) {
             const error = await res.text();
-            throw new Error(error);
+            throw new Error(
+                `HTTP ${method} ${path} - ${res.status} - ${res.statusText} - ${error}`
+            );
         }
         const isSameAgent =
             this.agent?.pre === res.headers.get('signify-resource');
