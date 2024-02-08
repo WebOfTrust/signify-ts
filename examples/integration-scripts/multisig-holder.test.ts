@@ -7,7 +7,7 @@ import signify, {
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assert_notifications,
-    assert_operations,
+    assertOperations,
     markNotification,
     waitForNotifications,
     waitOperation,
@@ -496,7 +496,7 @@ test('multisig', async function run() {
     );
     assert.equal(creds1.length, 1);
 
-    await assert_operations(client1, client2, client3);
+    await assertOperations(client1, client2, client3);
     await assert_notifications(client1, client2, client3);
 }, 360000);
 

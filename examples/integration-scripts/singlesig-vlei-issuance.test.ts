@@ -3,7 +3,7 @@ import { Saider, Serder, SignifyClient } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assert_notifications,
-    assert_operations,
+    assertOperations,
     markAndRemoveNotification,
     resolveOobi,
     waitForNotifications,
@@ -460,7 +460,7 @@ test('singlesig-vlei-issuance', async function run() {
     assert.equal(oorCredHolder.status.s, '0');
     assert(oorCredHolder.atc !== undefined);
 
-    await assert_operations(gleifClient, qviClient, leClient, roleClient);
+    await assertOperations(gleifClient, qviClient, leClient, roleClient);
     await assert_notifications(gleifClient, qviClient, leClient, roleClient);
 }, 360000);
 

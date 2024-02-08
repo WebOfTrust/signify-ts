@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert';
 import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
-import { assert_operations, waitOperation } from './utils/test-util';
+import { assertOperations, waitOperation } from './utils/test-util';
 
 const { url, bootUrl } = resolveEnvironment();
 
@@ -166,7 +166,7 @@ test('salty', async () => {
     assert.equal(serder.pre, ixn.pre);
     assert.equal(serder.ked['d'], ixn.ked['d']);
 
-    await assert_operations(client1);
+    await assertOperations(client1);
 
     console.log('Salty test passed');
 }, 30000);

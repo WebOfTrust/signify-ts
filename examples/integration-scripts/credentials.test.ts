@@ -3,7 +3,7 @@ import { Saider, Serder, SignifyClient } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assert_notifications,
-    assert_operations,
+    assertOperations,
     markAndRemoveNotification,
     resolveOobi,
     waitForNotifications,
@@ -79,7 +79,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await assert_operations(
+    await assertOperations(
         issuerClient,
         holderClient,
         verifierClient,

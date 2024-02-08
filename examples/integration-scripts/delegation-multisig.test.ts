@@ -2,7 +2,7 @@ import { strict as assert } from 'assert';
 import signify from 'signify-ts';
 import {
     assert_notifications,
-    assert_operations,
+    assertOperations,
     markAndRemoveNotification,
     resolveOobi,
     waitForNotifications,
@@ -169,7 +169,7 @@ test('delegation-multisig', async () => {
     const aid_delegate = await client1.identifiers().get('multisig');
     assert.equal(aid_delegate.prefix, delegatePrefix);
 
-    await assert_operations(client0, client1, client2);
+    await assertOperations(client0, client1, client2);
     await assert_notifications(client0, client1, client2);
 }, 30000);
 

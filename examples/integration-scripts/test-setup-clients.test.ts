@@ -4,7 +4,7 @@ import {
     getOrCreateContact,
     getOrCreateIdentifier,
 } from './utils/test-setup';
-import { assert_operations } from './utils/test-util';
+import { assertOperations } from './utils/test-util';
 
 let client1: SignifyClient, client2: SignifyClient;
 let name1_id: string, name1_oobi: string;
@@ -24,7 +24,7 @@ beforeAll(async () => {
     contact2_id = await getOrCreateContact(client1, 'contact2', name2_oobi);
 });
 afterAll(async () => {
-    await assert_operations(client1, client2);
+    await assertOperations(client1, client2);
 });
 
 describe('test-setup-clients', () => {

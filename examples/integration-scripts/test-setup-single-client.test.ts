@@ -1,7 +1,7 @@
 import { SignifyClient } from 'signify-ts';
 import { getOrCreateClients, getOrCreateIdentifier } from './utils/test-setup';
 import { resolveEnvironment } from './utils/resolve-env';
-import { assert_operations, waitOperation } from './utils/test-util';
+import { assertOperations, waitOperation } from './utils/test-util';
 
 let client: SignifyClient;
 let name1_id: string, name1_oobi: string;
@@ -14,7 +14,7 @@ beforeAll(async () => {
     [name1_id, name1_oobi] = await getOrCreateIdentifier(client, 'name1');
 });
 afterAll(async () => {
-    await assert_operations(client);
+    await assertOperations(client);
 });
 
 describe('test-setup-single-client', () => {

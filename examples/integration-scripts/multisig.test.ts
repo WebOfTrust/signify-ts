@@ -7,7 +7,7 @@ import signify, {
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assert_notifications,
-    assert_operations,
+    assertOperations,
     markNotification,
     waitForNotifications,
     waitOperation,
@@ -1113,7 +1113,7 @@ test('multisig', async function run() {
     const creds = await client4.credentials().list();
     console.log(`Holder holds ${creds.length} credential`);
 
-    await assert_operations(client1, client2, client3, client4);
+    await assertOperations(client1, client2, client3, client4);
     await assert_notifications(client1, client2, client3, client4);
 }, 360000);
 

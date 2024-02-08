@@ -2,7 +2,7 @@ import { strict as assert } from 'assert';
 import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
-    assert_operations,
+    assertOperations,
     resolveOobi,
     waitOperation,
 } from './utils/test-util';
@@ -98,5 +98,5 @@ test('delegation', async () => {
     assert.equal(aid2.prefix, delegatePrefix);
     console.log('Delegation approved for aid:', aid2.prefix);
 
-    await assert_operations(client1, client2);
+    await assertOperations(client1, client2);
 }, 60000);

@@ -10,7 +10,7 @@ export function sleep(ms: number): Promise<void> {
 /**
  * Assert that all operations were waited for
  */
-export async function assert_operations(
+export async function assertOperations(
     ...clients: SignifyClient[]
 ): Promise<void> {
     for (let client of clients) {

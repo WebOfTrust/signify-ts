@@ -2,7 +2,7 @@ import { strict as assert } from 'assert';
 import signify, { Serder } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
-    assert_operations,
+    assertOperations,
     resolveOobi,
     waitOperation,
 } from './utils/test-util';
@@ -130,5 +130,5 @@ test('challenge', async () => {
     );
     expect(bobContact.challenges[0].authenticated).toEqual(true);
 
-    await assert_operations(client1, client2);
+    await assertOperations(client1, client2);
 }, 30000);
