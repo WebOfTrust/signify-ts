@@ -6,7 +6,7 @@ import signify, {
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
-    assert_notifications,
+    assertNotifications,
     assertOperations,
     markNotification,
     waitForNotifications,
@@ -1114,7 +1114,7 @@ test('multisig', async function run() {
     console.log(`Holder holds ${creds.length} credential`);
 
     await assertOperations(client1, client2, client3, client4);
-    await assert_notifications(client1, client2, client3, client4);
+    await assertNotifications(client1, client2, client3, client4);
 }, 360000);
 
 async function waitAndMarkNotification(client: SignifyClient, route: string) {

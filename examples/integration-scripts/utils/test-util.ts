@@ -28,7 +28,7 @@ export async function assertOperations(
 /**
  * Assert that all notifications were handled
  */
-export async function assert_notifications(
+export async function assertNotifications(
     ...clients: SignifyClient[]
 ): Promise<void> {
     for (let client of clients) {
