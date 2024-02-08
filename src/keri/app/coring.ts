@@ -125,7 +125,7 @@ export class Operations {
         const path = `/operations/${name}`;
         const data = null;
         const method = 'DELETE';
-        const res = await this.client.fetch(path, method, data);
+        await this.client.fetch(path, method, data);
     }
 }
 

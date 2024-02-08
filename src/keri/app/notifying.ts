@@ -64,6 +64,6 @@ export class Notifications {
     async delete(said: string): Promise<void> {
         const path = `/notifications/` + said;
         const method = 'DELETE';
-        const res = await this.client.fetch(path, method, null);
+        await this.client.fetch(path, method, null);
     }
 }
