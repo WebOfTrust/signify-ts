@@ -2,6 +2,9 @@ import { strict as assert } from 'assert';
 import { Saider, Serder, SignifyClient } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
+    assert_notifications,
+    assert_operations,
+    markAndRemoveNotification,
     resolveOobi,
     waitForNotifications,
     waitOperation,
@@ -456,6 +459,9 @@ test('singlesig-vlei-issuance', async function run() {
     assert.equal(oorCredHolder.sad.e.auth.n, oorAuthCred.sad.d);
     assert.equal(oorCredHolder.status.s, '0');
     assert(oorCredHolder.atc !== undefined);
+
+    await assert_operations(gleifClient, qviClient, leClient, roleClient);
+    await assert_notifications(gleifClient, qviClient, leClient, roleClient);
 }, 360000);
 
 async function getOrCreateRegistry(
@@ -551,9 +557,10 @@ async function sendGrantMessage(
         datetime: createTimestamp(),
     });
 
-    await senderClient
+    let op = await senderClient
         .ipex()
         .submitGrant(senderAid.name, grant, gsigs, gend, [recipientAid.prefix]);
+    op = await waitOperation(senderClient, op);
 }
 
 async function sendAdmitMessage(
@@ -572,9 +579,10 @@ async function sendAdmitMessage(
         .ipex()
         .admit(senderAid.name, '', grantNotification.a.d!, createTimestamp());
 
-    await senderClient
+    let op = await senderClient
         .ipex()
         .submitAdmit(senderAid.name, admit, sigs, aend, [recipientAid.prefix]);
+    op = await waitOperation(senderClient, op);
 
-    await senderClient.notifications().mark(grantNotification.i);
+    await markAndRemoveNotification(senderClient, grantNotification);
 }
