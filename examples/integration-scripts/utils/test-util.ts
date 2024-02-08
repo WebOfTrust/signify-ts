@@ -15,13 +15,7 @@ export async function assertOperations(
 ): Promise<void> {
     for (let client of clients) {
         let operations = await client.operations().list();
-        for (let op of operations) {
-            if (true) {
-                expect(op).toBeUndefined();
-            } else {
-                console.warn('operation', op);
-            }
-        }
+        expect(operations).toHaveLength(0);
     }
 }
 
