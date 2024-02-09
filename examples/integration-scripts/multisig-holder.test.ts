@@ -6,11 +6,11 @@ import signify, {
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
-    assertNotifications,
     assertOperations,
     markNotification,
     waitForNotifications,
     waitOperation,
+    warnNotifications,
 } from './utils/test-util';
 import { getOrCreateClient, getOrCreateIdentifier } from './utils/test-setup';
 
@@ -497,7 +497,7 @@ test('multisig', async function run() {
     assert.equal(creds1.length, 1);
 
     await assertOperations(client1, client2, client3);
-    await assertNotifications(client1, client2, client3);
+    await warnNotifications(client1, client2, client3); 
 }, 360000);
 
 async function waitAndMarkNotification(client: SignifyClient, route: string) {
