@@ -497,7 +497,7 @@ test('multisig', async function run() {
     assert.equal(creds1.length, 1);
 
     await assertOperations(client1, client2, client3);
-    await warnNotifications(client1, client2, client3); 
+    await warnNotifications(client1, client2, client3);
 }, 360000);
 
 async function waitAndMarkNotification(client: SignifyClient, route: string) {

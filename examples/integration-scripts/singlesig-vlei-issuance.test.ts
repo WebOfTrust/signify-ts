@@ -461,7 +461,7 @@ test('singlesig-vlei-issuance', async function run() {
     assert(oorCredHolder.atc !== undefined);
 
     await assertOperations(gleifClient, qviClient, leClient, roleClient);
-    await warnNotifications(gleifClient, qviClient, leClient, roleClient); 
+    await warnNotifications(gleifClient, qviClient, leClient, roleClient);
 }, 360000);
 
 async function getOrCreateRegistry(

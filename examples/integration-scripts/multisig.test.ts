@@ -1114,7 +1114,7 @@ test('multisig', async function run() {
     console.log(`Holder holds ${creds.length} credential`);
 
     await assertOperations(client1, client2, client3, client4);
-    await warnNotifications(client1, client2, client3, client4); 
+    await warnNotifications(client1, client2, client3, client4);
 }, 360000);
 
 async function waitAndMarkNotification(client: SignifyClient, route: string) {

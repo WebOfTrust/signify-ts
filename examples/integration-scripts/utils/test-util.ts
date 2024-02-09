@@ -51,7 +51,7 @@ export async function warnNotifications(
         let notes = res.notes.filter((i: any) => i.r === false);
         if (notes.length > 0) {
             count += notes.length;
-            console.warn("notifications", notes);
+            console.warn('notifications', notes);
         }
     }
     expect(count).toBeGreaterThan(0); // replace warnNotifications with assertNotifications
