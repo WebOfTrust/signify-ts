@@ -8,7 +8,9 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Assert that all operations were waited for
+ * Assert that all operations were waited for.
+ * <p>This is a postcondition check to make sure all long-running operations have been waited for
+ * @see waitOperation
  */
 export async function assertOperations(
     ...clients: SignifyClient[]
@@ -20,21 +22,39 @@ export async function assertOperations(
 }
 
 /**
- * Assert that all notifications were handled
+ * Assert that all notifications were handled.
+ * <p>This is a postcondition check to make sure all notifications have been handled
+ * @see markNotification
+ * @see markAndRemoveNotification
  */
 export async function assertNotifications(
     ...clients: SignifyClient[]
 ): Promise<void> {
     for (let client of clients) {
         let res = await client.notifications().list();
-        for (let note of res.notes.filter((i: any) => i.r === false)) {
-            if (false) {
-                expect(note).toBeUndefined();
-            } else {
-                console.warn('notification', note);
-            }
+        let notes = res.notes.filter((i: any) => i.r === false);
+        expect(notes).toHaveLength(0);
+    }
+}
+
+/**
+ * Logs a warning for each un-handled notification.
+ * <p>Replace warnNotifications with assertNotifications when test handles all notifications
+ * @see assertNotifications
+ */
+export async function warnNotifications(
+    ...clients: SignifyClient[]
+): Promise<void> {
+    let count = 0;
+    for (let client of clients) {
+        let res = await client.notifications().list();
+        let notes = res.notes.filter((i: any) => i.r === false);
+        if (notes.length > 0) {
+            count += notes.length;
+            console.warn("notifications", notes);
         }
     }
+    expect(count).toBeGreaterThan(0); // replace warnNotifications with assertNotifications
 }
 
 /**
