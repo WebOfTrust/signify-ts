@@ -260,6 +260,14 @@ test('single signature credentials', async () => {
         await markAndRemoveNotification(holderClient, grantNotification);
     });
 
+    await step('issuer IPEX grant response', async () => {
+        const issuerNotifications = await waitForNotifications(
+            issuerClient,
+            '/exn/ipex/admit'
+        );
+        await markAndRemoveNotification(issuerClient, issuerNotifications[0]);
+    });
+
     await step('holder has credential', async () => {
         const holderCredential = await retry(async () => {
             const result = await holderClient
@@ -332,6 +340,14 @@ test('single signature credentials', async () => {
         assert.equal(verifierCredential.sad.s, QVI_SCHEMA_SAID);
         assert.equal(verifierCredential.sad.i, issuerAid.prefix);
         assert.equal(verifierCredential.status.s, '0'); // 0 = issued
+    });
+
+    await step('holder IPEX present response', async () => {
+        const holderNotifications = await waitForNotifications(
+            holderClient,
+            '/exn/ipex/admit'
+        );
+        await markAndRemoveNotification(holderClient, holderNotifications[0]);
     });
 
     const holderRegistry: { regk: string } = await step(
@@ -438,6 +454,14 @@ test('single signature credentials', async () => {
         await waitOperation(legalEntityClient, op);
 
         await markAndRemoveNotification(legalEntityClient, grantNotification);
+    });
+
+    await step('LE credential IPEX grant response', async () => {
+        const notifications = await waitForNotifications(
+            holderClient,
+            '/exn/ipex/admit'
+        );
+        await markAndRemoveNotification(holderClient, notifications[0]);
     });
 
     await step('Legal Entity has chained credential', async () => {
