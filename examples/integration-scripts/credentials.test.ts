@@ -329,7 +329,7 @@ test('single signature credentials', async () => {
             .submitAdmit(verifierAid.name, admit3, sigs3, aend3, [
                 holderAid.prefix,
             ]);
-        waitOperation(verifierClient, op);
+        await waitOperation(verifierClient, op);
 
         await markAndRemoveNotification(verifierClient, verifierGrantNote);
 
