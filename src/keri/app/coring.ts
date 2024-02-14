@@ -4,7 +4,7 @@ import { Salter } from '../core/salter';
 import { Matter, MtrDex } from '../core/matter';
 
 export function randomPasscode(): string {
-    const raw = libsodium.randombytes_buf(16);
+    const raw = libsodium.randombytes_buf(32);
     const salter = new Salter({ raw: raw });
 
     return salter.qb64.substring(2);
