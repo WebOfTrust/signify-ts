@@ -37,8 +37,17 @@ export interface CredentialFilter {
 }
 
 export interface CredentialSubject {
+    /**
+     * Issuee, or holder of the credential.
+     */
     i?: string;
+    /**
+     * Timestamp of issuance.
+     */
     dt?: string;
+    /**
+     * Privacy salt
+     */
     u?: string;
     [key: string]: unknown;
 }
@@ -46,12 +55,33 @@ export interface CredentialSubject {
 export interface CredentialData {
     v?: string;
     d?: string;
+    /**
+     * Privacy salt
+     */
     u?: string;
+    /**
+     * Issuer of the credential.
+     */
     i?: string;
+    /**
+     * Registry id.
+     */
     ri?: string;
+    /**
+     * Schema id
+     */
     s?: string;
+    /**
+     * Credential subject data
+     */
     a: CredentialSubject;
+    /**
+     * Credential source section
+     */
     e?: { [key: string]: unknown };
+    /**
+     * Credential rules section
+     */
     r?: { [key: string]: unknown };
 }
 
