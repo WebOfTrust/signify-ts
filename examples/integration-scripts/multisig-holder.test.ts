@@ -1,10 +1,5 @@
 import { strict as assert } from 'assert';
-import signify, {
-    SignifyClient,
-    IssueCredentialArgs,
-    Operation,
-    CredentialData,
-} from 'signify-ts';
+import signify, { SignifyClient, Operation, CredentialData } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assertOperations,

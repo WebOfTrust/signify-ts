@@ -490,7 +490,8 @@ async function getOrIssueCredential(
     credData: any,
     schema: string,
     rules?: any,
-    source?: any
+    source?: any,
+    privacy = false
 ): Promise<any> {
     const credentialList = await issuerClient.credentials().list();
 
@@ -509,10 +510,10 @@ async function getOrIssueCredential(
     const issResult = await issuerClient.credentials().issue(issuerAid.name, {
         ri: issuerRegistry.regk,
         s: schema,
-        u: new Salter({}).qb64,
+        u: privacy ? new Salter({}).qb64 : undefined,
         a: {
             i: recipientAid.prefix,
-            u: new Salter({}).qb64,
+            u: privacy ? new Salter({}).qb64 : undefined,
             ...credData,
         },
         r: rules,
