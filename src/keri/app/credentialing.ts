@@ -223,7 +223,7 @@ export class Credentials {
             i: acdc.d,
             s: '0',
             ri: args.ri,
-            dt: args.a.dt ?? new Date().toISOString().replace('Z', '000+00:00'),
+            dt: subject.dt,
         });
 
         const sn = parseInt(hab.state.s, 16);
