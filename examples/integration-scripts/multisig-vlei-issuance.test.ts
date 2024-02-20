@@ -8,7 +8,7 @@ import signify, {
     CreateIdentiferArgs,
     EventResult,
     randomNonce,
-    Salter
+    Salter,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
@@ -523,7 +523,6 @@ test('multisig-vlei-issuance', async function run() {
         QVI_SCHEMA_SAID
     );
     if (!(qviCredbyGAR1 && qviCredbyGAR2)) {
-
         const kargsSub: CredentialSubject = {
             i: aidQVI.prefix,
             dt: createTimestamp(),
@@ -533,7 +532,7 @@ test('multisig-vlei-issuance', async function run() {
             i: aidGEDA.prefix,
             ri: gedaRegistry.regk,
             s: QVI_SCHEMA_SAID,
-            a: kargsSub
+            a: kargsSub,
         };
         const IssOp1 = await issueCredentialMultisig(
             clientGAR1,
@@ -779,7 +778,7 @@ test('multisig-vlei-issuance', async function run() {
         getOrCreateContact(clientQAR1, aidLE.name, oobiLE),
         getOrCreateContact(clientQAR2, aidLE.name, oobiLE),
         getOrCreateContact(clientQAR3, aidLE.name, oobiLE),
-        getOrCreateContact(clientECR, aidLE.name, oobiLE)
+        getOrCreateContact(clientECR, aidLE.name, oobiLE),
     ]);
 
     // QARs creates a registry for QVI AID.
@@ -883,7 +882,7 @@ test('multisig-vlei-issuance', async function run() {
             s: LE_SCHEMA_SAID,
             a: kargsSub,
             e: leCredSource,
-            r: LE_RULES
+            r: LE_RULES,
         };
         const IssOp1 = await issueCredentialMultisig(
             clientQAR1,
@@ -1130,7 +1129,7 @@ test('multisig-vlei-issuance', async function run() {
             s: ECR_SCHEMA_SAID,
             a: kargsSub,
             e: ecrCredSource,
-            r: ECR_RULES
+            r: ECR_RULES,
         };
 
         const IssOp1 = await issueCredentialMultisig(
@@ -1232,7 +1231,6 @@ test('multisig-vlei-issuance', async function run() {
     // Skip if ECR Person has already received the credential.
     let ecrCredbyECR = await getReceivedCredential(clientECR, ecrCred.sad.d);
     if (!ecrCredbyECR) {
-
         await admitSinglesig(clientECR, aidECR, aidLE);
         await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit');
         await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit');
@@ -1241,7 +1239,6 @@ test('multisig-vlei-issuance', async function run() {
         ecrCredbyECR = await waitForCredential(clientECR, ecrCred.sad.d);
     }
     assert.equal(ecrCred.sad.d, ecrCredbyECR.sad.d);
-    
 }, 360000);
 
 function createTimestamp() {
@@ -1482,7 +1479,9 @@ async function issueCredentialMultisig(
 ) {
     if (!isInitiator) await waitAndMarkNotification(client, '/multisig/iss');
 
-    const credResult = await client.credentials().issue(multisigAIDName, kargsIss);
+    const credResult = await client
+        .credentials()
+        .issue(multisigAIDName, kargsIss);
     const op = credResult.op;
 
     const multisigAID = await client.identifiers().get(multisigAIDName);
@@ -1619,7 +1618,6 @@ async function admitSinglesig(
     aid: Aid,
     recipientAid: Aid
 ) {
-
     const grantMsgSaid = await waitAndMarkNotification(
         client,
         '/exn/ipex/grant'
@@ -1632,7 +1630,6 @@ async function admitSinglesig(
     const op = await client
         .ipex()
         .submitAdmit(aid.name, admit, sigs, aend, [recipientAid.prefix]);
-
 }
 
 async function waitAndMarkNotification(client: SignifyClient, route: string) {
