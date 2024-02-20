@@ -3,17 +3,18 @@ import signify, {
     SignifyClient,
     Saider,
     Serder,
-    IssueCredentialArgs,
+    CredentialSubject,
+    CredentialData,
     CreateIdentiferArgs,
     EventResult,
-    randomNonce
+    randomNonce,
+    Salter
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
-    Notification,
     resolveOobi,
     waitOperation,
-    waitForNotifications
+    waitForNotifications,
 } from './utils/test-util';
 import { getOrCreateClients, getOrCreateContact } from './utils/test-setup';
 
@@ -523,13 +524,16 @@ test('multisig-vlei-issuance', async function run() {
     );
     if (!(qviCredbyGAR1 && qviCredbyGAR2)) {
 
-        const kargsIss = {
-            issuerName: aidGEDA.name,
-            registryId: gedaRegistry.regk,
-            schemaId: QVI_SCHEMA_SAID,
-            data: qviData,
-            recipient: aidQVI.prefix,
-            datetime: createTimestamp(),
+        const kargsSub: CredentialSubject = {
+            i: aidQVI.prefix,
+            dt: createTimestamp(),
+            ...qviData,
+        };
+        const kargsIss: CredentialData = {
+            i: aidGEDA.prefix,
+            ri: gedaRegistry.regk,
+            s: QVI_SCHEMA_SAID,
+            a: kargsSub
         };
         const IssOp1 = await issueCredentialMultisig(
             clientGAR1,
@@ -608,7 +612,6 @@ test('multisig-vlei-issuance', async function run() {
     let qviCredbyQAR2 = await getReceivedCredential(clientQAR2, qviCred.sad.d);
     let qviCredbyQAR3 = await getReceivedCredential(clientQAR3, qviCred.sad.d);
     if (!(qviCredbyQAR1 && qviCredbyQAR2 && qviCredbyQAR3)) {
-
         const admitTime = createTimestamp();
         await admitMultisig(
             clientQAR1,
@@ -776,7 +779,7 @@ test('multisig-vlei-issuance', async function run() {
         getOrCreateContact(clientQAR1, aidLE.name, oobiLE),
         getOrCreateContact(clientQAR2, aidLE.name, oobiLE),
         getOrCreateContact(clientQAR3, aidLE.name, oobiLE),
-        getOrCreateContact(clientECR, aidLE.name, oobiLE),
+        getOrCreateContact(clientECR, aidLE.name, oobiLE)
     ]);
 
     // QARs creates a registry for QVI AID.
@@ -869,15 +872,18 @@ test('multisig-vlei-issuance', async function run() {
             },
         })[1];
 
-        const kargsIss = {
-            issuerName: aidQVI.name,
-            registryId: qviRegistry.regk,
-            schemaId: LE_SCHEMA_SAID,
-            data: leData,
-            recipient: aidLE.prefix,
-            source: leCredSource,
-            rules: LE_RULES,
-            datetime: createTimestamp(),
+        const kargsSub: CredentialSubject = {
+            i: aidLE.prefix,
+            dt: createTimestamp(),
+            ...leData,
+        };
+        const kargsIss: CredentialData = {
+            i: aidQVI.prefix,
+            ri: qviRegistry.regk,
+            s: LE_SCHEMA_SAID,
+            a: kargsSub,
+            e: leCredSource,
+            r: LE_RULES
         };
         const IssOp1 = await issueCredentialMultisig(
             clientQAR1,
@@ -928,7 +934,7 @@ test('multisig-vlei-issuance', async function run() {
             aidLE,
             LE_SCHEMA_SAID
         );
-    
+
         const grantTime = createTimestamp();
         await grantMultisig(
             clientQAR1,
@@ -1111,16 +1117,20 @@ test('multisig-vlei-issuance', async function run() {
             },
         })[1];
 
-        const kargsIss = {
-            issuerName: aidLE.name,
-            registryId: leRegistry.regk,
-            schemaId: ECR_SCHEMA_SAID,
-            data: ecrData,
-            recipient: aidECR.prefix,
-            source: ecrCredSource,
-            rules: ECR_RULES,
-            privacy: true,
-            datetime: createTimestamp(),
+        const kargsSub: CredentialSubject = {
+            i: aidECR.prefix,
+            dt: createTimestamp(),
+            u: new Salter({}).qb64,
+            ...ecrData,
+        };
+        const kargsIss: CredentialData = {
+            u: new Salter({}).qb64,
+            i: aidLE.prefix,
+            ri: leRegistry.regk,
+            s: ECR_SCHEMA_SAID,
+            a: kargsSub,
+            e: ecrCredSource,
+            r: ECR_RULES
         };
 
         const IssOp1 = await issueCredentialMultisig(
@@ -1152,87 +1162,86 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientLAR3, IssOp3),
         ]);
 
-        // await waitAndMarkNotification(clientLAR1, '/multisig/iss');
+        await waitAndMarkNotification(clientLAR1, '/multisig/iss');
 
-        // leCredbyLAR1 = await getIssuedCredential(
-        //     clientLAR1,
-        //     aidLE,
-        //     aidECR,
-        //     ECR_SCHEMA_SAID
-        // );
-        // leCredbyLAR2 = await getIssuedCredential(
-        //     clientLAR2,
-        //     aidLE,
-        //     aidECR,
-        //     ECR_SCHEMA_SAID
-        // );
-        // leCredbyLAR3 = await getIssuedCredential(
-        //     clientLAR3,
-        //     aidLE,
-        //     aidECR,
-        //     ECR_SCHEMA_SAID
-        // );
-    
-        // const grantTime = createTimestamp();
-        // await grantMultisig(
-        //     clientLAR1,
-        //     aidLAR1,
-        //     [aidLAR2, aidLAR3],
-        //     aidLE,
-        //     aidECR,
-        //     leCredbyLAR1,
-        //     grantTime,
-        //     true
-        // );
-        // await grantMultisig(
-        //     clientLAR2,
-        //     aidLAR2,
-        //     [aidLAR1, aidLAR3],
-        //     aidLE,
-        //     aidECR,
-        //     leCredbyLAR2,
-        //     grantTime
-        // );
-        // await grantMultisig(
-        //     clientLAR3,
-        //     aidLAR3,
-        //     [aidLAR1, aidLAR2],
-        //     aidLE,
-        //     aidECR,
-        //     leCredbyLAR3,
-        //     grantTime
-        // );
+        ecrCredbyLAR1 = await getIssuedCredential(
+            clientLAR1,
+            aidLE,
+            aidECR,
+            ECR_SCHEMA_SAID
+        );
+        ecrCredbyLAR2 = await getIssuedCredential(
+            clientLAR2,
+            aidLE,
+            aidECR,
+            ECR_SCHEMA_SAID
+        );
+        ecrCredbyLAR3 = await getIssuedCredential(
+            clientLAR3,
+            aidLE,
+            aidECR,
+            ECR_SCHEMA_SAID
+        );
 
-        // await waitAndMarkNotification(clientLAR1, '/multisig/exn');
+        const grantTime = createTimestamp();
+        await grantMultisig(
+            clientLAR1,
+            aidLAR1,
+            [aidLAR2, aidLAR3],
+            aidLE,
+            aidECR,
+            ecrCredbyLAR1,
+            grantTime,
+            true
+        );
+        await grantMultisig(
+            clientLAR2,
+            aidLAR2,
+            [aidLAR1, aidLAR3],
+            aidLE,
+            aidECR,
+            ecrCredbyLAR2,
+            grantTime
+        );
+        await grantMultisig(
+            clientLAR3,
+            aidLAR3,
+            [aidLAR1, aidLAR2],
+            aidLE,
+            aidECR,
+            ecrCredbyLAR3,
+            grantTime
+        );
+
+        await waitAndMarkNotification(clientLAR1, '/multisig/exn');
     }
-    // assert.equal(leCredbyLAR1.sad.d, leCredbyLAR2.sad.d);
-    // assert.equal(leCredbyLAR1.sad.d, leCredbyLAR3.sad.d);
-    // assert.equal(leCredbyLAR1.sad.s, LE_SCHEMA_SAID);
-    // assert.equal(leCredbyLAR1.sad.i, aidLE.prefix);
-    // assert.equal(leCredbyLAR1.sad.a.i, aidLE.prefix);
-    // assert.equal(leCredbyLAR1.status.s, '0');
-    // assert(leCredbyLAR1.atc !== undefined);
-    // const ecrCred = leCredbyLAR1;
-    // console.log(
-    //     'LE has issued an ECR vLEI credential with SAID:',
-    //     ecrCred.sad.d
-    // );
+    assert.equal(ecrCredbyLAR1.sad.d, ecrCredbyLAR2.sad.d);
+    assert.equal(ecrCredbyLAR1.sad.d, ecrCredbyLAR3.sad.d);
+    assert.equal(ecrCredbyLAR1.sad.s, ECR_SCHEMA_SAID);
+    assert.equal(ecrCredbyLAR1.sad.i, aidLE.prefix);
+    assert.equal(ecrCredbyLAR1.sad.a.i, aidECR.prefix);
+    assert.equal(ecrCredbyLAR1.status.s, '0');
+    assert(ecrCredbyLAR1.atc !== undefined);
+    const ecrCred = ecrCredbyLAR1;
+    console.log(
+        'LE has issued an ECR vLEI credential with SAID:',
+        ecrCred.sad.d
+    );
 
-    // // LE and ECR Person exchange grant and admit messages.
-    // // Skip if ECR Person has already received the credential.
-    // let ecrCredbyECR = await getReceivedCredential(clientECR, ecrCred.sad.d);
-    // if (!ecrCredbyECR) {
+    // LE and ECR Person exchange grant and admit messages.
+    // Skip if ECR Person has already received the credential.
+    let ecrCredbyECR = await getReceivedCredential(clientECR, ecrCred.sad.d);
+    if (!ecrCredbyECR) {
 
-    //     const admitTime = createTimestamp();
-    //     await admitSinglesig(clientECR, aidECR, aidLE, admitTime, 3);
-    //     await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit');
-    //     await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit');
-    //     await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit');
+        await admitSinglesig(clientECR, aidECR, aidLE);
+        await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit');
+        await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit');
+        await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit');
 
-    //     ecrCredbyECR = await waitForCredential(clientECR, ecrCred.sad.d);
-    // }
-    // assert.equal(ecrCred.sad.d, ecrCredbyECR.sad.d);
-
+        ecrCredbyECR = await waitForCredential(clientECR, ecrCred.sad.d);
+    }
+    assert.equal(ecrCred.sad.d, ecrCredbyECR.sad.d);
+    
 }, 360000);
 
 function createTimestamp() {
@@ -1468,15 +1477,14 @@ async function issueCredentialMultisig(
     aid: Aid,
     otherMembersAIDs: Aid[],
     multisigAIDName: string,
-    kargsIss: IssueCredentialArgs,
+    kargsIss: CredentialData,
     isInitiator: boolean = false
 ) {
-
     if (!isInitiator) await waitAndMarkNotification(client, '/multisig/iss');
 
-    const credResult = await client.credentials().issue(kargsIss);
+    const credResult = await client.credentials().issue(multisigAIDName, kargsIss);
     const op = credResult.op;
-    
+
     const multisigAID = await client.identifiers().get(multisigAIDName);
     const keeper = client.manager!.get(multisigAID);
     const sigs = await keeper.sign(signify.b(credResult.anc.raw));
@@ -1528,9 +1536,7 @@ async function grantMultisig(
 
     await client
         .ipex()
-        .submitGrant(multisigAID.name, grant, sigs, end, [
-            recipientAID.prefix,
-        ]);
+        .submitGrant(multisigAID.name, grant, sigs, end, [recipientAID.prefix]);
 
     const mstate = multisigAID.state;
     const seal = [
@@ -1565,10 +1571,9 @@ async function admitMultisig(
     otherMembersAIDs: Aid[],
     multisigAID: Aid,
     recipientAID: Aid,
-    timestamp: string,
+    timestamp: string
     // numGrantMsgs: number
 ) {
-    // await waitForGrantMessages(client, numGrantMsgs);
     const grantMsgSaid = await waitAndMarkNotification(
         client,
         '/exn/ipex/grant'
@@ -1610,25 +1615,24 @@ async function admitMultisig(
 }
 
 async function admitSinglesig(
-    senderClient: SignifyClient,
-    senderAid: Aid,
-    recipientAid: Aid,
-    timestamp: string,
-    numGrantMsgs: number
+    client: SignifyClient,
+    aid: Aid,
+    recipientAid: Aid
 ) {
-    // await waitForGrantMessages(senderClient, numGrantMsgs);
+
     const grantMsgSaid = await waitAndMarkNotification(
-        senderClient,
+        client,
         '/exn/ipex/grant'
     );
 
-    const [admit, sigs, aend] = await senderClient
+    const [admit, sigs, aend] = await client
         .ipex()
-        .admit(senderAid.name, '', grantMsgSaid, timestamp);
+        .admit(aid.name, '', grantMsgSaid);
 
-    await senderClient
+    const op = await client
         .ipex()
-        .submitAdmit(senderAid.name, admit, sigs, aend, [recipientAid.prefix]);
+        .submitAdmit(aid.name, admit, sigs, aend, [recipientAid.prefix]);
+
 }
 
 async function waitAndMarkNotification(client: SignifyClient, route: string) {
@@ -1648,9 +1652,9 @@ async function getReceivedCredential(
     credId: string
 ): Promise<any> {
     const credentialList = await client.credentials().list({
-            filter: {
-                '-d': credId
-            }
+        filter: {
+            '-d': credId,
+        },
     });
     return credentialList[0];
 }
