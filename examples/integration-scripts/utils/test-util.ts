@@ -114,12 +114,10 @@ export async function waitOperation<T = any>(
         if (t.done !== true) {
             throw new Error(`Operation ${name} not done`);
         }
-        console.log('DONE', name);
         return t;
     }, options);
     let i: Operation | undefined = result;
     while (i !== undefined) {
-        // console.log('DELETE', i.name);
         await client.operations().delete(i.name);
         i = i.metadata?.depends;
     }

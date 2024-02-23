@@ -33,7 +33,6 @@ export async function getOrCreateClients(
         );
     }
     const clients: SignifyClient[] = await Promise.all(tasks);
-    console.log(`SIGNIFY_SECRETS="${clients.map((i) => i.bran).join(',')}"`);
     return clients;
 }
 
@@ -55,10 +54,6 @@ export async function getOrCreateClient(
         if (!res.ok) throw new Error();
         await client.connect();
     }
-    console.log('client', {
-        agent: client.agent?.pre,
-        controller: client.controller.pre,
-    });
     return client;
 }
 
@@ -80,7 +75,6 @@ export async function getOrCreateIdentifier(
     let id: any = undefined;
     try {
         const identfier = await client.identifiers().get(name);
-        // console.log("identifiers.get", identfier);
         id = identfier.prefix;
     } catch {
         const env = resolveEnvironment();
@@ -93,21 +87,18 @@ export async function getOrCreateIdentifier(
             .create(name, kargs);
         let op = await result.op();
         op = await waitOperation(client, op);
-        // console.log("identifiers.create", op);
         id = op.response.i;
     }
-    const eid = client.agent?.pre!;
-    if (!(await hasEndRole(client, name, 'agent', eid))) {
+    const eid = client.agent?.pre;
+    if (!(await hasEndRole(client, name, 'agent', eid!))) {
         const result: EventResult = await client
             .identifiers()
             .addEndRole(name, 'agent', eid);
-        let op = await result.op();
-        op = await waitOperation(client, op);
-        // console.log("identifiers.addEndRole", op);
+        const op = await result.op();
+        await waitOperation(client, op);
     }
     const oobi = await client.oobis().get(name, 'agent');
     const result: [string, string] = [id, oobi.oobis[0]];
-    console.log(name, result);
     return result;
 }
 
@@ -126,7 +117,6 @@ export async function getEndRoles(
     const response: Response = await client.fetch(path, 'GET', null);
     if (!response.ok) throw new Error(await response.text());
     const result = await response.json();
-    // console.log("getEndRoles", result);
     return result;
 }
 
@@ -163,16 +153,13 @@ export async function getOrCreateContact(
     oobi: string
 ): Promise<string> {
     const list = await client.contacts().list(undefined, 'alias', `^${name}$`);
-    // console.log("contacts.list", list);
     if (list.length > 0) {
         const contact = list[0];
         if (contact.oobi === oobi) {
-            // console.log("contacts.id", contact.id);
             return contact.id;
         }
     }
     let op = await client.oobis().resolve(oobi, name);
     op = await waitOperation(client, op);
-    // console.log("oobis.resolve", op);
     return op.response.i;
 }
