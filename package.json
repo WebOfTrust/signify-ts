@@ -61,8 +61,5 @@
     "mathjs": "^11.8.2",
     "structured-headers": "^0.5.0",
     "urlsafe-base64": "^1.0.0"
-  },
-  "workspaces": [
-    "examples/*"
-  ]
+  }
 }
