@@ -5,7 +5,7 @@ import { designature, Signage, signature } from '../end/ending';
 import { Cigar } from './cigar';
 import { Siger } from './siger';
 import { nowUTC } from './utils';
-import { b } from './core.ts';
+import { b } from './core';
 
 export class Authenticater {
     static readonly DefaultFields = [
