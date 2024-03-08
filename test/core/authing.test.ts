@@ -236,6 +236,7 @@ describe('Authenticater.sign', () => {
             headers,
             'POST',
             '/boot',
+            undefined
         );
     });
 });
