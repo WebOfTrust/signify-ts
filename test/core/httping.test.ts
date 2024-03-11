@@ -17,11 +17,12 @@ describe('siginput', () => {
         const signiputString = siginput(input);
         assert.equal(
             signiputString,
-            '("signify-resource" "@method" "@path" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"',
+            '("signify-resource" "@method" "@path" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"'
         );
     });
     it('RFC Test https://datatracker.ietf.org/doc/html/rfc9421#section-2.5', async () => {
-        const expectedParameters = '("@method" "@authority" "@path" "content-digest" "content-length" "content-type");created=1618884473;keyid="test-key-rsa-pss"';
+        const expectedParameters =
+            '("@method" "@authority" "@path" "content-digest" "content-length" "content-type");created=1618884473;keyid="test-key-rsa-pss"';
         const input = {
             fields: [
                 '@method',
@@ -38,7 +39,8 @@ describe('siginput', () => {
         assert.equal(result, expectedParameters);
     });
     it('RFC Test https://datatracker.ietf.org/doc/html/rfc9421#appendix-B.2.6', async () => {
-        const expectedParameters = '("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
+        const expectedParameters =
+            '("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
         const input = {
             fields: [
                 'date',
@@ -91,14 +93,15 @@ describe('desiginput', () => {
         assert.equal(sig1Input.alg, 'ed25519');
         assert.equal(
             sig1Input.keyid,
-            'DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt',
+            'DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt'
         );
         assert.equal(sig1Input.expires, 1609459210);
         assert.equal(sig1Input.nonce, undefined);
         assert.equal(sig1Input.context, undefined);
     });
     it('RFC Test https://datatracker.ietf.org/doc/html/rfc9421#appendix-B.2.6', async () => {
-        const siginputString = 'sig-b26=("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
+        const siginputString =
+            'sig-b26=("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
         const inputs = desiginput(siginputString);
         assert.equal(inputs.size, 1);
         const input = inputs.get('sig-b26')!;
@@ -129,7 +132,8 @@ describe('sigbase', () => {
             '"content-length": 18\n' +
             '"content-type": application/json\n' +
             '"@signature-params": ("@method" "@authority" "@path" "content-digest" "content-length" "content-type");created=1618884473;keyid="test-key-rsa-pss"';
-        const signatureParams = '("@method" "@authority" "@path" "content-digest" "content-length" "content-type");created=1618884473;keyid="test-key-rsa-pss"';
+        const signatureParams =
+            '("@method" "@authority" "@path" "content-digest" "content-length" "content-type");created=1618884473;keyid="test-key-rsa-pss"';
         const fields = [
             '@method',
             '@authority',
@@ -146,7 +150,14 @@ describe('sigbase', () => {
             ['content-length', '18'],
             ['content-type', 'application/json'],
         ]);
-        const result = sigbase(fields, signatureParams, inputHeaders, 'POST', '/foo', 'example.com');
+        const result = sigbase(
+            fields,
+            signatureParams,
+            inputHeaders,
+            'POST',
+            '/foo',
+            'example.com'
+        );
         assert.equal(result, expectedSigbase);
     });
     it('RFC Test https://datatracker.ietf.org/doc/html/rfc9421#appendix-B.2.6', async () => {
@@ -158,7 +169,8 @@ describe('sigbase', () => {
             '"content-type": application/json\n' +
             '"content-length": 18\n' +
             '"@signature-params": ("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
-        const signatureParams = '("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
+        const signatureParams =
+            '("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"';
         const fields = [
             'date',
             '@method',
@@ -172,7 +184,14 @@ describe('sigbase', () => {
             ['date', 'Tue, 20 Apr 2021 02:07:55 GMT'],
             ['content-type', 'application/json'],
         ]);
-        const result = sigbase(fields, signatureParams, inputHeaders, 'POST', '/foo', 'example.com');
+        const result = sigbase(
+            fields,
+            signatureParams,
+            inputHeaders,
+            'POST',
+            '/foo',
+            'example.com'
+        );
         assert.equal(result, expectedSigbase);
     });
     it('signify valid', async () => {
@@ -182,7 +201,8 @@ describe('sigbase', () => {
             '"@path": /signify\n' +
             '"signify-timestamp": 2022-09-24T00:05:48.196795+00:00\n' +
             '"@signature-params": ("signify-resource" "@method" "@path" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"';
-        const signatureParams = '("signify-resource" "@method" "@path" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"';
+        const signatureParams =
+            '("signify-resource" "@method" "@path" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"';
         const fields = [
             'signify-resource',
             '@method',
@@ -199,7 +219,13 @@ describe('sigbase', () => {
             ],
             ['Signify-Timestamp', '2022-09-24T00:05:48.196795+00:00'],
         ]);
-        const result = sigbase(fields, signatureParams, inputHeaders, 'POST', '/signify');
+        const result = sigbase(
+            fields,
+            signatureParams,
+            inputHeaders,
+            'POST',
+            '/signify'
+        );
         assert.equal(result, expectedSigbase);
     });
 });

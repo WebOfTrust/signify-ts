@@ -49,7 +49,7 @@ describe('Signer', () => {
         const signer = new Signer({ raw: privateKey });
         const result = signer.sign(b(content));
         const expectedSignatureBytes = new Uint8Array(
-            Base64.decode(expectedSignature),
+            Base64.decode(expectedSignature)
         );
         assert.deepStrictEqual(result.raw, expectedSignatureBytes);
     });

@@ -1,4 +1,9 @@
-import { Item, Parameters, parseDictionary, serializeInnerList } from 'structured-headers';
+import {
+    Item,
+    Parameters,
+    parseDictionary,
+    serializeInnerList,
+} from 'structured-headers';
 import { b } from './core';
 import Base64 from 'urlsafe-base64';
 import { Buffer } from 'buffer';
@@ -30,7 +35,7 @@ export function sigbase(
     headers: Headers,
     method: string,
     path: string,
-    authority?: string,
+    authority?: string
 ): string {
     const items = new Array<string>();
     fields.forEach((field: string) => {
@@ -43,7 +48,7 @@ export function sigbase(
                     items.push(`"${field}": ${path}`);
                     break;
                 case '@authority':
-                    items.push(`"${ field }": ${ authority }`);
+                    items.push(`"${field}": ${authority}`);
                     break;
             }
         } else if (headers.has(field)) {
@@ -51,7 +56,7 @@ export function sigbase(
             items.push(`"${field}": ${value}`);
         }
     });
-    items.push(`"@signature-params": ${ signatureParams }`);
+    items.push(`"@signature-params": ${signatureParams}`);
     return items.join('\n');
 }
 
@@ -109,7 +114,6 @@ export class Inputage {
     public keyid?: any;
     public context?: any;
 }
-
 
 /**
  * Parse a Signature-Input value into an {@link Inputage} by label map

@@ -1,6 +1,15 @@
 import { strict as assert } from 'assert';
 import libsodium from 'libsodium-wrappers-sumo';
-import { Authenticater, b, Inputage, Matter, MtrDex, Salter, Signer, Verfer } from '../../src';
+import {
+    Authenticater,
+    b,
+    Inputage,
+    Matter,
+    MtrDex,
+    Salter,
+    Signer,
+    Verfer,
+} from '../../src';
 import * as utilApi from '../../src/keri/core/utils';
 import * as httping from '../../src/keri/core/httping';
 import { mock } from 'ts-mockito';
@@ -48,13 +57,15 @@ describe('Authenticater.verify', () => {
         const sigbaseMock = jest.fn();
         sigbaseMock.mockReturnValue(
             '"signify-resource": EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei\n' +
-            '"@method": GET\n' +
-            '"@path": /identifiers/aid1\n' +
-            '"signify-timestamp": 2023-05-22T00:37:00.248708+00:00\n' +
-            '"@signature-params": ("signify-resource" "@method" "@path" "signify-timestamp");created=1684715820;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"',
+                '"@method": GET\n' +
+                '"@path": /identifiers/aid1\n' +
+                '"signify-timestamp": 2023-05-22T00:37:00.248708+00:00\n' +
+                '"@signature-params": ("signify-resource" "@method" "@path" "signify-timestamp");created=1684715820;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"'
         );
         const siginputMock = jest.fn();
-        siginputMock.mockReturnValue('("signify-resource" "@method" "@path" "signify-timestamp");created=1684715820;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"');
+        siginputMock.mockReturnValue(
+            '("signify-resource" "@method" "@path" "signify-timestamp");created=1684715820;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"'
+        );
         jest.spyOn(httping, 'sigbase').mockImplementation(sigbaseMock);
         jest.spyOn(httping, 'siginput').mockImplementation(siginputMock);
         jest.spyOn(httping, 'desiginput').mockImplementation(desiginputMock);
@@ -63,7 +74,9 @@ describe('Authenticater.verify', () => {
         assert.notEqual(authn, undefined);
         assert.equal(authn.verify(headers, 'GET', '/identifiers/aid1'), true);
         expect(desiginputMock).toHaveBeenCalledTimes(1);
-        expect(desiginputMock).toHaveBeenCalledWith('signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1684715820;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"');
+        expect(desiginputMock).toHaveBeenCalledWith(
+            'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1684715820;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"'
+        );
         expect(siginputMock).toHaveBeenCalledTimes(1);
         expect(siginputMock).toHaveBeenCalledWith(input);
         expect(sigbaseMock).toHaveBeenCalledTimes(1);
@@ -73,7 +86,7 @@ describe('Authenticater.verify', () => {
             headers,
             'GET',
             '/identifiers/aid1',
-            undefined,
+            undefined
         );
     });
     it('verify test request https://datatracker.ietf.org/doc/html/rfc9421#appendix-B.2.6', async () => {
@@ -89,7 +102,7 @@ describe('Authenticater.verify', () => {
         const expectedSignatureB64 =
             'wqcAqbmYJ2ji2glfAMaRy4gruYYnx2nEFN2HN6jrnDnQCK1u02Gb04v9EDgwUPiu4A0w6vuQv5lIp5WPpBKRCw==';
         const expectedSignatureRaw = new Uint8Array(
-            Base64.decode(expectedSignatureB64),
+            Base64.decode(expectedSignatureB64)
         );
         const expectedSignatureCESR = new Matter({
             raw: expectedSignatureRaw,
@@ -106,7 +119,7 @@ describe('Authenticater.verify', () => {
             ['date', 'Tue, 20 Apr 2021 02:07:55 GMT'],
             [
                 'Signature',
-                `indexed="?0";signify="${ expectedSignatureCESR.qb64 }"`,
+                `indexed="?0";signify="${expectedSignatureCESR.qb64}"`,
             ],
             [
                 'Signature-Input',
@@ -130,15 +143,17 @@ describe('Authenticater.verify', () => {
         const sigbaseMock = jest.fn();
         sigbaseMock.mockReturnValue(
             '"date": Tue, 20 Apr 2021 02:07:55 GMT\n' +
-            '"@method": POST\n' +
-            '"@path": /foo\n' +
-            '"@authority": example.com\n' +
-            '"content-type": application/json\n' +
-            '"content-length": 18\n' +
-            '"@signature-params": ("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"',
+                '"@method": POST\n' +
+                '"@path": /foo\n' +
+                '"@authority": example.com\n' +
+                '"content-type": application/json\n' +
+                '"content-length": 18\n' +
+                '"@signature-params": ("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"'
         );
         const siginputMock = jest.fn();
-        siginputMock.mockReturnValue('("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"');
+        siginputMock.mockReturnValue(
+            '("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"'
+        );
         jest.spyOn(httping, 'sigbase').mockImplementation(sigbaseMock);
         jest.spyOn(httping, 'siginput').mockImplementation(siginputMock);
         jest.spyOn(httping, 'desiginput').mockImplementation(desiginputMock);
@@ -151,7 +166,9 @@ describe('Authenticater.verify', () => {
             true
         );
         expect(desiginputMock).toHaveBeenCalledTimes(1);
-        expect(desiginputMock).toHaveBeenCalledWith('signify=("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"');
+        expect(desiginputMock).toHaveBeenCalledWith(
+            'signify=("date" "@method" "@path" "@authority" "content-type" "content-length");created=1618884473;keyid="test-key-ed25519"'
+        );
         expect(siginputMock).toHaveBeenCalledTimes(1);
         expect(siginputMock).toHaveBeenCalledWith(input);
         expect(sigbaseMock).toHaveBeenCalledTimes(1);
@@ -161,7 +178,7 @@ describe('Authenticater.verify', () => {
             headers,
             'POST',
             '/foo',
-            'example.com',
+            'example.com'
         );
     });
 });
@@ -192,13 +209,15 @@ describe('Authenticater.sign', () => {
         const sigbaseMock = jest.fn();
         sigbaseMock.mockReturnValue(
             '"@method": POST\n' +
-            '"@path": /boot\n' +
-            '"signify-resource": EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs\n' +
-            '"signify-timestamp": 2022-09-24T00:05:48.196795+00:00\n' +
-            '"@signature-params": ("@method" "@path" "signify-resource" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"',
+                '"@path": /boot\n' +
+                '"signify-resource": EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs\n' +
+                '"signify-timestamp": 2022-09-24T00:05:48.196795+00:00\n' +
+                '"@signature-params": ("@method" "@path" "signify-resource" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"'
         );
         const siginputMock = jest.fn();
-        siginputMock.mockReturnValue('("@method" "@path" "signify-resource" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"');
+        siginputMock.mockReturnValue(
+            '("@method" "@path" "signify-resource" "signify-timestamp");created=1609459200;keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt";alg="ed25519"'
+        );
         jest.spyOn(httping, 'sigbase').mockImplementation(sigbaseMock);
         jest.spyOn(httping, 'siginput').mockImplementation(siginputMock);
 
@@ -213,7 +232,7 @@ describe('Authenticater.sign', () => {
         );
         assert.equal(
             headers.get('Signature'),
-            'indexed="?0";signify="0BDcjKTbpvmcF9oIeCI-95enQRd3_PfAgzOWi9vVf811lWGlTTOsKtFzpdkwr90ksvpvB_GhvsbV2l29wFN_QW0K"',
+            'indexed="?0";signify="0BDcjKTbpvmcF9oIeCI-95enQRd3_PfAgzOWi9vVf811lWGlTTOsKtFzpdkwr90ksvpvB_GhvsbV2l29wFN_QW0K"'
         );
 
         const expectedInput = {

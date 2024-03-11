@@ -26,7 +26,7 @@ export class Authenticater {
         headers: Headers,
         method: string,
         path: string,
-        authority?: string,
+        authority?: string
     ): boolean {
         const siginputHeader = headers.get('Signature-Input');
         if (siginputHeader == null) {
@@ -47,7 +47,7 @@ export class Authenticater {
             headers,
             method,
             path,
-            authority,
+            authority
         );
         const signage = designature(signature);
         const cig = signage[0].markers.get('signify');
@@ -74,8 +74,15 @@ export class Authenticater {
             keyid: this._csig.verfer.qb64,
         };
         const signatureParams = siginput(input);
-        const signatureBase = sigbase(fields, signatureParams, headers, method, path, authority);
-        const sid = `signify=${ signatureParams }`;
+        const signatureBase = sigbase(
+            fields,
+            signatureParams,
+            headers,
+            method,
+            path,
+            authority
+        );
+        const sid = `signify=${signatureParams}`;
         headers.append('Signature-Input', sid);
 
         const sig = this._csig.sign(b(signatureBase));
