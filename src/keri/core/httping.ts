@@ -1,15 +1,10 @@
 import {
-    serializeDictionary,
-    Dictionary,
-    parseDictionary,
     Item,
     Parameters,
+    parseDictionary,
+    serializeInnerList,
 } from 'structured-headers';
-import { Signer } from './signer';
 import { b } from './core';
-import { Cigar } from './cigar';
-import { nowUTC } from './utils';
-import { Siger } from './siger';
 import Base64 from 'urlsafe-base64';
 import { Buffer } from 'buffer';
 
@@ -18,99 +13,80 @@ export function normalize(header: string) {
 }
 
 export interface SiginputArgs {
-    name: string;
     method: string;
     path: string;
+    authority?: string;
     headers: Headers;
-    fields: Array<string>;
-    expires?: number;
-    nonce?: string;
-    alg?: string;
-    keyid?: string;
-    context?: string;
 }
 
-export function siginput(
-    signer: Signer,
-    {
-        name,
-        method,
-        path,
-        headers,
-        fields,
-        expires,
-        nonce,
-        alg,
-        keyid,
-        context,
-    }: SiginputArgs
-): [Map<string, string>, Siger | Cigar] {
+/**
+ * Prepare signature-parameters (https://datatracker.ietf.org/doc/html/rfc9421#section-2.3)
+ * and signature-base (https://datatracker.ietf.org/doc/html/rfc9421#section-2.5) strings based on the following input
+ * @param fields - signature fields names in a signature order
+ * @param signatureParams - signature params string
+ * @param headers - request headers to derive signature input components from
+ * @param method - request method
+ * @param path - request path
+ * @param authority - request authority
+ */
+export function sigbase(
+    fields: Array<string>,
+    signatureParams: string,
+    headers: Headers,
+    method: string,
+    path: string,
+    authority?: string
+): string {
     const items = new Array<string>();
-    const ifields = new Array<[string, Map<string, string>]>();
-
-    fields.forEach((field) => {
+    fields.forEach((field: string) => {
         if (field.startsWith('@')) {
             switch (field) {
                 case '@method':
                     items.push(`"${field}": ${method}`);
-                    ifields.push([field, new Map()]);
                     break;
                 case '@path':
                     items.push(`"${field}": ${path}`);
-                    ifields.push([field, new Map()]);
+                    break;
+                case '@authority':
+                    items.push(`"${field}": ${authority}`);
                     break;
             }
-        } else {
-            if (!headers.has(field)) return;
-
-            ifields.push([field, new Map()]);
-            const value = normalize(headers.get(field)!);
+        } else if (headers.has(field)) {
+            const value = normalize(headers.get(field) as string);
             items.push(`"${field}": ${value}`);
         }
     });
+    items.push(`"@signature-params": ${signatureParams}`);
+    return items.join('\n');
+}
 
+/**
+ * Build a signature-params string based on the {@link Inputage} values
+ * @param input - the input values for signature-params
+ */
+export function siginput(input: Inputage): string {
+    const ifields = new Array<[string, Map<string, string>]>();
+    input.fields.forEach((field: string) => {
+        ifields.push([field, new Map()]);
+    });
     const nameParams = new Map<string, string | number>();
-    const now = Math.floor(nowUTC().getTime() / 1000);
-    nameParams.set('created', now);
-
-    const values = [
-        `(${ifields.map((field) => field[0]).join(' ')})`,
-        `created=${now}`,
-    ];
-    if (expires != undefined) {
-        values.push(`expires=${expires}`);
-        nameParams.set('expires', expires);
+    nameParams.set('created', input.created);
+    if (input.expires != undefined) {
+        nameParams.set('expires', input.expires);
     }
-    if (nonce != undefined) {
-        values.push(`nonce=${nonce}`);
-        nameParams.set('nonce', nonce);
+    if (input.nonce != undefined) {
+        nameParams.set('nonce', input.nonce);
     }
-    if (keyid != undefined) {
-        values.push(`keyid=${keyid}`);
-        nameParams.set('keyid', keyid);
+    if (input.keyid != undefined) {
+        nameParams.set('keyid', input.keyid);
     }
-    if (context != undefined) {
-        values.push(`context=${context}`);
-        nameParams.set('context', context);
+    if (input.context != undefined) {
+        nameParams.set('context', input.context);
     }
-    if (alg != undefined) {
-        values.push(`alg=${alg}`);
-        nameParams.set('alg', alg);
+    if (input.alg != undefined) {
+        nameParams.set('alg', input.alg);
     }
-    const sid = new Map([[name, [ifields, nameParams]]]);
-
-    const params = values.join(';');
-    items.push(`"@signature-params: ${params}"`);
-
-    const ser = items.join('\n');
-    const sig = signer.sign(b(ser));
-
-    return [
-        new Map<string, string>([
-            ['Signature-Input', `${serializeDictionary(sid as Dictionary)}`],
-        ]),
-        sig,
-    ];
+    return serializeInnerList([ifields, nameParams]);
 }
 
 export class Unqualified {
@@ -130,23 +106,25 @@ export class Unqualified {
 }
 
 export class Inputage {
-    public name: any;
     public fields: any;
     public created: any;
-    public expires: any;
-    public nonce: any;
-    public alg: any;
-    public keyid: any;
-    public context: any;
+    public expires?: any;
+    public nonce?: any;
+    public alg?: any;
+    public keyid?: any;
+    public context?: any;
 }
 
-export function desiginput(value: string): Array<Inputage> {
+/**
+ * Parse a Signature-Input value into an {@link Inputage} by label map
+ * @param value - Signature-Input string
+ */
+export function desiginput(value: string): Map<string, Inputage> {
     const sid = parseDictionary(value);
-    const siginputs = new Array<Inputage>();
+    const siginputs = new Map<string, Inputage>();
 
     sid.forEach((value, key) => {
         const siginput = new Inputage();
-        siginput.name = key;
         let list: Item[];
         let params;
         [list, params] = value as [Item[], Parameters];
@@ -179,11 +157,12 @@ export function desiginput(value: string): Array<Inputage> {
             siginput.context = params.get('context');
         }
 
-        siginputs.push(siginput);
+        siginputs.set(key, siginput);
     });
 
     return siginputs;
 }
+
 /** Parse start, end and total from HTTP Content-Range header value
  * @param {string|null} header - HTTP Range header value
  * @param {string} typ - type of range, e.g. "aids"

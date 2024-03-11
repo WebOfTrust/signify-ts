@@ -1,11 +1,14 @@
 import { Signer } from './signer';
 import { Verfer } from './verfer';
-import { desiginput, normalize, siginput } from './httping';
-import { Signage, signature, designature } from '../end/ending';
+import { desiginput, sigbase, siginput } from './httping';
+import { designature, Signage, signature } from '../end/ending';
 import { Cigar } from './cigar';
 import { Siger } from './siger';
+import { nowUTC } from './utils';
+import { b } from './core';
+
 export class Authenticater {
-    static DefaultFields = [
+    static readonly DefaultFields = [
         '@method',
         '@path',
         'signify-resource',
@@ -19,64 +22,38 @@ export class Authenticater {
         this._verfer = verfer;
     }
 
-    verify(headers: Headers, method: string, path: string): boolean {
-        const siginput = headers.get('Signature-Input');
-        if (siginput == null) {
+    verify(
+        headers: Headers,
+        method: string,
+        path: string,
+        authority?: string
+    ): boolean {
+        const siginputHeader = headers.get('Signature-Input');
+        if (siginputHeader == null) {
             return false;
         }
         const signature = headers.get('Signature');
         if (signature == null) {
             return false;
         }
-        let inputs = desiginput(siginput);
-        inputs = inputs.filter((input) => input.name == 'signify');
-        if (inputs.length == 0) {
+        const inputs = desiginput(siginputHeader);
+        const input = inputs.get('signify');
+        if (!input) {
             return false;
         }
-        inputs.forEach((input) => {
-            const items = new Array<string>();
-            input.fields!.forEach((field: string) => {
-                if (field.startsWith('@')) {
-                    if (field == '@method') {
-                        items.push(`"${field}": ${method}`);
-                    } else if (field == '@path') {
-                        items.push(`"${field}": ${path}`);
-                    }
-                } else {
-                    if (headers.has(field)) {
-                        const value = normalize(headers.get(field) as string);
-                        items.push(`"${field}": ${value}`);
-                    }
-                }
-            });
-            const values = new Array<string>();
-            values.push(`(${input.fields!.join(' ')})`);
-            values.push(`created=${input.created}`);
-            if (input.expires != undefined) {
-                values.push(`expires=${input.expires}`);
-            }
-            if (input.nonce != undefined) {
-                values.push(`nonce=${input.nonce}`);
-            }
-            if (input.keyid != undefined) {
-                values.push(`keyid=${input.keyid}`);
-            }
-            if (input.context != undefined) {
-                values.push(`context=${input.context}`);
-            }
-            if (input.alg != undefined) {
-                values.push(`alg=${input.alg}`);
-            }
-            const params = values.join(';');
-            items.push(`"@signature-params: ${params}"`);
-            const ser = items.join('\n');
-            const signage = designature(signature!);
-            const cig = signage[0].markers.get(input.name);
-            if (!this._verfer.verify(cig.raw, ser)) {
-                throw new Error(`Signature for ${input.keyid} invalid.`);
-            }
-        });
-
+        const ser = sigbase(
+            input.fields,
+            siginput(input),
+            headers,
+            method,
+            path,
+            authority
+        );
+        const signage = designature(signature);
+        const cig = signage[0].markers.get('signify');
+        if (!this._verfer.verify(cig.raw, ser)) {
+            throw new Error(`Signature for ${input.keyid} invalid.`);
+        }
         return true;
     }
 
@@ -84,26 +61,31 @@ export class Authenticater {
         headers: Headers,
         method: string,
         path: string,
+        authority?: string,
         fields?: Array<string>
     ): Headers {
         if (fields == undefined) {
             fields = Authenticater.DefaultFields;
         }
-
-        const [header, sig] = siginput(this._csig, {
-            name: 'signify',
-            method,
-            path,
-            headers,
+        const input = {
             fields,
+            created: Math.floor(nowUTC().getTime() / 1000),
             alg: 'ed25519',
             keyid: this._csig.verfer.qb64,
-        });
+        };
+        const signatureParams = siginput(input);
+        const signatureBase = sigbase(
+            fields,
+            signatureParams,
+            headers,
+            method,
+            path,
+            authority
+        );
+        const sid = `signify=${signatureParams}`;
+        headers.append('Signature-Input', sid);
 
-        header.forEach((value, key) => {
-            headers.append(key, value);
-        });
-
+        const sig = this._csig.sign(b(signatureBase));
         const markers = new Map<string, Siger | Cigar>();
         markers.set('signify', sig);
         const signage = new Signage(markers, false);
