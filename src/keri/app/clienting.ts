@@ -183,7 +183,10 @@ export class SignifyClient {
 
         const _body = method == 'GET' ? null : JSON.stringify(data);
         if (_body !== null) {
-            headers.set('Content-Length', String((new TextEncoder().encode(_body)).length));
+            headers.set(
+                'Content-Length',
+                String(new TextEncoder().encode(_body).length)
+            );
         }
         if (this.authn) {
             signed_headers = this.authn.sign(
