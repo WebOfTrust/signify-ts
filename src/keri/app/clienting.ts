@@ -262,9 +262,9 @@ export class SignifyClient {
         );
 
         if (data !== null) {
-            headers.set('Content-Length2', data.length);
+            headers.set('Content-Length', data.length);
         } else {
-            headers.set('Content-Length2', '0');
+            headers.set('Content-Length', '0');
         }
         const signed_headers = authenticator.sign(
             headers,
