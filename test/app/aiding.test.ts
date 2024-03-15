@@ -99,6 +99,18 @@ describe('Aiding', () => {
         assert.deepEqual(lastCall.body.salty.transferable, true);
     });
 
+    it('Can create salty identifiers with special characters in the name', async () => {
+        client.fetch.mockResolvedValue(Response.json({}));
+        await client
+            .identifiers()
+            .create('a name with ñ!', { bran: '0123456789abcdefghijk' });
+
+        const lastCall = client.getLastMockRequest();
+        assert.equal(lastCall.path, '/identifiers');
+        assert.equal(lastCall.method, 'POST');
+        assert.equal(lastCall.body.name, 'a name with ñ!');
+    });
+
     it('Can create salty AID with multiple signatures', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
 
