@@ -103,12 +103,11 @@ describe('Aiding', () => {
         client.fetch.mockResolvedValue(Response.json({}));
         await client
             .identifiers()
-            .create('a name with ñ!', { bran: '0123456789abcdefghijk' });
+            .get('a name with ñ!');
 
         const lastCall = client.getLastMockRequest();
-        assert.equal(lastCall.path, '/identifiers');
-        assert.equal(lastCall.method, 'POST');
-        assert.equal(lastCall.body.name, 'a name with ñ!');
+        assert.equal(lastCall.method, 'GET');
+        assert.equal(lastCall.path, '/identifiers/a%20name%20with%20%C3%B1!');
     });
 
     it('Can create salty AID with multiple signatures', async () => {
