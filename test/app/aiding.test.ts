@@ -99,7 +99,7 @@ describe('Aiding', () => {
         assert.deepEqual(lastCall.body.salty.transferable, true);
     });
 
-    it('Can create salty identifiers with special characters in the name', async () => {
+    it('Can get identifiers with special characters in the name', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
         await client.identifiers().get('a name with ñ!');
 
