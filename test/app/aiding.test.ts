@@ -101,9 +101,7 @@ describe('Aiding', () => {
 
     it('Can create salty identifiers with special characters in the name', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
-        await client
-            .identifiers()
-            .get('a name with ñ!');
+        await client.identifiers().get('a name with ñ!');
 
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.method, 'GET');
