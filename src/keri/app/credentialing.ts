@@ -803,7 +803,7 @@ export class Ipex {
             a: args.attributes ?? {},
             i: args.recipient,
         };
-        
+
         return this.client
             .exchanges()
             .createExchangeMessage(
@@ -813,7 +813,7 @@ export class Ipex {
                 {},
                 undefined,
                 args.datetime,
-                undefined,
+                undefined
             );
     }
 
@@ -856,10 +856,10 @@ export class Ipex {
                 { acdc: [args.acdc, undefined] },
                 undefined,
                 args.datetime,
-                args.apply,
-            )
+                args.apply
+            );
     }
-    
+
     async submitOffer(
         name: string,
         exn: Serder,
@@ -877,7 +877,7 @@ export class Ipex {
         const response = await this.client.fetch(
             `/identifiers/${name}/ipex/offer`,
             'POST',
-            body,
+            body
         );
 
         return response.json();
@@ -901,10 +901,10 @@ export class Ipex {
                 {},
                 undefined,
                 args.datetime,
-                args.offer,
-            )
+                args.offer
+            );
     }
-    
+
     async submitAgree(
         name: string,
         exn: Serder,
@@ -920,7 +920,7 @@ export class Ipex {
         const response = await this.client.fetch(
             `/identifiers/${name}/ipex/agree`,
             'POST',
-            body,
+            body
         );
 
         return response.json();

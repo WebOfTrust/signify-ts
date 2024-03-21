@@ -290,14 +290,14 @@ test('single signature credentials', async () => {
         const [apply, sigs, _] = await verifierClient.ipex().apply({
             senderName: verifierAid.name,
             schema: QVI_SCHEMA_SAID,
-            attributes: { LEI: "5493001KJTIIGC8Y1R17" },
+            attributes: { LEI: '5493001KJTIIGC8Y1R17' },
             recipient: holderAid.prefix,
             datetime: createTimestamp(),
         });
 
-        const op = await verifierClient.ipex().submitApply(
-            verifierAid.name, apply, sigs, [holderAid.prefix]
-        );
+        const op = await verifierClient
+            .ipex()
+            .submitApply(verifierAid.name, apply, sigs, [holderAid.prefix]);
         await waitOperation(verifierClient, op);
     });
 
@@ -331,7 +331,11 @@ test('single signature credentials', async () => {
             datetime: createTimestamp(),
         });
 
-        const op = await holderClient.ipex().submitOffer(holderAid.name, offer, sigs, end, [verifierAid.prefix]);
+        const op = await holderClient
+            .ipex()
+            .submitOffer(holderAid.name, offer, sigs, end, [
+                verifierAid.prefix,
+            ]);
         await waitOperation(holderClient, op);
     });
 
@@ -344,11 +348,13 @@ test('single signature credentials', async () => {
         const verifierOfferNote = verifierNotifications[0];
         assert(verifierOfferNote.a.d);
 
-        const offer = await verifierClient.exchanges().get(verifierOfferNote.a.d);
+        const offer = await verifierClient
+            .exchanges()
+            .get(verifierOfferNote.a.d);
         offerSaid = offer.exn.d;
 
         expect(offer.exn.p).toBe(applySaid);
-        expect(offer.exn.e.acdc.a.LEI).toBe("5493001KJTIIGC8Y1R17");
+        expect(offer.exn.e.acdc.a.LEI).toBe('5493001KJTIIGC8Y1R17');
 
         await markAndRemoveNotification(verifierClient, verifierOfferNote);
 
@@ -358,8 +364,10 @@ test('single signature credentials', async () => {
             offer: offerSaid,
             datetime: createTimestamp(),
         });
-        
-        const op = await verifierClient.ipex().submitAgree(verifierAid.name, agree, sigs, [holderAid.prefix]);
+
+        const op = await verifierClient
+            .ipex()
+            .submitAgree(verifierAid.name, agree, sigs, [holderAid.prefix]);
         await waitOperation(verifierClient, op);
     });
 

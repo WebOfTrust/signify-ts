@@ -359,7 +359,7 @@ describe('Ipex', () => {
             version: undefined,
             kind: undefined,
         });
- 
+
         const [grant, gsigs, end] = await ipex.grant({
             senderName: 'multisig',
             recipient: holder,
@@ -544,7 +544,7 @@ describe('Ipex', () => {
                 m: 'Applying',
                 i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
                 s: 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao',
-                a: { LEI: '5493001KJTIIGC8Y1R17' }
+                a: { LEI: '5493001KJTIIGC8Y1R17' },
             },
             e: {},
         });
@@ -553,10 +553,7 @@ describe('Ipex', () => {
             'AAADMrTKGghic8ye_BSoo1I3G5oit5GXvo3RXXTerZQCYtA4tYbji0bURgQII_ACT8louPDUgpWPQ_WscIa4v64I',
         ]);
 
-        assert.equal(
-            applyEnd,
-            ''
-        );
+        assert.equal(applyEnd, '');
 
         await ipex.submitApply('multisig', apply, applySigs, [holder]);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
@@ -573,7 +570,7 @@ describe('Ipex', () => {
             datetime: mockCredential.sad.a.dt,
             apply: apply.ked.d,
         });
-       
+
         assert.deepStrictEqual(offer.ked, {
             v: 'KERI10JSON0002f0_',
             t: 'exn',
@@ -603,18 +600,20 @@ describe('Ipex', () => {
                 d: 'EK72JZyOyz81Jvt--iebptfhIWiw2ZdQg7ondKd-EyJF',
             },
         });
-        
+
         assert.deepStrictEqual(offerSigs, [
             'AADWWHG9LHz5sLeE98HnsbYWyVl7zO4z4FOyWVyjOyWT5-VTa1ZTYRddScEmyOcG-E9XK0XSWe-cM5L3GJqpn5cN',
         ]);
         assert.equal(offerEnd, '');
-        
-        await ipex.submitOffer('multisig', offer, offerSigs, offerEnd, [holder]);
+
+        await ipex.submitOffer('multisig', offer, offerSigs, offerEnd, [
+            holder,
+        ]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0],
             'http://127.0.0.1:3901/identifiers/multisig/ipex/offer'
-        );        
+        );
 
         const [agree, agreeSigs, agreeEnd] = await ipex.agree({
             senderName: 'multisig',
@@ -623,7 +622,7 @@ describe('Ipex', () => {
             datetime: mockCredential.sad.a.dt,
             offer: offer.ked.d,
         });
-       
+
         assert.deepStrictEqual(agree.ked, {
             v: 'KERI10JSON000114_',
             t: 'exn',
@@ -638,12 +637,12 @@ describe('Ipex', () => {
             },
             e: {},
         });
-        
+
         assert.deepStrictEqual(agreeSigs, [
             'AADPaleEvvzOop-8iBDh3LWcjVzl0QzLL6UWYd0xTO02hWEIGVYGalKk1DYJFzwarMf6bAmDA1Betp_dyRNmT38N',
         ]);
         assert.equal(agreeEnd, '');
-        
+
         await ipex.submitAgree('multisig', agree, agreeSigs, [holder]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
@@ -834,8 +833,10 @@ describe('Ipex', () => {
             'AAAnd2tFMyrr0O91ilWCr6ae1UCK69k5_B4L6rrLTEzYF-Nw7rTVeveRaR-i4VL3An3yOsLaAupD0uHyyXkQWmIN',
         ]);
         assert.equal(offerEnd, '');
-        
-        await ipex.submitOffer('multisig', offer, offerSigs, offerEnd, [holder]);
+
+        await ipex.submitOffer('multisig', offer, offerSigs, offerEnd, [
+            holder,
+        ]);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0],
