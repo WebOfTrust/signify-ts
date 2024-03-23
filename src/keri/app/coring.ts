@@ -157,6 +157,10 @@ export class Operations {
             await this.wait(op.metadata.depends, options);
         }
 
+        if (op.done === true) {
+            return op;
+        }
+
         let retries = 0;
 
         // eslint-disable-next-line no-constant-condition
