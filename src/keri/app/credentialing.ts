@@ -21,6 +21,7 @@ import {
     serializeIssExnAttachment,
 } from '../core/utils';
 import { Operation } from './coring';
+import { CesrNumber } from '../core/number';
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -230,10 +231,10 @@ export class Credentials {
             dt: dt,
         });
 
-        const sn = Number(hab.state.s);
+        const sner = new CesrNumber({}, undefined, hab.state.s);
         const anc = interact({
             pre: hab.prefix,
-            sn: sn + 1,
+            sn: sner.num + 1,
             data: [
                 {
                     i: iss.i,
@@ -320,7 +321,7 @@ export class Credentials {
             var estOnly = false;
         }
 
-        const sn = Number(state.s);
+        const sner = new CesrNumber({}, undefined, state.s);
         const dig = state.d;
 
         const data: any = [
@@ -339,7 +340,7 @@ export class Credentials {
         } else {
             const serder = interact({
                 pre: pre,
-                sn: sn + 1,
+                sn: sner.num + 1,
                 data: data,
                 dig: dig,
                 version: undefined,
@@ -604,7 +605,7 @@ export class Registries {
             throw new Error('establishment only not implemented');
         } else {
             const state = hab.state;
-            const sn = Number(state.s);
+            const sner = new CesrNumber({}, undefined, state.s);
             const dig = state.d;
 
             const data: any = [
@@ -617,7 +618,7 @@ export class Registries {
 
             const serder = interact({
                 pre: pre,
-                sn: sn + 1,
+                sn: sner.num + 1,
                 data: data,
                 dig: dig,
                 version: Versionage,
