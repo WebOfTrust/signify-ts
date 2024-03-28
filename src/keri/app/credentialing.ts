@@ -81,6 +81,10 @@ export interface IssueCredentialArgs {
      * Flag to issue a credential with privacy preserving features
      */
     privacy?: boolean;
+
+    attributeNonce?: string;
+
+    rootNonce?: string;
 }
 
 export interface IssueCredentialResult {
@@ -202,7 +206,9 @@ export class Credentials {
 
         const [, subject] = Saider.saidify({
             d: '',
-            u: args.privacy ? new Salter({}).qb64 : undefined,
+            u: args.privacy
+                ? args.attributeNonce ?? new Salter({}).qb64
+                : undefined,
             i: args.recipient,
             dt: dt,
             ...args.data,
@@ -211,7 +217,7 @@ export class Credentials {
         const [, acdc] = Saider.saidify({
             v: versify(Ident.ACDC, undefined, Serials.JSON, 0),
             d: '',
-            u: args.privacy ? new Salter({}).qb64 : undefined,
+            u: args.privacy ? args.rootNonce ?? new Salter({}).qb64 : undefined,
             i: hab.prefix,
             ri: args.registryId,
             s: args.schemaId,
