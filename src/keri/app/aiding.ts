@@ -7,6 +7,7 @@ import { MtrDex } from '../core/matter';
 import { Serder } from '../core/serder';
 import { parseRangeHeaders } from '../core/httping';
 import { KeyManager } from '../core/keeping';
+import { CesrNumber } from '../core/number';
 
 /** Arguments required to create an identfier */
 export interface CreateIdentiferArgs {
@@ -254,7 +255,7 @@ export class Identifier {
         const pre: string = hab.prefix;
 
         const state = hab.state;
-        const sn = Number(state.s);
+        const sner = new CesrNumber({}, undefined, state.s);
         const dig = state.d;
 
         data = Array.isArray(data) ? data : [data];
@@ -263,7 +264,7 @@ export class Identifier {
 
         const serder = interact({
             pre: pre,
-            sn: sn + 1,
+            sn: sner.num + 1,
             data: data,
             dig: dig,
             version: undefined,
@@ -307,7 +308,8 @@ export class Identifier {
         const state = hab.state;
         const count = state.k.length;
         const dig = state.d;
-        const ridx = Number(state.s) + 1;
+        const sner = new CesrNumber({}, undefined, state.s);
+        const ridx = sner.num + 1;
         const wits = state.b;
         let isith = state.nt;
 
