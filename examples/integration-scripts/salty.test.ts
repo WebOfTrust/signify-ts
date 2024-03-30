@@ -175,9 +175,7 @@ test('salty', async () => {
     aid = aids.aids.pop();
     assert.equal(aid.name, 'aidRenamed');
 
-    await client1
-    .identifiers()
-    .delete('aidRenamed');
+    await client1.identifiers().delete('aidRenamed');
     aids = await client1.identifiers().list();
     assert.equal(aids.aids.length, 2);
     aid = aids.aids.pop();

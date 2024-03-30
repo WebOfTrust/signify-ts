@@ -437,7 +437,9 @@ describe('Aiding', () => {
         client.fetch.mockResolvedValueOnce(Response.json(aid1));
         client.fetch.mockResolvedValueOnce(Response.json({}));
 
-        const aidRenamed = await client.identifiers().rename('aid1','aidRenamed');
+        const aidRenamed = await client
+            .identifiers()
+            .rename('aid1', 'aidRenamed');
         client.fetch.mockResolvedValueOnce(Response.json(aidRenamed));
         client.fetch.mockResolvedValueOnce(Response.json({}));
         const lastCall = client.getLastMockRequest();
