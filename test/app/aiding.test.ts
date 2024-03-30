@@ -160,8 +160,8 @@ describe('Aiding', () => {
 
         await client.identifiers().rotate('aid1');
         const lastCall = client.getLastMockRequest();
-        assert.equal(lastCall.path, '/identifiers/aid1');
-        assert.equal(lastCall.method, 'PUT');
+        assert.equal(lastCall.path, '/identifiers/aid1/events');
+        assert.equal(lastCall.method, 'POST');
         assert.deepEqual(lastCall.body.rot, {
             v: 'KERI10JSON000160_',
             t: 'rot',
@@ -206,8 +206,8 @@ describe('Aiding', () => {
 
         await client.identifiers().rotate('aid1');
         const lastCall = client.getLastMockRequest();
-        assert.equal(lastCall.path, '/identifiers/aid1');
-        assert.equal(lastCall.method, 'PUT');
+        assert.equal(lastCall.path, '/identifiers/aid1/events');
+        assert.equal(lastCall.method, 'POST');
         expect(lastCall.body.rot).toMatchObject({
             v: 'KERI10JSON000160_',
             t: 'rot',
@@ -232,8 +232,8 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
 
-        expect(lastCall.path).toEqual('/identifiers/aid1?type=ixn');
-        expect(lastCall.method).toEqual('PUT');
+        expect(lastCall.path).toEqual('/identifiers/aid1/events');
+        expect(lastCall.method).toEqual('POST');
         expect(lastCall.body.ixn).toMatchObject({
             v: 'KERI10JSON000138_',
             t: 'ixn',
@@ -274,8 +274,8 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
 
-        expect(lastCall.path).toEqual('/identifiers/aid1?type=ixn');
-        expect(lastCall.method).toEqual('PUT');
+        expect(lastCall.path).toEqual('/identifiers/aid1/events');
+        expect(lastCall.method).toEqual('POST');
         expect(lastCall.body.ixn).toMatchObject({
             s: 'b',
             a: data,
