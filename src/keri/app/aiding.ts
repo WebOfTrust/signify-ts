@@ -120,6 +120,36 @@ export class Identifier {
     }
 
     /**
+     * Get information for a managed identifier
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @param {string} newName New name or alias of the identifier
+     * @returns {Promise<any>} A promise to the identifier information
+     */
+    async rename(name: string, newName: string): Promise<any> {
+        const path = `/identifiers/${name}`;
+        const data = { name: newName };
+        const method = 'PUT';
+        const res = await this.client.fetch(path, method, data);
+        console.log(res.status);
+        return res.json();
+    }
+
+    /**
+     * Delete a managed identifier
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @returns {Promise<any>} A promise to the identifier information
+     */
+    async delete(name: string): Promise<any> {
+        const path = `/identifiers/${name}`;
+        const method = 'DELETE';
+        const res = await this.client.fetch(path, method, null);
+        console.log(res.status);
+        return;
+    }
+
+    /**
      * Create a managed identifier
      * @async
      * @param {string} name Name or alias of the identifier
@@ -277,8 +307,8 @@ export class Identifier {
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
-            'PUT',
+            '/identifiers/' + name + '/events',
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
@@ -375,8 +405,8 @@ export class Identifier {
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name,
-            'PUT',
+            '/identifiers/' + name + '/events',
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);

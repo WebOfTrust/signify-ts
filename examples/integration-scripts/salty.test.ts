@@ -166,6 +166,15 @@ test('salty', async () => {
     assert.equal(serder.pre, ixn.pre);
     assert.equal(serder.ked['d'], ixn.ked['d']);
 
+    const renameResult = await client1
+        .identifiers()
+        .rename('aid1', 'aidRenamed');
+    assert.equal(renameResult.name, 'aidRenamed');
+    aids = await client1.identifiers().list();
+    console.log('aids', aids);
+    aid = aids.aids.pop();
+    assert.equal(aid.name, 'aidRenamed');
+
     await assertOperations(client1);
 
     console.log('Salty test passed');
