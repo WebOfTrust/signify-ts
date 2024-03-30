@@ -431,4 +431,32 @@ describe('Aiding', () => {
             args !== null; // avoids TS6133
         });
     });
+
+    it('Can rename salty identifier', async () => {
+        const aid1 = await createMockIdentifierState('aid1', bran, {});
+        client.fetch.mockResolvedValueOnce(Response.json(aid1));
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+
+        const aidRenamed = await client.identifiers().rename('aid1','aidRenamed');
+        client.fetch.mockResolvedValueOnce(Response.json(aidRenamed));
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+        const lastCall = client.getLastMockRequest();
+        assert.equal(lastCall.path, '/identifiers/aid1');
+        assert.equal(lastCall.method, 'PUT');
+        assert.deepEqual(lastCall.body, {
+            name: 'aidRenamed',
+        });
+    });
+
+    it('Can delete salty identifier', async () => {
+        const aid1 = await createMockIdentifierState('aid1', bran, {});
+        client.fetch.mockResolvedValueOnce(Response.json(aid1));
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+
+        await client.identifiers().delete('aid1');
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+        const lastCall = client.getLastMockRequest();
+        assert.equal(lastCall.path, '/identifiers/aid1');
+        assert.equal(lastCall.method, 'DELETE');
+    });
 });
