@@ -131,7 +131,6 @@ export class Identifier {
         const data = { name: newName };
         const method = 'PUT';
         const res = await this.client.fetch(path, method, data);
-        console.log(res.status);
         return res.json();
     }
 
@@ -144,8 +143,7 @@ export class Identifier {
     async delete(name: string): Promise<any> {
         const path = `/identifiers/${name}`;
         const method = 'DELETE';
-        const res = await this.client.fetch(path, method, null);
-        console.log(res.status);
+        await this.client.fetch(path, method, null);
         return;
     }
 
