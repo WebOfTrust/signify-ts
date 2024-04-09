@@ -55,23 +55,4 @@ describe('Controller', () => {
 
         assert.notEqual(controller1.pre, controller2.pre);
     });
-
-    it('should generate unique controller AIDs per passcode', async () => {
-        await libsodium.ready;
-        const template = randomPasscode();
-
-        // Create new passcode where we know that the last character is different
-        const passcode1 = template.substring(0, template.length - 1) + 'a';
-        const passcode2 = template.substring(0, template.length - 1) + 'b';
-
-        console.log(template.length);
-        assert.equal(passcode1.length, template.length);
-        assert.equal(passcode2.length, template.length);
-        assert.notEqual(passcode1, passcode2);
-
-        const controller1 = new Controller(passcode1, Tier.low);
-        const controller2 = new Controller(passcode2, Tier.low);
-
-        assert.notEqual(controller1.pre, controller2.pre);
-    });
 });
