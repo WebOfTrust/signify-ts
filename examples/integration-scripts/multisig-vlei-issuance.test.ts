@@ -1261,10 +1261,9 @@ async function getOrCreateAID(
         await waitOperation(client, await result.op());
         aid = await client.identifiers().get(name);
 
-        const op = await client
+        await client
             .identifiers()
             .addEndRole(name, 'agent', client!.agent!.pre);
-        await waitOperation(client, await op.op());
         console.log(name, 'AID:', aid.prefix);
     }
     return aid;
