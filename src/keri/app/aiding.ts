@@ -255,7 +255,7 @@ export class Identifier {
             sigs: sigs,
             proxy: proxy,
             smids: states,
-            rmids: states
+            rmids: states,
         };
         jsondata[algo] = keeper.params();
 
