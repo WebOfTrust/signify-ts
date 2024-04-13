@@ -386,7 +386,7 @@ export class Identifier {
             rot: serder.ked,
             sigs: sigs,
             smids: states,
-            rmids: rstates
+            rmids: rstates,
         };
         jsondata[keeper.algo] = keeper.params();
 

@@ -515,7 +515,7 @@ async function getOrIssueCredential(
             ...credData,
         },
         e: source,
-        r: rules
+        r: rules,
     });
 
     await waitOperation(issuerClient, issResult.op);
