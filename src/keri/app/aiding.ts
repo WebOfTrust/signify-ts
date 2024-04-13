@@ -385,14 +385,8 @@ export class Identifier {
         const jsondata: any = {
             rot: serder.ked,
             sigs: sigs,
-            smids:
-                states != undefined
-                    ? states.map((state) => state.i)
-                    : undefined,
-            rmids:
-                rstates != undefined
-                    ? rstates.map((state) => state.i)
-                    : undefined,
+            smids: states,
+            rmids: rstates
         };
         jsondata[keeper.algo] = keeper.params();
 
