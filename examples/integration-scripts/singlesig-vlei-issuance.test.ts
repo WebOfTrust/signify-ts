@@ -506,16 +506,16 @@ async function getOrIssueCredential(
     }
 
     const issResult = await issuerClient.credentials().issue(issuerAid.name, {
+        u: privacy ? new Salter({}).qb64 : undefined,
         ri: issuerRegistry.regk,
         s: schema,
-        u: privacy ? new Salter({}).qb64 : undefined,
         a: {
             i: recipientAid.prefix,
             u: privacy ? new Salter({}).qb64 : undefined,
             ...credData,
         },
-        r: rules,
         e: source,
+        r: rules
     });
 
     await waitOperation(issuerClient, issResult.op);

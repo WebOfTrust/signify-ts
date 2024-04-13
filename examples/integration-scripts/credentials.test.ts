@@ -380,12 +380,19 @@ test('single signature credentials', async () => {
             const result = await holderClient
                 .credentials()
                 .issue(holderAid.name, {
+                    ri: holderRegistry.regk,
+                    s: LE_SCHEMA_SAID,
                     a: {
                         i: legalEntityAid.prefix,
                         LEI: '5493001KJTIIGC8Y1R17',
                     },
-                    ri: holderRegistry.regk,
-                    s: LE_SCHEMA_SAID,
+                    e: Saider.saidify({
+                        d: '',
+                        qvi: {
+                            n: qviCredential.sad.d,
+                            s: qviCredential.sad.s,
+                        },
+                    })[1],
                     r: Saider.saidify({
                         d: '',
                         usageDisclaimer: {
@@ -393,13 +400,6 @@ test('single signature credentials', async () => {
                         },
                         issuanceDisclaimer: {
                             l: 'All information in a valid, unexpired, and non-revoked vLEI Credential, as defined in the associated Ecosystem Governance Framework, is accurate as of the date the validation process was complete. The vLEI Credential has been issued to the legal entity or person named in the vLEI Credential as the subject; and the qualified vLEI Issuer exercised reasonable care to perform the validation process set forth in the vLEI Ecosystem Governance Framework.',
-                        },
-                    })[1],
-                    e: Saider.saidify({
-                        d: '',
-                        qvi: {
-                            n: qviCredential.sad.d,
-                            s: qviCredential.sad.s,
                         },
                     })[1],
                 });
