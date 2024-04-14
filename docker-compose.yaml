@@ -26,7 +26,7 @@ services:
             - 7723:7723
 
     keria:
-        image: ${KERIA_IMAGE:-weboftrust/keria}:${KERIA_IMAGE_TAG:-latest}
+        image: ${KERIA_IMAGE:-weboftrust/keria}:${KERIA_IMAGE_TAG:-0.2.0-dev0}
         environment:
             - KERI_AGENT_CORS=1
             - KERI_URL=http://keria:3902
@@ -55,7 +55,7 @@ services:
             - 3903:3903
 
     witness-demo:
-        image: weboftrust/keri-witness-demo:1.1.0
+        image: weboftrust/keri:1.1.12
         environment:
             - PYTHONUNBUFFERED=1
             - PYTHONIOENCODING=UTF-8
@@ -65,6 +65,11 @@ services:
             timeout: 3s
             retries: 5
             start_period: 2s
+        entrypoint:
+            - kli
+        command:
+            - witness
+            - demo
         volumes:
             - ./config/witness-demo:/keripy/scripts/keri/cf/main
         ports:
