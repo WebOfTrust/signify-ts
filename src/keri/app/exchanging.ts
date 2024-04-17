@@ -113,7 +113,7 @@ export class Exchanges {
         atc: string,
         recipients: string[]
     ): Promise<any> {
-        const path = `/identifiers/${name}/exchanges`;
+        const path = `/identifiers/${encodeURIComponent(name)}/exchanges`;
         const method = 'POST';
         const data: any = {
             tpc: topic,

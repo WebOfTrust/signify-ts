@@ -121,8 +121,8 @@ export async function getEndRoles(
 ): Promise<any> {
     const path =
         role !== undefined
-            ? `/identifiers/${alias}/endroles/${role}`
-            : `/identifiers/${alias}/endroles`;
+            ? `/identifiers/${encodeURIComponent(alias)}/endroles/${role}`
+            : `/identifiers/${encodeURIComponent(alias)}/endroles`;
     const response: Response = await client.fetch(path, 'GET', null);
     if (!response.ok) throw new Error(await response.text());
     const result = await response.json();
