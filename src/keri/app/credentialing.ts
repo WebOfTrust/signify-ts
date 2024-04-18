@@ -353,7 +353,9 @@ export class Credentials {
             [keeper.algo]: keeper.params(),
         };
 
-        const path = `/identifiers/${encodeURIComponent(name)}/credentials/${said}`;
+        const path = `/identifiers/${encodeURIComponent(
+            name
+        )}/credentials/${said}`;
         const method = 'DELETE';
         const headers = new Headers({
             Accept: 'application/json+cesr',
@@ -423,7 +425,9 @@ export class Credentials {
             include: include,
         };
 
-        const path = `/identifiers/${encodeURIComponent(name)}/credentials/${said}/presentations`;
+        const path = `/identifiers/${encodeURIComponent(
+            name
+        )}/credentials/${said}/presentations`;
         const method = 'POST';
         const headers = new Headers({
             Accept: 'application/json+cesr',

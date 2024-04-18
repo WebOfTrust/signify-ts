@@ -43,7 +43,9 @@ export class Groups {
         sigs: string[],
         atc: string
     ): Promise<any> {
-        const path = `/identifiers/${encodeURIComponent(name)}/multisig/request`;
+        const path = `/identifiers/${encodeURIComponent(
+            name
+        )}/multisig/request`;
         const method = 'POST';
         const data = {
             exn: exn,

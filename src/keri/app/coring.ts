@@ -34,7 +34,9 @@ export class Oobis {
      * @returns {Promise<any>} A promise to the OOBI(s)
      */
     async get(name: string, role: string = 'agent'): Promise<any> {
-        const path = `/identifiers/${encodeURIComponent(name)}/oobis?role=${role}`;
+        const path = `/identifiers/${encodeURIComponent(
+            name
+        )}/oobis?role=${role}`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
         return await res.json();
