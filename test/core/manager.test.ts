@@ -19,8 +19,14 @@ import { Diger } from '../../src/keri/core/diger';
 import { Siger } from '../../src/keri/core/siger';
 import { b } from '../../src/keri/core/core';
 import { Cigar } from '../../src/keri/core/cigar';
-import { Keeper, KeeperParams, KeyManager } from '../../src';
-import { State } from '../../src/keri/core/state';
+import {
+    Keeper,
+    KeeperParams,
+    KeyManager,
+    Prefixer,
+    RandyKeeper,
+} from '../../src';
+import { RandyState, State } from '../../src/keri/core/state';
 import { randomUUID } from 'crypto';
 
 describe('RandyCreator', () => {
@@ -697,6 +703,49 @@ describe('Manager', () => {
             psigs[0],
             'AACRPqO6vdXm1oSSa82rmVVHikf7NdN4JXjOWEk30Ub5JHChL0bW6DzJfA-7VlgLm_B1XR0Z61FweP87bBQpVawI'
         );
+    });
+
+    it('Should support creating and getting randy keeper', async () => {
+        const passcode = '0123456789abcdefghijk';
+        const salter = new Salter({ raw: b(passcode) });
+
+        const manager = new KeyManager(salter, []);
+
+        const keeper0 = manager.new(Algos.randy, 0, {}) as RandyKeeper;
+        const [keys] = await keeper0.incept(false);
+        const prefixes = new Prefixer({ qb64: keys[0] });
+
+        const keeper1 = manager.get({
+            prefix: prefixes.qb64,
+            name: '',
+            state: {} as State,
+            randy: keeper0.params() as RandyState,
+            transferable: false,
+            windexes: [],
+        });
+
+        assert(keeper0 instanceof RandyKeeper);
+        assert(keeper1 instanceof RandyKeeper);
+    });
+
+    it('Should throw if algo is not supported', async () => {
+        const passcode = '0123456789abcdefghijk';
+        const salter = new Salter({ raw: b(passcode) });
+
+        const manager = new KeyManager(salter, []);
+
+        expect(() => manager.new(randomUUID() as Algos, 0, {})).toThrow(
+            'Unknown algo'
+        );
+        expect(() =>
+            manager.get({
+                prefix: '',
+                name: '',
+                state: {} as State,
+                transferable: false,
+                windexes: [],
+            })
+        ).toThrow('Algo not allowed yet');
     });
 
     describe('External Module ', () => {
