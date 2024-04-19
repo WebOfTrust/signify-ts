@@ -13,7 +13,7 @@ import { HabState, State } from './state';
 
 /** External module definition */
 export interface ExternalModuleType {
-    new (pidx: number, args: unknown): Keeper;
+    new (pidx: number, args: KeeperParams): Keeper;
 }
 
 export interface ExternalModule {
@@ -143,7 +143,6 @@ export class KeyManager {
     }
 
     get(aid: HabState): Keeper {
-        const pre = new Prefixer({ qb64: aid['prefix'] });
         if (aid[Algos.salty]) {
             const kargs = aid[Algos.salty];
             return new SaltyKeeper(
@@ -164,6 +163,7 @@ export class KeyManager {
                 kargs['sxlt']
             );
         } else if (aid[Algos.randy]) {
+            const pre = new Prefixer({ qb64: aid['prefix'] });
             const kargs = aid[Algos.randy]!;
             return new RandyKeeper(
                 this.salter,
