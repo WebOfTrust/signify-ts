@@ -244,7 +244,8 @@ export class SignifyClient {
         path: string,
         method: string,
         data: any,
-        aidName: string
+        aidName: string,
+        cesr: boolean = false
     ): Promise<Response> {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
@@ -272,7 +273,11 @@ export class SignifyClient {
             path.split('?')[0]
         );
         let _body = null;
-        if (method != 'GET') {
+
+        if ((typeof data == 'string') && cesr) {
+            _body = data;
+            headers.set('Content-Type', 'application/cesr+json');
+        } else if (method != 'GET') {
             if (data instanceof FormData) {
                 _body = data;
                 // do not set the content type, let the browser do it
