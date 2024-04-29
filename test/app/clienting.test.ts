@@ -365,7 +365,7 @@ describe('SignifyClient', () => {
             'POST',
             JSON.stringify({ foo: true }),
             'application/json',
-            'aid1',
+            'aid1'
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(lastCall[0]!, 'http://example.com/test');

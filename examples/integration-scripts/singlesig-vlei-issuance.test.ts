@@ -505,17 +505,21 @@ async function getOrIssueCredential(
         if (credential) return credential;
     }
 
-    const issResult = await issuerClient.credentials().issue(issuerAid.name, {
-        ri: issuerRegistry.regk,
-        s: schema,
-        a: {
-            i: recipientAid.prefix,
-            u: privacy ? new Salter({}).qb64 : undefined,
-            ...credData,
+    const issResult = await issuerClient.credentials().issue(
+        issuerAid.name,
+        {
+            ri: issuerRegistry.regk,
+            s: schema,
+            a: {
+                i: recipientAid.prefix,
+                u: privacy ? new Salter({}).qb64 : undefined,
+                ...credData,
+            },
+            e: source,
+            r: rules,
         },
-        e: source,
-        r: rules,
-    },privacy);
+        privacy
+    );
 
     await waitOperation(issuerClient, issResult.op);
     const credential = await issuerClient

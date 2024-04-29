@@ -249,7 +249,7 @@ export class SignifyClient {
         method: string,
         data: string,
         contentType: string,
-        aidName: string,
+        aidName: string
     ): Promise<Response> {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
@@ -266,7 +266,7 @@ export class SignifyClient {
             new Date().toISOString().replace('Z', '000+00:00')
         );
 
-        if(contentType !== null) {
+        if (contentType !== null) {
             headers.set('Content-Type', contentType);
         }
 

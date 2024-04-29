@@ -189,7 +189,7 @@ export class Credentials {
     async issue(
         name: string,
         args: CredentialData,
-        privacy:boolean = false
+        privacy: boolean = false
     ): Promise<IssueCredentialResult> {
         const hab = await this.client.identifiers().get(name);
         const estOnly = hab.state.c !== undefined && hab.state.c.includes('EO');
