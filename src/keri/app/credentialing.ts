@@ -188,7 +188,8 @@ export class Credentials {
      */
     async issue(
         name: string,
-        args: CredentialData
+        args: CredentialData,
+        privacy:boolean = false
     ): Promise<IssueCredentialResult> {
         const hab = await this.client.identifiers().get(name);
         const estOnly = hab.state.c !== undefined && hab.state.c.includes('EO');
@@ -211,6 +212,7 @@ export class Credentials {
         const [, acdc] = Saider.saidify({
             v: versify(Ident.ACDC, undefined, Serials.JSON, 0),
             d: '',
+            u: privacy ? new Salter({}).qb64 : undefined,
             i: args.i ?? hab.prefix,
             ...args,
             a: subject,

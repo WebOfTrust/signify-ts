@@ -276,7 +276,7 @@ export class SignifyClient {
 
         if ((typeof data == 'string') && cesr) {
             _body = data;
-            headers.set('Content-Type', 'application/cesr+json');
+            headers.set('Content-Type', 'application/json+cesr');
         } else if (method != 'GET') {
             if (data instanceof FormData) {
                 _body = data;

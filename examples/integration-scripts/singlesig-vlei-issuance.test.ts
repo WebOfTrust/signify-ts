@@ -21,7 +21,7 @@ const { vleiServerUrl } = resolveEnvironment();
 const QVI_SCHEMA_SAID = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
 const LE_SCHEMA_SAID = 'ENPXp1vQzRF6JwIuS-mp2U8Uf1MoADoP_GqQ62VsDZWY';
 const ECR_AUTH_SCHEMA_SAID = 'EH6ekLjSr8V32WyFbGe1zXjTzFs9PkTYmupJ9H65O14g';
-const ECR_SCHEMA_SAID = 'EEy9PkikFcANV1l7EHukCeXqrzT1hNZjGlUk7wuMO5jw';
+export const ECR_SCHEMA_SAID = 'EEy9PkikFcANV1l7EHukCeXqrzT1hNZjGlUk7wuMO5jw';
 const OOR_AUTH_SCHEMA_SAID = 'EKA57bKBKxr_kN7iN5i7lMUxpMG-s19dRcmov1iDxz-E';
 const OOR_SCHEMA_SAID = 'EBNaNu-M9P5cgrnfl2Fvymy4E_jvxxyjb70PRtiANlJy';
 
@@ -508,15 +508,14 @@ async function getOrIssueCredential(
     const issResult = await issuerClient.credentials().issue(issuerAid.name, {
         ri: issuerRegistry.regk,
         s: schema,
-        u: privacy ? new Salter({}).qb64 : undefined,
         a: {
             i: recipientAid.prefix,
             u: privacy ? new Salter({}).qb64 : undefined,
             ...credData,
         },
-        r: rules,
         e: source,
-    });
+        r: rules,
+    },privacy);
 
     await waitOperation(issuerClient, issResult.op);
     const credential = await issuerClient
@@ -526,7 +525,7 @@ async function getOrIssueCredential(
     return credential;
 }
 
-async function getGrantedCredential(
+export async function getGrantedCredential(
     client: SignifyClient,
     credId: string
 ): Promise<any> {
