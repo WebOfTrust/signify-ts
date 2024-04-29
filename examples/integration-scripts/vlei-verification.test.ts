@@ -4,9 +4,9 @@ import {
 } from './utils/test-setup';
 import {getGrantedCredential, ECR_SCHEMA_SAID} from './singlesig-vlei-issuance.test';
 
-// // This test assumes you have run a vlei test that sets up the glief, qvi, le, and
-// // role identifiers and Credentials.
-// test('vlei-verification', async function run() {
+// This test assumes you have run a vlei test that sets up the glief, qvi, le, and
+// role identifiers and Credentials.
+test('vlei-verification', async function run() {
 
 //     // these come from a previous test (ex. singlesig-vlei-issuance.test.ts)
 //     const bran = 'DbH7DF2uJgXg8gTRpM2ar'; //taken from SIGNIFY_SECRETS
@@ -45,4 +45,4 @@ import {getGrantedCredential, ECR_SCHEMA_SAID} from './singlesig-vlei-issuance.t
 //         console.log(e);
 //         fail(e);
 //     }
-// });
+});
