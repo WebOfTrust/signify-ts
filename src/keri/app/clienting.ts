@@ -235,7 +235,11 @@ export class SignifyClient {
      * @param {string} url URL of the resource
      * @param {string} path Path to the resource
      * @param {string} method HTTP method
-     * @param {any} data Data to be sent in the body of the resource
+     * @param {any} data Data to be sent in the body of the resource.
+     *              If the data is a CESR JSON string then you should also set contentType to 'application/json+cesr'
+     *              If the data is a FormData object then you should not set the contentType and the browser will set it to 'multipart/form-data'
+     *              If the data is an object then you should use JSON.stringify to convert it to a string and set the contentType to 'application/json'
+     * @param {string} contentType Content type of the request.
      * @param {string} aidName Name or alias of the AID to be used for signing
      * @returns {Promise<Response>} A promise to the result of the fetch
      */
@@ -243,9 +247,9 @@ export class SignifyClient {
         url: string,
         path: string,
         method: string,
-        data: any,
+        data: string,
+        contentType: string,
         aidName: string,
-        cesr: boolean = false
     ): Promise<Response> {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
@@ -262,37 +266,25 @@ export class SignifyClient {
             new Date().toISOString().replace('Z', '000+00:00')
         );
 
+        if(contentType !== null) {
+            headers.set('Content-Type', contentType);
+        }
+
         if (data !== null) {
-            headers.set('Content-Length', data.length);
+            headers.set('Content-Length', data.length.toString());
         } else {
             headers.set('Content-Length', '0');
         }
+
         const signed_headers = authenticator.sign(
             headers,
             method,
             path.split('?')[0]
         );
-        let _body = null;
-
-        if ((typeof data == 'string') && cesr) {
-            _body = data;
-            headers.set('Content-Type', 'application/json+cesr');
-        } else if (method != 'GET') {
-            if (data instanceof FormData) {
-                _body = data;
-                // do not set the content type, let the browser do it
-                // headers.set('Content-Type', 'multipart/form-data')
-            } else {
-                _body = JSON.stringify(data);
-                headers.set('Content-Type', 'application/json');
-            }
-        } else {
-            headers.set('Content-Type', 'application/json');
-        }
 
         return await fetch(url + path, {
             method: method,
-            body: _body,
+            body: data,
             headers: signed_headers,
         });
     }
