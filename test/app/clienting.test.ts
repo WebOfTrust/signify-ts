@@ -23,6 +23,7 @@ import { Salter, Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
 import fetchMock from 'jest-fetch-mock';
 import 'whatwg-fetch';
+import { b } from '../../dist';
 
 fetchMock.enableMocks();
 
@@ -359,14 +360,10 @@ describe('SignifyClient', () => {
             'EGFi9pCcRaLK8dPh5S7JP9Em62fBMiR1l4gW1ZazuuAO'
         );
 
-        resp = await client.signedFetch(
-            'http://example.com',
-            '/test',
-            'POST',
-            JSON.stringify({ foo: true }),
-            'application/json',
-            'aid1'
-        );
+        let heads = new Headers();
+        heads.set('Content-Type', 'application/json');
+        let reqInit = {headers: heads, method: 'POST', body: JSON.stringify({foo: true})};
+        resp = await client.signedFetch('aid1', 'http://example.com', '/test', reqInit);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(lastCall[0]!, 'http://example.com/test');
         assert.equal(lastCall[1]!.method, 'POST');

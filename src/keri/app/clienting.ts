@@ -11,6 +11,7 @@ import { Notifications } from './notifying';
 import { Escrows } from './escrowing';
 import { Groups } from './grouping';
 import { Exchanges } from './exchanging';
+import { Hab, Habery } from './habery';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
 
@@ -243,14 +244,7 @@ export class SignifyClient {
      * @param {string} aidName Name or alias of the AID to be used for signing
      * @returns {Promise<Response>} A promise to the result of the fetch
      */
-    async signedFetch(
-        url: string,
-        path: string,
-        method: string,
-        data: string,
-        contentType: string,
-        aidName: string
-    ): Promise<Response> {
+    async signedFetch(aidName: string, url: string, path: string, req: RequestInit): Promise<Response> {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
 
@@ -259,34 +253,23 @@ export class SignifyClient {
             keeper.signers[0].verfer
         );
 
-        const headers = new Headers();
-        headers.set('Signify-Resource', hab.prefix);
-        headers.set(
-            'Signify-Timestamp',
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-
-        if (contentType !== null) {
-            headers.set('Content-Type', contentType);
-        }
-
-        if (data !== null) {
-            headers.set('Content-Length', data.length.toString());
+        let headers = req.headers;
+        if(headers == undefined) {
+            headers = new Headers();
         } else {
-            headers.set('Content-Length', '0');
+            headers = new Headers(headers);
         }
+        headers.set('Signify-Resource',hab['prefix']);
+        headers.set('Signify-Timestamp', new Date().toISOString().replace('Z', '000+00:00'));
 
         const signed_headers = authenticator.sign(
-            headers,
-            method,
+            new Headers(headers),
+            headers.get('method')!,
             path.split('?')[0]
         );
+        req.headers = signed_headers;
 
-        return await fetch(url + path, {
-            method: method,
-            body: data,
-            headers: signed_headers,
-        });
+        return await fetch(url + path, req);
     }
 
     /**
