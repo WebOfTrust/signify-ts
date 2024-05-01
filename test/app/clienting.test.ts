@@ -23,7 +23,6 @@ import { Salter, Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
 import fetchMock from 'jest-fetch-mock';
 import 'whatwg-fetch';
-import { b } from '../../dist';
 
 fetchMock.enableMocks();
 

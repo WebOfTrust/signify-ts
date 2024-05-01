@@ -11,7 +11,6 @@ import { Notifications } from './notifying';
 import { Escrows } from './escrowing';
 import { Groups } from './grouping';
 import { Exchanges } from './exchanging';
-import { Hab, Habery } from './habery';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
 
