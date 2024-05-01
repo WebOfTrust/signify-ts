@@ -243,7 +243,12 @@ export class SignifyClient {
      * @param {string} aidName Name or alias of the AID to be used for signing
      * @returns {Promise<Response>} A promise to the result of the fetch
      */
-    async signedFetch(aidName: string, url: string, path: string, req: RequestInit): Promise<Response> {
+    async signedFetch(
+        aidName: string,
+        url: string,
+        path: string,
+        req: RequestInit
+    ): Promise<Response> {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
 
@@ -253,13 +258,16 @@ export class SignifyClient {
         );
 
         let headers = req.headers;
-        if(headers == undefined) {
+        if (headers == undefined) {
             headers = new Headers();
         } else {
             headers = new Headers(headers);
         }
-        headers.set('Signify-Resource',hab['prefix']);
-        headers.set('Signify-Timestamp', new Date().toISOString().replace('Z', '000+00:00'));
+        headers.set('Signify-Resource', hab['prefix']);
+        headers.set(
+            'Signify-Timestamp',
+            new Date().toISOString().replace('Z', '000+00:00')
+        );
 
         const signed_headers = authenticator.sign(
             new Headers(headers),

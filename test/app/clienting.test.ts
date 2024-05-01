@@ -361,8 +361,17 @@ describe('SignifyClient', () => {
 
         let heads = new Headers();
         heads.set('Content-Type', 'application/json');
-        let reqInit = {headers: heads, method: 'POST', body: JSON.stringify({foo: true})};
-        resp = await client.signedFetch('aid1', 'http://example.com', '/test', reqInit);
+        let reqInit = {
+            headers: heads,
+            method: 'POST',
+            body: JSON.stringify({ foo: true }),
+        };
+        resp = await client.signedFetch(
+            'aid1',
+            'http://example.com',
+            '/test',
+            reqInit
+        );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(lastCall[0]!, 'http://example.com/test');
         assert.equal(lastCall[1]!.method, 'POST');
