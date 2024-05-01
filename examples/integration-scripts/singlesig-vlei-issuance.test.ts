@@ -233,7 +233,7 @@ test('singlesig-vlei-issuance', async function run() {
         leRetry += 1;
         leCredHolder = await retry(async () => {
             const cred = await getGrantedCredential(leClient, leCred.sad.d);
-            
+
             if (cred !== undefined) return cred;
         });
     }
@@ -326,7 +326,7 @@ test('singlesig-vlei-issuance', async function run() {
                 ecrAuthCred.sad.d
             );
             ecrAuthRetry += 1;
-            if(cred !== undefined) return cred;
+            if (cred !== undefined) return cred;
         });
     }
     assert(ecrAuthCredHolder !== undefined);
@@ -371,7 +371,7 @@ test('singlesig-vlei-issuance', async function run() {
         ecrCredHolder2 = await retry(async () => {
             const cred = await getGrantedCredential(roleClient, ecrCred2.sad.d);
             ecr2Retry += 1;
-            if(cred !== undefined) return cred;
+            if (cred !== undefined) return cred;
         });
     }
     assert(ecrCredHolder2 !== undefined);
@@ -419,7 +419,7 @@ test('singlesig-vlei-issuance', async function run() {
                 oorAuthCred.sad.d
             );
             oorAuthRetry += 1;
-            if(cred !== undefined) return cred;
+            if (cred !== undefined) return cred;
         });
     }
     assert(oorAuthCredHolder !== undefined);
@@ -463,7 +463,7 @@ test('singlesig-vlei-issuance', async function run() {
         oorCredHolder = await retry(async () => {
             const cred = await getGrantedCredential(roleClient, oorCred.sad.d);
             oorRetry += 1;
-            if(cred !== undefined) return cred;
+            if (cred !== undefined) return cred;
         });
     }
     assert(oorCredHolder !== undefined);
@@ -519,21 +519,18 @@ async function getOrIssueCredential(
         if (credential) return credential;
     }
 
-    const issResult = await issuerClient.credentials().issue(
-        issuerAid.name,
-        {
+    const issResult = await issuerClient.credentials().issue(issuerAid.name, {
+        u: privacy ? new Salter({}).qb64 : undefined,
+        ri: issuerRegistry.regk,
+        s: schema,
+        a: {
+            i: recipientAid.prefix,
             u: privacy ? new Salter({}).qb64 : undefined,
-            ri: issuerRegistry.regk,
-            s: schema,
-            a: {
-                i: recipientAid.prefix,
-                u: privacy ? new Salter({}).qb64 : undefined,
-                ...credData,
-            },
-            e: source,
-            r: rules,
-        }
-    );
+            ...credData,
+        },
+        e: source,
+        r: rules,
+    });
 
     await waitOperation(issuerClient, issResult.op);
     const credential = await issuerClient
