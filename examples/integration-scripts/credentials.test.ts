@@ -113,16 +113,27 @@ test('single signature credentials', async () => {
 
     const registry = await step('Create registry', async () => {
         const registryName = 'vLEI-test-registry';
+        const updatedRegistryName = 'vLEI-test-registry-1';
         const regResult = await issuerClient
             .registries()
             .create({ name: issuerAid.name, registryName: registryName });
 
         await waitOperation(issuerClient, await regResult.op());
-        const registries = await issuerClient.registries().list(issuerAid.name);
+        let registries = await issuerClient.registries().list(issuerAid.name);
         const registry: { name: string; regk: string } = registries[0];
         assert.equal(registries.length, 1);
         assert.equal(registry.name, registryName);
-        return registry;
+
+        await issuerClient
+            .registries()
+            .rename(issuerAid.name, registryName, updatedRegistryName);
+
+        registries = await issuerClient.registries().list(issuerAid.name);
+        let updateRegistry: { name: string; regk: string } = registries[0];
+        assert.equal(registries.length, 1);
+        assert.equal(updateRegistry.name, updatedRegistryName);
+
+        return updateRegistry;
     });
 
     await step('issuer can get schemas', async () => {
@@ -147,13 +158,16 @@ test('single signature credentials', async () => {
             LEI: '5493001KJTIIGC8Y1R17',
         };
 
-        const issResult = await issuerClient.credentials().issue({
-            issuerName: issuerAid.name,
-            registryId: registry.regk,
-            schemaId: QVI_SCHEMA_SAID,
-            recipient: holderAid.prefix,
-            data: vcdata,
-        });
+        const issResult = await issuerClient
+            .credentials()
+            .issue(issuerAid.name, {
+                ri: registry.regk,
+                s: QVI_SCHEMA_SAID,
+                a: {
+                    i: holderAid.prefix,
+                    ...vcdata,
+                },
+            });
 
         await waitOperation(issuerClient, issResult.op);
         return issResult.acdc.ked.d as string;
@@ -484,31 +498,32 @@ test('single signature credentials', async () => {
                 .credentials()
                 .get(qviCredentialId);
 
-            const result = await holderClient.credentials().issue({
-                issuerName: holderAid.name,
-                recipient: legalEntityAid.prefix,
-                registryId: holderRegistry.regk,
-                schemaId: LE_SCHEMA_SAID,
-                data: {
-                    LEI: '5493001KJTIIGC8Y1R17',
-                },
-                rules: Saider.saidify({
-                    d: '',
-                    usageDisclaimer: {
-                        l: 'Usage of a valid, unexpired, and non-revoked vLEI Credential, as defined in the associated Ecosystem Governance Framework, does not assert that the Legal Entity is trustworthy, honest, reputable in its business dealings, safe to do business with, or compliant with any laws or that an implied or expressly intended purpose will be fulfilled.',
+            const result = await holderClient
+                .credentials()
+                .issue(holderAid.name, {
+                    a: {
+                        i: legalEntityAid.prefix,
+                        LEI: '5493001KJTIIGC8Y1R17',
                     },
-                    issuanceDisclaimer: {
-                        l: 'All information in a valid, unexpired, and non-revoked vLEI Credential, as defined in the associated Ecosystem Governance Framework, is accurate as of the date the validation process was complete. The vLEI Credential has been issued to the legal entity or person named in the vLEI Credential as the subject; and the qualified vLEI Issuer exercised reasonable care to perform the validation process set forth in the vLEI Ecosystem Governance Framework.',
-                    },
-                })[1],
-                source: Saider.saidify({
-                    d: '',
-                    qvi: {
-                        n: qviCredential.sad.d,
-                        s: qviCredential.sad.s,
-                    },
-                })[1],
-            });
+                    ri: holderRegistry.regk,
+                    s: LE_SCHEMA_SAID,
+                    r: Saider.saidify({
+                        d: '',
+                        usageDisclaimer: {
+                            l: 'Usage of a valid, unexpired, and non-revoked vLEI Credential, as defined in the associated Ecosystem Governance Framework, does not assert that the Legal Entity is trustworthy, honest, reputable in its business dealings, safe to do business with, or compliant with any laws or that an implied or expressly intended purpose will be fulfilled.',
+                        },
+                        issuanceDisclaimer: {
+                            l: 'All information in a valid, unexpired, and non-revoked vLEI Credential, as defined in the associated Ecosystem Governance Framework, is accurate as of the date the validation process was complete. The vLEI Credential has been issued to the legal entity or person named in the vLEI Credential as the subject; and the qualified vLEI Issuer exercised reasonable care to perform the validation process set forth in the vLEI Ecosystem Governance Framework.',
+                        },
+                    })[1],
+                    e: Saider.saidify({
+                        d: '',
+                        qvi: {
+                            n: qviCredential.sad.d,
+                            s: qviCredential.sad.s,
+                        },
+                    })[1],
+                });
 
             await waitOperation(holderClient, result.op);
             return result.acdc.ked.d;
