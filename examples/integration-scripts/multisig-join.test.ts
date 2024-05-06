@@ -363,8 +363,7 @@ describe('multisig-join', () => {
         assert.equal(endRoleResult.done, true);
         assert.equal(endRoleResult.error, null);
 
-        // This operation never resolves!
-        // await waitOperation(client3, joinOperation);
+        await waitOperation(client3, joinOperation);
     });
 });
 
