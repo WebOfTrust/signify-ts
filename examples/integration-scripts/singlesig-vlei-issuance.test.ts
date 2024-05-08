@@ -236,7 +236,7 @@ test('singlesig-vlei-issuance', async function run() {
     if (!leCredHolder) {
         await sendGrantMessage(qviClient, qviAid, leAid, leCred);
         await sendAdmitMessage(leClient, leAid, qviAid);
-        
+
         leCredHolder = await retry(async () => {
             const cred = await getGrantedCredential(leClient, leCred.sad.d);
             assert(cred !== undefined);
@@ -521,16 +521,16 @@ async function getOrIssueCredential(
     }
 
     const issResult = await issuerClient.credentials().issue(issuerAid.name, {
-        u: privacy ? new Salter({}).qb64 : undefined,
         ri: issuerRegistry.regk,
         s: schema,
+        u: privacy ? new Salter({}).qb64 : undefined,
         a: {
             i: recipientAid.prefix,
             u: privacy ? new Salter({}).qb64 : undefined,
             ...credData,
         },
-        e: source,
         r: rules,
+        e: source,
     });
 
     await waitOperation(issuerClient, issResult.op);
