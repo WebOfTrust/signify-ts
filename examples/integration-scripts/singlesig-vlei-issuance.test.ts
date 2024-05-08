@@ -15,7 +15,6 @@ import {
     getOrCreateContact,
     getOrCreateIdentifier,
 } from './utils/test-setup';
-import { i } from 'mathjs';
 
 const { vleiServerUrl } = resolveEnvironment();
 
