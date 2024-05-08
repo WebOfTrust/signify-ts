@@ -15,6 +15,7 @@ import {
     getOrCreateContact,
     getOrCreateIdentifier,
 } from './utils/test-setup';
+import { i } from 'mathjs';
 
 const { vleiServerUrl } = resolveEnvironment();
 
@@ -192,14 +193,16 @@ test('singlesig-vlei-issuance', async function run() {
 
     let qviCredHolder = await getGrantedCredential(qviClient, qviCred.sad.d);
 
-    await sendGrantMessage(gleifClient, gleifAid, qviAid, qviCred);
-    await sendAdmitMessage(qviClient, qviAid, gleifAid);
+    if (!qviCredHolder) {
+        await sendGrantMessage(gleifClient, gleifAid, qviAid, qviCred);
+        await sendAdmitMessage(qviClient, qviAid, gleifAid);
 
-    qviCredHolder = await retry(async () => {
-        const cred = await getGrantedCredential(qviClient, qviCred.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+        qviCredHolder = await retry(async () => {
+            const cred = await getGrantedCredential(qviClient, qviCred.sad.d);
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(qviCredHolder.sad.d, qviCred.sad.d);
     assert.equal(qviCredHolder.sad.s, QVI_SCHEMA_SAID);
@@ -230,13 +233,16 @@ test('singlesig-vlei-issuance', async function run() {
 
     let leCredHolder = await getGrantedCredential(leClient, leCred.sad.d);
 
-    await sendGrantMessage(qviClient, qviAid, leAid, leCred);
-    await sendAdmitMessage(leClient, leAid, qviAid);
-    leCredHolder = await retry(async () => {
-        const cred = await getGrantedCredential(leClient, leCred.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+    if (!leCredHolder) {
+        await sendGrantMessage(qviClient, qviAid, leAid, leCred);
+        await sendAdmitMessage(leClient, leAid, qviAid);
+        
+        leCredHolder = await retry(async () => {
+            const cred = await getGrantedCredential(leClient, leCred.sad.d);
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(leCredHolder.sad.d, leCred.sad.d);
     assert.equal(leCredHolder.sad.s, LE_SCHEMA_SAID);
@@ -269,14 +275,16 @@ test('singlesig-vlei-issuance', async function run() {
 
     let ecrCredHolder = await getGrantedCredential(roleClient, ecrCred.sad.d);
 
-    await sendGrantMessage(leClient, leAid, roleAid, ecrCred);
-    await sendAdmitMessage(roleClient, roleAid, leAid);
+    if (!ecrCredHolder) {
+        await sendGrantMessage(leClient, leAid, roleAid, ecrCred);
+        await sendAdmitMessage(roleClient, roleAid, leAid);
 
-    ecrCredHolder = await retry(async () => {
-        const cred = await getGrantedCredential(roleClient, ecrCred.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+        ecrCredHolder = await retry(async () => {
+            const cred = await getGrantedCredential(roleClient, ecrCred.sad.d);
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(ecrCredHolder.sad.d, ecrCred.sad.d);
     assert.equal(ecrCredHolder.sad.s, ECR_SCHEMA_SAID);
@@ -312,14 +320,19 @@ test('singlesig-vlei-issuance', async function run() {
         ecrAuthCred.sad.d
     );
 
-    await sendGrantMessage(leClient, leAid, qviAid, ecrAuthCred);
-    await sendAdmitMessage(qviClient, qviAid, leAid);
+    if (!ecrAuthCredHolder) {
+        await sendGrantMessage(leClient, leAid, qviAid, ecrAuthCred);
+        await sendAdmitMessage(qviClient, qviAid, leAid);
 
-    ecrAuthCredHolder = await retry(async () => {
-        const cred = await getGrantedCredential(qviClient, ecrAuthCred.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+        ecrAuthCredHolder = await retry(async () => {
+            const cred = await getGrantedCredential(
+                qviClient,
+                ecrAuthCred.sad.d
+            );
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(ecrAuthCredHolder.sad.d, ecrAuthCred.sad.d);
     assert.equal(ecrAuthCredHolder.sad.s, ECR_AUTH_SCHEMA_SAID);
@@ -354,14 +367,16 @@ test('singlesig-vlei-issuance', async function run() {
 
     let ecrCredHolder2 = await getGrantedCredential(roleClient, ecrCred2.sad.d);
 
-    await sendGrantMessage(qviClient, qviAid, roleAid, ecrCred2);
-    await sendAdmitMessage(roleClient, roleAid, qviAid);
+    if (!ecrCredHolder2) {
+        await sendGrantMessage(qviClient, qviAid, roleAid, ecrCred2);
+        await sendAdmitMessage(roleClient, roleAid, qviAid);
 
-    ecrCredHolder2 = await retry(async () => {
-        const cred = await getGrantedCredential(roleClient, ecrCred2.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+        ecrCredHolder2 = await retry(async () => {
+            const cred = await getGrantedCredential(roleClient, ecrCred2.sad.d);
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(ecrCredHolder2.sad.d, ecrCred2.sad.d);
     assert.equal(ecrCredHolder2.sad.s, ECR_SCHEMA_SAID);
@@ -396,14 +411,19 @@ test('singlesig-vlei-issuance', async function run() {
         oorAuthCred.sad.d
     );
 
-    await sendGrantMessage(leClient, leAid, qviAid, oorAuthCred);
-    await sendAdmitMessage(qviClient, qviAid, leAid);
+    if (!oorAuthCredHolder) {
+        await sendGrantMessage(leClient, leAid, qviAid, oorAuthCred);
+        await sendAdmitMessage(qviClient, qviAid, leAid);
 
-    oorAuthCredHolder = await retry(async () => {
-        const cred = await getGrantedCredential(qviClient, oorAuthCred.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+        oorAuthCredHolder = await retry(async () => {
+            const cred = await getGrantedCredential(
+                qviClient,
+                oorAuthCred.sad.d
+            );
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(oorAuthCredHolder.sad.d, oorAuthCred.sad.d);
     assert.equal(oorAuthCredHolder.sad.s, OOR_AUTH_SCHEMA_SAID);
@@ -437,14 +457,16 @@ test('singlesig-vlei-issuance', async function run() {
 
     let oorCredHolder = await getGrantedCredential(roleClient, oorCred.sad.d);
 
-    await sendGrantMessage(qviClient, qviAid, roleAid, oorCred);
-    await sendAdmitMessage(roleClient, roleAid, qviAid);
+    if (!oorCredHolder) {
+        await sendGrantMessage(qviClient, qviAid, roleAid, oorCred);
+        await sendAdmitMessage(roleClient, roleAid, qviAid);
 
-    oorCredHolder = await retry(async () => {
-        const cred = await getGrantedCredential(roleClient, oorCred.sad.d);
-        assert(cred !== undefined);
-        return cred;
-    }, CRED_RETRY_DEFAULTS);
+        oorCredHolder = await retry(async () => {
+            const cred = await getGrantedCredential(roleClient, oorCred.sad.d);
+            assert(cred !== undefined);
+            return cred;
+        }, CRED_RETRY_DEFAULTS);
+    }
 
     assert.equal(oorCredHolder.sad.d, oorCred.sad.d);
     assert.equal(oorCredHolder.sad.s, OOR_SCHEMA_SAID);
