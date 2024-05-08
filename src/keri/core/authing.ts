@@ -1,6 +1,12 @@
 import { Signer } from './signer';
 import { Verfer } from './verfer';
-import { desiginput, HEADER_SIG_INPUT, HEADER_SIG_TIME, normalize, siginput } from './httping';
+import {
+    desiginput,
+    HEADER_SIG_INPUT,
+    HEADER_SIG_TIME,
+    normalize,
+    siginput,
+} from './httping';
 import { Signage, signature, designature } from '../end/ending';
 import { Cigar } from './cigar';
 import { Siger } from './siger';

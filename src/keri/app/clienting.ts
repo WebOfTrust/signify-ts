@@ -268,7 +268,7 @@ export class SignifyClient {
 
         const signed_headers = authenticator.sign(
             new Headers(headers),
-            req.method ?? "GET",
+            req.method ?? 'GET',
             path.split('?')[0]
         );
         req.headers = signed_headers;

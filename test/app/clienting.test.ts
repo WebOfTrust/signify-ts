@@ -405,17 +405,26 @@ describe('SignifyClient', () => {
         let aid = await client.identifiers().get('aid1');
         const keeper = client.manager!.get(aid) as SaltyKeeper;
         const signer = keeper.signers[0];
-        const created = lastHeaders.get(HEADER_SIG_INPUT)?.split(';created=')[1].split(';keyid=')[0];
-        const data = `\"@method\": POST\n\"@path\": /test\n\"signify-resource\": ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK\n\"signify-timestamp\": ${lastHeaders.get(HEADER_SIG_TIME)}\n\"@signature-params: (@method @path signify-resource signify-timestamp);created=${created};keyid=BPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9;alg=ed25519\"`
+        const created = lastHeaders
+            .get(HEADER_SIG_INPUT)
+            ?.split(';created=')[1]
+            .split(';keyid=')[0];
+        const data = `\"@method\": POST\n\"@path\": /test\n\"signify-resource\": ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK\n\"signify-timestamp\": ${lastHeaders.get(
+            HEADER_SIG_TIME
+        )}\n\"@signature-params: (@method @path signify-resource signify-timestamp);created=${created};keyid=BPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9;alg=ed25519\"`;
 
         if (data) {
             const raw = new TextEncoder().encode(data);
             const sig = signer.sign(raw, null) as Cigar;
             assert.equal(
                 sig.qb64,
-                lastHeaders.get('signature')?.split('signify="')[1].split('"')[0]);
+                lastHeaders
+                    .get('signature')
+                    ?.split('signify="')[1]
+                    .split('"')[0]
+            );
         } else {
-            fail(`${HEADER_SIG_INPUT} is empty`)
+            fail(`${HEADER_SIG_INPUT} is empty`);
         }
     });
 
