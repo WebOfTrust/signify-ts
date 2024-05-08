@@ -259,12 +259,7 @@ export class SignifyClient {
             keeper.signers[0].verfer
         );
 
-        let headers = req.headers;
-        if (headers == undefined) {
-            headers = new Headers();
-        } else {
-            headers = new Headers(headers);
-        }
+        const headers = new Headers(req.headers);
         headers.set('Signify-Resource', hab['prefix']);
         headers.set(
             HEADER_SIG_TIME,
