@@ -409,9 +409,9 @@ describe('SignifyClient', () => {
             .get(HEADER_SIG_INPUT)
             ?.split(';created=')[1]
             .split(';keyid=')[0];
-        const data = `\"@method\": POST\n\"@path\": /test\n\"signify-resource\": ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK\n\"signify-timestamp\": ${lastHeaders.get(
+        const data = `"@method": POST\n"@path": /test\n"signify-resource": ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK\n"signify-timestamp": ${lastHeaders.get(
             HEADER_SIG_TIME
-        )}\n\"@signature-params: (@method @path signify-resource signify-timestamp);created=${created};keyid=BPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9;alg=ed25519\"`;
+        )}\n"@signature-params: (@method @path signify-resource signify-timestamp);created=${created};keyid=BPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9;alg=ed25519"`;
 
         if (data) {
             const raw = new TextEncoder().encode(data);
