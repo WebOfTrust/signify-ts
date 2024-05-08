@@ -338,6 +338,8 @@ describe('multisig-join', () => {
             .groups()
             .join(nameMultisig, serder3, sigs3, exn3.a.gid, smids, rmids);
 
+        await waitOperation(client3, joinOperation);
+
         const multisigAid = await client3.identifiers().get(nameMultisig);
 
         assert.equal(multisigAid.state.k.length, 3);
@@ -362,8 +364,6 @@ describe('multisig-join', () => {
 
         assert.equal(endRoleResult.done, true);
         assert.equal(endRoleResult.error, null);
-
-        await waitOperation(client3, joinOperation);
     });
 });
 
