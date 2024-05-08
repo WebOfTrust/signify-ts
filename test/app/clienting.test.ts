@@ -19,6 +19,9 @@ import { Groups } from '../../src/keri/app/grouping';
 import { Notifications } from '../../src/keri/app/notifying';
 
 import { Authenticater } from '../../src/keri/core/authing';
+import { Cigar } from '../../src/keri/core/cigar';
+import { HEADER_SIG_INPUT, HEADER_SIG_TIME } from '../../src/keri/core/httping';
+import { SaltyKeeper } from '../../src/keri/core/keeping';
 import { Salter, Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
 import fetchMock from 'jest-fetch-mock';
@@ -142,7 +145,7 @@ fetchMock.mockResponse((req) => {
             'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
         );
         headers.set(
-            'Signify-Timestamp',
+            HEADER_SIG_TIME,
             new Date().toISOString().replace('Z', '000+00:00')
         );
         headers.set('Content-Type', 'application/json');
@@ -290,8 +293,8 @@ describe('SignifyClient', () => {
         // Headers in error
         let badAgentHeaders = {
             'signify-resource': 'bad_resource',
-            'signify-timestamp': '2023-08-20T15:34:31.534673+00:00',
-            'signature-input':
+            [HEADER_SIG_TIME]: '2023-08-20T15:34:31.534673+00:00',
+            [HEADER_SIG_INPUT]:
                 'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1692545671;keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei";alg="ed25519"',
             signature:
                 'indexed="?0";signify="0BDiSoxCv42h2BtGMHy_tpWAqyCgEoFwRa8bQy20mBB2D5Vik4gRp3XwkEHtqy6iy6SUYAytMUDtRbewotAfkCgN"',
@@ -307,7 +310,7 @@ describe('SignifyClient', () => {
         badAgentHeaders = {
             'signify-resource': 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
             'signify-timestamp': '2023-08-20T15:34:31.534673+00:00',
-            'signature-input':
+            [HEADER_SIG_INPUT]:
                 'signify=("signify-resource" "@method" "@path" "signify-timestamp");created=1692545671;keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei";alg="ed25519"',
             signature:
                 'indexed="?0";signify="0BDiSoxCv42h2BtGMHy_tpWAqyCgEoFwRa8bQy20mBB2D5Vik4gRp3XwkEHtqy6iy6SUYAytMUDtRbewotAfkCbad"',
@@ -382,6 +385,38 @@ describe('SignifyClient', () => {
             lastHeaders.get('signify-resource'),
             'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK'
         );
+        assert.equal(
+            lastHeaders
+                .get(HEADER_SIG_INPUT)
+                ?.startsWith(
+                    'signify=("@method" "@path" "signify-resource" "signify-timestamp");created='
+                ),
+            true
+        );
+        assert.equal(
+            lastHeaders
+                .get(HEADER_SIG_INPUT)
+                ?.endsWith(
+                    ';keyid="BPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9";alg="ed25519"'
+                ),
+            true
+        );
+
+        let aid = await client.identifiers().get('aid1');
+        const keeper = client.manager!.get(aid) as SaltyKeeper;
+        const signer = keeper.signers[0];
+        const created = lastHeaders.get(HEADER_SIG_INPUT)?.split(';created=')[1].split(';keyid=')[0];
+        const data = `\"@method\": POST\n\"@path\": /test\n\"signify-resource\": ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK\n\"signify-timestamp\": ${lastHeaders.get(HEADER_SIG_TIME)}\n\"@signature-params: (@method @path signify-resource signify-timestamp);created=${created};keyid=BPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9;alg=ed25519\"`
+
+        if (data) {
+            const raw = new TextEncoder().encode(data);
+            const sig = signer.sign(raw, null) as Cigar;
+            assert.equal(
+                sig.qb64,
+                lastHeaders.get('signature')?.split('signify="')[1].split('"')[0]);
+        } else {
+            fail(`${HEADER_SIG_INPUT} is empty`)
+        }
     });
 
     test('includes HTTP status info in error message', async () => {

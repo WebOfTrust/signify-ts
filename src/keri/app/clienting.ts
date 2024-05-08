@@ -1,16 +1,17 @@
-import { Agent, Controller } from './controller';
-import { Tier } from '../core/salter';
 import { Authenticater } from '../core/authing';
+import { HEADER_SIG_TIME } from '../core/httping';
 import { ExternalModule, KeyManager } from '../core/keeping';
+import { Tier } from '../core/salter';
 
 import { Identifier } from './aiding';
 import { Contacts, Challenges } from './contacting';
+import { Agent, Controller } from './controller';
 import { Oobis, Operations, KeyEvents, KeyStates } from './coring';
 import { Credentials, Ipex, Registries, Schemas } from './credentialing';
-import { Notifications } from './notifying';
 import { Escrows } from './escrowing';
-import { Groups } from './grouping';
 import { Exchanges } from './exchanging';
+import { Groups } from './grouping';
+import { Notifications } from './notifying';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
 
@@ -176,7 +177,7 @@ export class SignifyClient {
 
         headers.set('Signify-Resource', this.controller.pre);
         headers.set(
-            'Signify-Timestamp',
+            HEADER_SIG_TIME,
             new Date().toISOString().replace('Z', '000+00:00')
         );
         headers.set('Content-Type', 'application/json');
@@ -266,13 +267,13 @@ export class SignifyClient {
         }
         headers.set('Signify-Resource', hab['prefix']);
         headers.set(
-            'Signify-Timestamp',
+            HEADER_SIG_TIME,
             new Date().toISOString().replace('Z', '000+00:00')
         );
 
         const signed_headers = authenticator.sign(
             new Headers(headers),
-            headers.get('method')!,
+            req.method ?? "GET",
             path.split('?')[0]
         );
         req.headers = signed_headers;
