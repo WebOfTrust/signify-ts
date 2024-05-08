@@ -197,7 +197,8 @@ test('singlesig-vlei-issuance', async function run() {
 
     qviCredHolder = await retry(async () => {
         const cred = await getGrantedCredential(qviClient, qviCred.sad.d);
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(qviCredHolder !== undefined);
@@ -235,7 +236,8 @@ test('singlesig-vlei-issuance', async function run() {
     leCredHolder = await retry(async () => {
         const cred = await getGrantedCredential(leClient, leCred.sad.d);
 
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(leCredHolder !== undefined);
@@ -275,7 +277,8 @@ test('singlesig-vlei-issuance', async function run() {
 
     ecrCredHolder = await retry(async () => {
         const cred = await getGrantedCredential(roleClient, ecrCred.sad.d);
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(ecrCredHolder !== undefined);
@@ -318,7 +321,8 @@ test('singlesig-vlei-issuance', async function run() {
 
     ecrAuthCredHolder = await retry(async () => {
         const cred = await getGrantedCredential(qviClient, ecrAuthCred.sad.d);
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(ecrAuthCredHolder !== undefined);
@@ -360,7 +364,8 @@ test('singlesig-vlei-issuance', async function run() {
 
     ecrCredHolder2 = await retry(async () => {
         const cred = await getGrantedCredential(roleClient, ecrCred2.sad.d);
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(ecrCredHolder2 !== undefined);
@@ -402,7 +407,8 @@ test('singlesig-vlei-issuance', async function run() {
 
     oorAuthCredHolder = await retry(async () => {
         const cred = await getGrantedCredential(qviClient, oorAuthCred.sad.d);
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(oorAuthCredHolder !== undefined);
@@ -443,7 +449,8 @@ test('singlesig-vlei-issuance', async function run() {
 
     oorCredHolder = await retry(async () => {
         const cred = await getGrantedCredential(roleClient, oorCred.sad.d);
-        if (cred !== undefined) return cred;
+        assert(cred !== undefined)
+        return cred;
     }, RETRY_DEFAULTS);
 
     assert(oorCredHolder !== undefined);
