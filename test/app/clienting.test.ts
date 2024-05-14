@@ -371,7 +371,7 @@ describe('SignifyClient', () => {
         let treq = await client.createSignedRequest('aid1', turl, treqInit);
         let tres = await fetch(treq);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        let resReq = (lastCall[0] as Request)
+        let resReq = lastCall[0] as Request;
         assert.equal(resReq.url, 'http://example.com/test');
         assert.equal(resReq.method, 'POST');
         lastBody = await resReq.json();

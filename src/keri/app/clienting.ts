@@ -271,7 +271,7 @@ export class SignifyClient {
         );
         req.headers = signed_headers;
 
-        return new Request(url,req);
+        return new Request(url, req);
     }
 
     /**
