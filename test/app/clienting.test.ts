@@ -19,9 +19,7 @@ import { Groups } from '../../src/keri/app/grouping';
 import { Notifications } from '../../src/keri/app/notifying';
 
 import { Authenticater } from '../../src/keri/core/authing';
-import { Cigar } from '../../src/keri/core/cigar';
 import { HEADER_SIG_INPUT, HEADER_SIG_TIME } from '../../src/keri/core/httping';
-import { SaltyKeeper } from '../../src/keri/core/keeping';
 import { Salter, Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
 import fetchMock from 'jest-fetch-mock';
@@ -364,23 +362,21 @@ describe('SignifyClient', () => {
 
         let heads = new Headers();
         heads.set('Content-Type', 'application/json');
-        let reqInit = {
+        let treqInit = {
             headers: heads,
             method: 'POST',
             body: JSON.stringify({ foo: true }),
         };
-        resp = await client.signedFetch(
-            'aid1',
-            'http://example.com',
-            '/test',
-            reqInit
-        );
+        let turl = 'http://example.com/test';
+        let treq = await client.createSignedRequest('aid1', turl, treqInit);
+        let tres = await fetch(treq);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, 'http://example.com/test');
-        assert.equal(lastCall[1]!.method, 'POST');
-        lastBody = JSON.parse(lastCall[1]!.body!);
+        let resReq = (lastCall[0] as Request)
+        assert.equal(resReq.url, 'http://example.com/test');
+        assert.equal(resReq.method, 'POST');
+        lastBody = await resReq.json();
         assert.deepEqual(lastBody.foo, true);
-        lastHeaders = new Headers(lastCall[1]!.headers!);
+        lastHeaders = new Headers(resReq.headers);
         assert.equal(
             lastHeaders.get('signify-resource'),
             'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK'
@@ -403,7 +399,7 @@ describe('SignifyClient', () => {
         );
 
         let aid = await client.identifiers().get('aid1');
-        const keeper = client.manager!.get(aid) as SaltyKeeper;
+        const keeper = client.manager!.get(aid);
         const signer = keeper.signers[0];
         const created = lastHeaders
             .get(HEADER_SIG_INPUT)
@@ -415,7 +411,7 @@ describe('SignifyClient', () => {
 
         if (data) {
             const raw = new TextEncoder().encode(data);
-            const sig = signer.sign(raw, null) as Cigar;
+            const sig = signer.sign(raw);
             assert.equal(
                 sig.qb64,
                 lastHeaders
