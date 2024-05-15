@@ -231,7 +231,7 @@ export class SignifyClient {
     }
 
     /**
-     * Fetch a resource from from an external URL with headers signed by an AID
+     * Create a Signed Request to fetch a resource from an external URL with headers signed by an AID
      * @async
      * @param {string} aidName Name or alias of the AID to be used for signing
      * @param {string} url URL of the requested resource
@@ -242,7 +242,7 @@ export class SignifyClient {
      *              If the data is a FormData object then you should not set the contentType and the browser will set it to 'multipart/form-data'
      *              If the data is an object then you should use JSON.stringify to convert it to a string and set the contentType to 'application/json'
      *     - contentType Content type of the request.
-     * @returns {Promise<Request>} A promise to the result of the fetch
+     * @returns {Promise<Request>} A promise to the created Request
      */
     async createSignedRequest(
         aidName: string,
