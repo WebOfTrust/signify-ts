@@ -77,7 +77,7 @@ export async function getOrCreateIdentifier(
     name: string,
     kargs: CreateIdentiferArgs | undefined = undefined
 ): Promise<[string, string]> {
-    let id: any = undefined;
+    let id: string = undefined;
     try {
         const identfier = await client.identifiers().get(name);
         // console.log("identifiers.get", identfier);
