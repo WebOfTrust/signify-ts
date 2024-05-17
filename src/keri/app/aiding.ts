@@ -227,14 +227,8 @@ export class Identifier {
             icp: serder.ked,
             sigs: sigs,
             proxy: proxy,
-            smids:
-                states != undefined
-                    ? states.map((state) => state.i)
-                    : undefined,
-            rmids:
-                rstates != undefined
-                    ? rstates.map((state) => state.i)
-                    : undefined,
+            smids: states,
+            rmids: rstates,
         };
         jsondata[algo] = keeper.params();
 
@@ -278,8 +272,8 @@ export class Identifier {
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
-            'PUT',
+            '/identifiers/' + name + '/events',
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
@@ -376,8 +370,8 @@ export class Identifier {
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name,
-            'PUT',
+            '/identifiers/' + name + '/events',
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
