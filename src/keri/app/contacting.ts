@@ -76,12 +76,11 @@ export class Contacts {
      * @param {string} pre Prefix of the contact
      * @returns {Promise<any>} A promise to the result of the deletion
      */
-    async delete(pre: string): Promise<any> {
+    async delete(pre: string): Promise<void> {
         const path = `/contacts/` + pre;
         const method = 'DELETE';
 
-        const res = await this.client.fetch(path, method, null);
-        return await res.json();
+        await this.client.fetch(path, method, null);
     }
 
     /**
