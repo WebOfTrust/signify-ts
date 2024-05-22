@@ -74,7 +74,7 @@ export class Contacts {
      * Delete a contact
      * @async
      * @param {string} pre Prefix of the contact
-     * @returns {Promise<any>} A promise to the result of the deletion
+     * @returns {Promise<void>}
      */
     async delete(pre: string): Promise<void> {
         const path = `/contacts/` + pre;
