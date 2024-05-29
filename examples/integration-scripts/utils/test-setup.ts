@@ -173,6 +173,9 @@ export async function getOrCreateContact(
     }
     let op = await client.oobis().resolve(oobi, name);
     op = await waitOperation(client, op);
-    // console.log("oobis.resolve", op);
+    console.dir(op, { depth: 100 });
+    const id = op.response.i;
+
+    await client.contacts().get(id);
     return op.response.i;
 }

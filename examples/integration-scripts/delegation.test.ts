@@ -6,6 +6,7 @@ import {
     resolveOobi,
     waitOperation,
 } from './utils/test-util';
+import { getOrCreateContact } from './utils/test-setup';
 
 const { url, bootUrl } = resolveEnvironment();
 
@@ -77,7 +78,7 @@ test('delegation', async () => {
     console.log("Delegate's prefix:", delegatePrefix);
     console.log('Delegate waiting for approval...');
 
-    // Client 1 approves deletation
+    // Client 1 approves delegation
     const anchor = {
         i: delegatePrefix,
         s: '0',
@@ -86,11 +87,14 @@ test('delegation', async () => {
     const ixnResult1 = await client1
         .identifiers()
         .interact('delegator', anchor);
-    await waitOperation(client1, await ixnResult1.op());
-    console.log('Delegator approved delegation');
+    const anchorRes = await waitOperation(client1, await ixnResult1.op());
+    console.log('Delegator approve delegation submitted');
 
     let op3 = await client2.keyStates().query(aid1.prefix, '1');
     await waitOperation(client2, op3);
+
+    const apprDelRes = await client1.identifiers().approveDelegation('delegator', ixnResult1, anchorRes);
+    const adRes = await waitOperation(client1, await apprDelRes.op());
 
     // Client 2 check approval
     await waitOperation(client2, op2);
@@ -99,4 +103,17 @@ test('delegation', async () => {
     console.log('Delegation approved for aid:', aid2.prefix);
 
     await assertOperations(client1, client2);
-}, 60000);
+    const rpyResult2 = await client2
+    .identifiers()
+    .addEndRole('delegate', 'agent', client2!.agent!.pre);
+    await waitOperation(client2, await rpyResult2.op());
+    const oobis = await client2.oobis().get('delegate');
+
+    console.log(oobis);
+    const res = await getOrCreateContact(
+        client1,
+        'delegate',
+        oobis.oobis[0].split('/agent/')[0]
+    );
+// console.log(res);
+}, 600000);

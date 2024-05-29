@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 import { Saider, Salter, Serder, SignifyClient } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment, TestEnvironment } from './utils/resolve-env';
 import {
     assertOperations,
     markAndRemoveNotification,
@@ -107,9 +107,9 @@ const OOR_RULES = LE_RULES;
 const OOR_AUTH_RULES = LE_RULES;
 
 const CRED_RETRY_DEFAULTS = {
-    maxSleep: 1000,
-    minSleep: 100,
-    maxRetries: undefined,
+    // maxSleep: 1000,
+    // minSleep: 100,
+    maxRetries: 10,
     timeout: 30000,
 };
 
@@ -124,7 +124,7 @@ function createTimestamp() {
 }
 
 async function createAid(client: SignifyClient, name: string): Promise<Aid> {
-    const [prefix, oobi] = await getOrCreateIdentifier(client, name);
+    const [prefix, oobi] = await getOrCreateIdentifier(client, name, {});
     return { name, prefix, oobi };
 }
 

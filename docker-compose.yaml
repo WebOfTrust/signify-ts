@@ -78,7 +78,7 @@ services:
         depends_on:
             vlei-server:
                 condition: service_healthy
-            keria:
-                condition: service_healthy
+            # keria:
+            #     condition: service_healthy
             witness-demo:
                 condition: service_healthy

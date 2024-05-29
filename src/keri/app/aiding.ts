@@ -7,6 +7,7 @@ import { MtrDex } from '../core/matter';
 import { Serder } from '../core/serder';
 import { parseRangeHeaders } from '../core/httping';
 import { KeyManager } from '../core/keeping';
+import { Operation } from './coring';
 import { HabState } from '../core/state';
 
 /** Arguments required to create an identfier */
@@ -279,7 +280,39 @@ export class Identifier {
 
         const res = await this.client.fetch(
             '/identifiers/' + name + '?type=ixn',
-            'PUT',
+            'POST',
+            jsondata
+        );
+        return new EventResult(serder, sigs, res);
+    }
+
+    /**
+     * Approve the delegation after interaction event is anchored
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @param {any} [data] The anchoring interaction event
+     * @returns {Promise<EventResult>} A promise to the delegated approval result
+     */
+    async approveDelegation(name: string, anchorResult: EventResult, anchorOp: Operation): Promise<EventResult> {
+        const hab = await this.get(name);
+        const pre: string = hab.prefix;
+
+        const state = hab.state;
+
+        const serder = anchorResult.serder;
+
+        const keeper = this.client!.manager!.get(hab);
+        const sigs = anchorResult.sigs;
+
+        const jsondata: any = {
+            approveDelegation: serder.ked,
+            sigs: sigs,
+        };
+        jsondata[keeper.algo] = keeper.params();
+
+        const res = await this.client.fetch(
+            '/identifiers/' + name + '?type=ixn',
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
