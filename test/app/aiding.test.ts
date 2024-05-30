@@ -101,12 +101,10 @@ describe('Aiding', () => {
 
     it('Can create non-transferable salty identifiers', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
-        await client
-            .identifiers()
-            .create('aid1', {
-                bran: '0123456789abcdefghijk',
-                transferable: false,
-            });
+        await client.identifiers().create('aid1', {
+            bran: '0123456789abcdefghijk',
+            transferable: false,
+        });
 
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.path, '/identifiers');
