@@ -84,17 +84,14 @@ test('delegation', async () => {
         s: '0',
         d: delegatePrefix,
     };
-    const ixnResult1 = await client1
-        .identifiers()
-        .interact('delegator', anchor);
-    const anchorRes = await waitOperation(client1, await ixnResult1.op());
+
+    const apprDelRes = await client1.delegations().approve('delegator', anchor);
+    const adRes = await waitOperation(client1, await apprDelRes.op());
+    
     console.log('Delegator approve delegation submitted');
 
     let op3 = await client2.keyStates().query(aid1.prefix, '1');
     await waitOperation(client2, op3);
-
-    const apprDelRes = await client1.identifiers().approveDelegation('delegator', ixnResult1, anchorRes);
-    const adRes = await waitOperation(client1, await apprDelRes.op());
 
     // Client 2 check approval
     await waitOperation(client2, op2);

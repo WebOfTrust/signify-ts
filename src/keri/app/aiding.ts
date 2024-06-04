@@ -252,6 +252,18 @@ export class Identifier {
      * @returns {Promise<EventResult>} A promise to the interaction event result
      */
     async interact(name: string, data?: any): Promise<EventResult> {
+
+        let {serder, sigs, jsondata} = await this.createInteract(name, data);
+
+        const res = await this.client.fetch(
+            '/identifiers/' + name + '?type=ixn',
+            'POST',
+            jsondata
+        );
+        return new EventResult(serder, sigs, res);
+    }
+
+    async createInteract(name: string, data?: any): Promise<{ serder: any, sigs: any, jsondata: any }>{
         const hab = await this.get(name);
         const pre: string = hab.prefix;
 
@@ -276,46 +288,8 @@ export class Identifier {
             ixn: serder.ked,
             sigs: sigs,
         };
-        jsondata[keeper.algo] = keeper.params();
-
-        const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
-            'POST',
-            jsondata
-        );
-        return new EventResult(serder, sigs, res);
-    }
-
-    /**
-     * Approve the delegation after interaction event is anchored
-     * @async
-     * @param {string} name Name or alias of the identifier
-     * @param {any} [data] The anchoring interaction event
-     * @returns {Promise<EventResult>} A promise to the delegated approval result
-     */
-    async approveDelegation(name: string, anchorResult: EventResult, anchorOp: Operation): Promise<EventResult> {
-        const hab = await this.get(name);
-        const pre: string = hab.prefix;
-
-        const state = hab.state;
-
-        const serder = anchorResult.serder;
-
-        const keeper = this.client!.manager!.get(hab);
-        const sigs = anchorResult.sigs;
-
-        const jsondata: any = {
-            approveDelegation: serder.ked,
-            sigs: sigs,
-        };
-        jsondata[keeper.algo] = keeper.params();
-
-        const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
-            'POST',
-            jsondata
-        );
-        return new EventResult(serder, sigs, res);
+        jsondata[keeper.algo] = keeper.params(); 
+        return {serder, sigs, jsondata};       
     }
 
     /**
