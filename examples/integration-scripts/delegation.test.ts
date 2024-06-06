@@ -7,6 +7,8 @@ import {
     waitOperation,
 } from './utils/test-util';
 import { getOrCreateContact } from './utils/test-setup';
+import { retry } from './utils/retry';
+import { step } from './utils/test-step';
 
 const { url, bootUrl } = resolveEnvironment();
 
@@ -85,10 +87,15 @@ test('delegation', async () => {
         d: delegatePrefix,
     };
 
-    const apprDelRes = await client1.delegations().approve('delegator', anchor);
-    const adRes = await waitOperation(client1, await apprDelRes.op());
-    
-    console.log('Delegator approve delegation submitted');
+    await step('delegator approves delegation', async () => {
+        const result = await retry(async () => {
+            const apprDelRes = await client1.delegations().approve('delegator', anchor);
+            const adRes = await waitOperation(client1, await apprDelRes.op());
+            console.log('Delegator approve delegation submitted');
+            return apprDelRes;
+        });
+        assert.equal(JSON.stringify(result.serder.ked.a[0]), JSON.stringify(anchor));
+    });
 
     let op3 = await client2.keyStates().query(aid1.prefix, '1');
     await waitOperation(client2, op3);

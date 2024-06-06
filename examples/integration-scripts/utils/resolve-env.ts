@@ -1,4 +1,4 @@
-export type TestEnvironmentPreset = 'local' | 'docker' | 'rootsid';
+export type TestEnvironmentPreset = 'local' | 'docker' | 'rootsid1' | 'rootsid2';
 
 export interface TestEnvironment {
     preset: TestEnvironmentPreset;
@@ -54,13 +54,26 @@ export function resolveEnvironment(
                 ],
                 witnessIds: [WAN, WIL, WES],
             };
-        case 'rootsid':
+        case 'rootsid1':
             return {
                 preset: preset,
                 // url: "http://keria--publi-7wqhypzd56ee-cc3c56cbeced4f45.elb.us-east-1.amazonaws.com/admin",
                 // bootUrl: "http://keria--publi-7wqhypzd56ee-cc3c56cbeced4f45.elb.us-east-1.amazonaws.com:3903",
                 url: "https://keria-dev.rootsid.cloud/admin",
                 bootUrl: "https://keria-dev.rootsid.cloud",
+                witnessUrls: [
+                    "https://witness-dev01.rootsid.cloud", 
+                    "https://witness-dev02.rootsid.cloud",
+                    "https://witness-dev03.rootsid.cloud"
+                ],
+                witnessIds: [WAN, WIL, WES],
+                vleiServerUrl: 'http://schemas.rootsid.cloud',
+            };
+        case 'rootsid2':
+            return {
+                preset: preset,
+                url: "https://keria-demoservice.rootsid.cloud/admin",
+                bootUrl: "https://keria-demoservice.rootsid.cloud",
                 witnessUrls: [
                     "https://witness-dev01.rootsid.cloud", 
                     "https://witness-dev02.rootsid.cloud",

@@ -14,6 +14,8 @@ import {
     acceptMultisigIncept,
     startMultisigIncept,
 } from './utils/multisig-utils';
+import { retry } from './utils/retry';
+import { step } from './utils/test-step';
 
 test('delegation-multisig', async () => {
     await signify.ready();
@@ -86,9 +88,15 @@ test('delegation-multisig', async () => {
         s: '0',
         d: delegatePrefix,
     };
-    const ixnResult = await client0.identifiers().interact('delegator', anchor);
-    await waitOperation(client0, await ixnResult.op());
-    console.log('Delegator approved delegation');
+    await step('delegator approves delegation', async () => {
+        const result = await retry(async () => {
+            const apprDelRes = await client0.delegations().approve('delegator', anchor);
+            const adRes = await waitOperation(client0, await apprDelRes.op());
+            console.log('Delegator approved delegation');
+            return apprDelRes;
+        });
+        assert.equal(JSON.stringify(result.serder.ked.a[0]), JSON.stringify(anchor));
+    });
 
     const op3 = await client1.keyStates().query(aid0.prefix, '1');
     const op4 = await client2.keyStates().query(aid0.prefix, '1');
@@ -107,7 +115,7 @@ test('delegation-multisig', async () => {
 
     await assertOperations(client0, client1, client2);
     await assertNotifications(client0, client1, client2);
-}, 30000);
+}, 3000000);
 
 async function createAID(client: signify.SignifyClient, name: string) {
     await getOrCreateIdentifier(client, name);

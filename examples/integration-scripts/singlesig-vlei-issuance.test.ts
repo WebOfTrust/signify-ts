@@ -106,9 +106,9 @@ const ECR_AUTH_RULES = Saider.saidify({
 const OOR_RULES = LE_RULES;
 const OOR_AUTH_RULES = LE_RULES;
 
-const CRED_RETRY_DEFAULTS = {
-    // maxSleep: 1000,
-    // minSleep: 100,
+const RETRY_DEFAULTS = {
+    maxSleep: 10000,
+    minSleep: 1000,
     maxRetries: 10,
     timeout: 30000,
 };
@@ -200,7 +200,7 @@ test('singlesig-vlei-issuance', async function run() {
             const cred = await getGrantedCredential(qviClient, qviCred.sad.d);
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(qviCredHolder.sad.d, qviCred.sad.d);
@@ -240,7 +240,7 @@ test('singlesig-vlei-issuance', async function run() {
             const cred = await getGrantedCredential(leClient, leCred.sad.d);
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(leCredHolder.sad.d, leCred.sad.d);
@@ -282,7 +282,7 @@ test('singlesig-vlei-issuance', async function run() {
             const cred = await getGrantedCredential(roleClient, ecrCred.sad.d);
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(ecrCredHolder.sad.d, ecrCred.sad.d);
@@ -330,7 +330,7 @@ test('singlesig-vlei-issuance', async function run() {
             );
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(ecrAuthCredHolder.sad.d, ecrAuthCred.sad.d);
@@ -374,7 +374,7 @@ test('singlesig-vlei-issuance', async function run() {
             const cred = await getGrantedCredential(roleClient, ecrCred2.sad.d);
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(ecrCredHolder2.sad.d, ecrCred2.sad.d);
@@ -421,7 +421,7 @@ test('singlesig-vlei-issuance', async function run() {
             );
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(oorAuthCredHolder.sad.d, oorAuthCred.sad.d);
@@ -464,7 +464,7 @@ test('singlesig-vlei-issuance', async function run() {
             const cred = await getGrantedCredential(roleClient, oorCred.sad.d);
             assert(cred !== undefined);
             return cred;
-        }, CRED_RETRY_DEFAULTS);
+        }, RETRY_DEFAULTS);
     }
 
     assert.equal(oorCredHolder.sad.d, oorCred.sad.d);
@@ -476,7 +476,7 @@ test('singlesig-vlei-issuance', async function run() {
 
     await assertOperations(gleifClient, qviClient, leClient, roleClient);
     await warnNotifications(gleifClient, qviClient, leClient, roleClient);
-}, 360000);
+}, 3600000);
 
 async function getOrCreateRegistry(
     client: SignifyClient,

@@ -8,6 +8,15 @@ import {
 } from 'signify-ts';
 import { resolveEnvironment } from './resolve-env';
 import { waitOperation } from './test-util';
+import { retry } from './retry';
+import assert from 'assert';
+
+const RETRY_DEFAULTS = {
+    maxSleep: 10000,
+    minSleep: 1000,
+    maxRetries: 10,
+    timeout: 30000,
+};
 
 /**
  * Connect or boot a number of SignifyClient instances
@@ -103,12 +112,23 @@ export async function getOrCreateIdentifier(
             .addEndRole(name, 'agent', eid);
         let op = await result.op();
         op = await waitOperation(client, op);
-        // console.log("identifiers.addEndRole", op);
+        console.log("identifiers.addEndRole", op);
+        if (op) {
+            const result = await retry(async () => {
+                const oobi = await client.oobis().get(name, 'agent');
+                if (oobi.oobis.length == 0) {
+                    console.log("Agent oobi not found, retrying...")
+                    throw new Error(`No agent oobi found for controller: ${name}`);
+                }
+                const result: [string, string] = [id, oobi.oobis[0]];
+                console.log(name, result);
+                return result;
+            },RETRY_DEFAULTS);
+            assert.equal(result[0], id);
+            return result;
+        }
     }
-    const oobi = await client.oobis().get(name, 'agent');
-    const result: [string, string] = [id, oobi.oobis[0]];
-    console.log(name, result);
-    return result;
+    throw new Error(`Failed to add end role and resolve oobies from agent: ${name}`);
 }
 
 /**
