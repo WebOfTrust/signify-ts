@@ -383,8 +383,8 @@ export class Identifier {
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name,
-            'PUT',
+            '/identifiers/' + name + '/events',
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
