@@ -150,3 +150,7 @@ export async function markAndRemoveNotification(
         await client.notifications().delete(note.i);
     }
 }
+
+export function createTimestamp() {
+    return new Date().toISOString().replace('Z', '000+00:00');
+}

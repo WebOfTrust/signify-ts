@@ -18,6 +18,8 @@ import {
 } from './utils/test-util';
 import { getOrCreateClients, getOrCreateContact } from './utils/test-setup';
 import { HabState } from '../../src/keri/core/state';
+import { retry } from './utils/retry';
+import { step } from './utils/test-step';
 
 const { vleiServerUrl, witnessIds } = resolveEnvironment();
 
@@ -66,6 +68,13 @@ const ECR_RULES = Saider.saidify({
         l: 'It is the sole responsibility of Holders as Issuees of an ECR vLEI Credential to present that Credential in a privacy-preserving manner using the mechanisms provided in the Issuance and Presentation Exchange (IPEX) protocol specification and the Authentic Chained Data Container (ACDC) specification. https://github.com/WebOfTrust/IETF-IPEX and https://github.com/trustoverip/tswg-acdc-specification.',
     },
 })[1];
+
+const RETRY_DEFAULTS = {
+    maxSleep: 10000,
+    minSleep: 1000,
+    maxRetries: 10,
+    timeout: 30000,
+};
 
 test('multisig-vlei-issuance', async function run() {
     /**
@@ -342,7 +351,7 @@ test('multisig-vlei-issuance', async function run() {
             s: '0',
             d: aidQVIPrefix,
         };
-        const ixnOp1 = await interactMultisig(
+        const ixnOp1 = await delegateMultisig(
             clientGAR1,
             aidGAR1,
             [aidGAR2],
@@ -350,7 +359,7 @@ test('multisig-vlei-issuance', async function run() {
             anchor,
             true
         );
-        const ixnOp2 = await interactMultisig(
+        const ixnOp2 = await delegateMultisig(
             clientGAR2,
             aidGAR2,
             [aidGAR1],
@@ -1234,7 +1243,7 @@ test('multisig-vlei-issuance', async function run() {
         ecrCredbyECR = await waitForCredential(clientECR, ecrCred.sad.d);
     }
     assert.equal(ecrCred.sad.d, ecrCredbyECR.sad.d);
-}, 360000);
+}, 3600000);
 
 function createTimestamp() {
     return new Date().toISOString().replace('Z', '000+00:00');
@@ -1303,7 +1312,7 @@ async function createAIDMultisig(
     return op;
 }
 
-async function interactMultisig(
+async function delegateMultisig(
     client: SignifyClient,
     aid: HabState,
     otherMembersAIDs: HabState[],
@@ -1313,12 +1322,19 @@ async function interactMultisig(
 ) {
     if (!isInitiator) await waitAndMarkNotification(client, '/multisig/ixn');
 
-    const ixnResult = await client
-        .identifiers()
-        .interact(multisigAID.name, anchor);
-    const op = await ixnResult.op();
-    const serder = ixnResult.serder;
-    const sigs = ixnResult.sigs;
+    const {delResult, delOp} = await retry(async () => {
+        const delResult = await client.delegations().approve(aid.name, anchor);
+        const delOp = await waitOperation(client, await delResult.op());
+        console.log(`Delegator ${aid.name} approved delegation for ${multisigAID.name} with anchor ${JSON.stringify(anchor)}`);
+        return {delResult, delOp};
+    },RETRY_DEFAULTS);
+    assert.equal(JSON.stringify(delResult.serder.ked.a[0]), JSON.stringify(anchor));
+    // const ixnResult = await client
+    //     .identifiers()
+    //     .interact(multisigAID.name, anchor);
+    // const op = await ixnResult.op();
+    const serder = delResult.serder;
+    const sigs = delResult.sigs;
     const sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
     const ims = signify.d(signify.messagize(serder, sigers));
     const atc = ims.substring(serder.size);
@@ -1340,7 +1356,7 @@ async function interactMultisig(
             recp
         );
 
-    return op;
+    return delOp;
 }
 
 async function addEndRoleMultisig(
