@@ -1,6 +1,7 @@
 import signify, { Algos, Siger, SignifyClient, d, messagize } from 'signify-ts';
-import { waitForNotifications } from './test-util';
+import { waitForNotifications, waitOperation } from './test-util';
 import { HabState } from '../../../src/keri/core/state';
+import assert from 'assert';
 
 export interface AcceptMultisigInceptArgs {
     groupName: string;
@@ -46,7 +47,7 @@ export async function acceptMultisigIncept(
 
     const recipients = smids.filter((id: string) => memberHab.prefix !== id);
 
-    await client2
+    client2
         .exchanges()
         .send(
             localMemberName,
@@ -188,7 +189,10 @@ async function getStates(client: SignifyClient, prefixes: string[]) {
     return participantStates.map((s) => s[0]);
 }
 
-export async function waitAndMarkNotification(client: SignifyClient, route: string) {
+export async function waitAndMarkNotification(
+    client: SignifyClient,
+    route: string
+) {
     const notes = await waitForNotifications(client, route);
 
     await Promise.all(
@@ -198,4 +202,70 @@ export async function waitAndMarkNotification(client: SignifyClient, route: stri
     );
 
     return notes[notes.length - 1]?.a.d ?? '';
+}
+
+export async function delegateMultisig(
+    client: SignifyClient,
+    aid: HabState,
+    otherMembersAIDs: HabState[],
+    multisigAID: HabState,
+    anchor: { i: string; s: string; d: string },
+    isInitiator: boolean = false
+) {
+    if (!isInitiator) {
+        const msgSaid = await waitAndMarkNotification(client, '/multisig/ixn');
+        console.log(
+            `${aid.name}(${aid.prefix}) received exchange message to join the interaction event`
+        );
+        const res = await client.groups().getRequest(msgSaid);
+        const exn = res[0].exn;
+        const ixn = exn.e.ixn;
+        anchor = ixn.a;
+    }
+
+    // const {delResult, delOp} = await retry(async () => {
+    const delResult = await client.delegations().approve(aid.name, anchor);
+    const delOp = await waitOperation(client, await delResult.op());
+    console.log(`Delegator ${aid.name}(${aid.prefix}) approved delegation for ${multisigAID.name} with anchor ${JSON.stringify(anchor)}`);
+    // return {delResult, delOp};
+    // },RETRY_DEFAULTS);
+    assert.equal(JSON.stringify(delResult.serder.ked.a[0]), JSON.stringify(anchor));
+    // const ixnResult = await client
+    //     .identifiers()
+    //     .interact(multisigAID.name, anchor);
+    // const op = await ixnResult.op();
+    const serder = delResult.serder;
+    const sigs = delResult.sigs;
+    const sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    const ims = signify.d(signify.messagize(serder, sigers));
+    const atc = ims.substring(serder.size);
+    const xembeds = {
+        ixn: [serder, atc],
+    };
+    const smids = [aid.prefix, ...otherMembersAIDs.map((aid) => aid.prefix)];
+    const recp = otherMembersAIDs.map((aid) => aid.prefix);
+
+    await client
+        .exchanges()
+        .send(
+            aid.name,
+            multisigAID.name,
+            aid,
+            '/multisig/ixn',
+            { gid: serder.pre, smids: smids, rmids: smids },
+            xembeds,
+            recp
+        );
+    
+    if (isInitiator) {
+        console.log(
+            `${aid.name}(${aid.prefix}) initiates interaction event, waiting for others to join...`
+        );
+    } else {
+        console.log(
+            `${aid.name}(${aid.prefix}) joins interaction event, waiting for others to join...`
+        );
+    }
+
+    return delOp;
 }

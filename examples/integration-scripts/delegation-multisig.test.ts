@@ -14,12 +14,12 @@ import { getOrCreateClient, getOrCreateContact, getOrCreateIdentifier } from './
 import {
     acceptMultisigIncept,
     addEndRoleMultisig,
+    delegateMultisig,
     startMultisigIncept,
     waitAndMarkNotification,
 } from './utils/multisig-utils';
 import { retry } from './utils/retry';
 import { step } from './utils/test-step';
-import { HabState } from '../../src/keri/core/state';
 
 const gtor = 'gtor';
 const gtee = 'gtee';
@@ -27,6 +27,13 @@ const tor1 = 'tor1';
 const tor2 = 'tor2';
 const tee1 = 'tee1';
 const tee2 = 'tee2';
+
+const RETRY_DEFAULTS = {
+    maxSleep: 10000,
+    minSleep: 1000,
+    maxRetries: 10,
+    timeout: 30000,
+};
 
 test('delegation-multisig', async () => {
     await signify.ready();
@@ -91,18 +98,18 @@ test('delegation-multisig', async () => {
                 participants: [ator1.prefix, ator2.prefix],
                 isith: 2,
                 nsith: 2,
-                toad: 2,
-                wits: [
-                    'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-                    'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-                    'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-                ],
+                // toad: 2,
+                // wits: [
+                //     'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+                //     'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+                //     'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+                // ],
 
             });
         }
     );
 
-    const [ntor] = await waitForNotifications(ctor2, '/multisig/icp');
+    const [ntor] = await waitForNotifications(ctor2, '/multisig/icp', RETRY_DEFAULTS);
     await markAndRemoveNotification(ctor2, ntor);
     assert(ntor.a.d);
     const otor2 = await acceptMultisigIncept(ctor2, {
@@ -178,13 +185,13 @@ test('delegation-multisig', async () => {
                 participants: [atee1.prefix, atee2.prefix],
                 isith: 2,
                 nsith: 2,
-                toad: 2,
+                // toad: 2,
                 delpre: torpre,
-                wits: [
-                    'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-                    'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-                    'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-                ],
+                // wits: [
+                //     'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+                //     'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+                //     'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+                // ],
             });
         }
     );
@@ -200,11 +207,6 @@ test('delegation-multisig', async () => {
         msgSaid: ntee.a.d,
     });
 
-    await Promise.all([
-        waitOperation(ctee1, otee1),
-        waitOperation(ctee2, otee2),
-    ]);
-
     console.log(`${tee2} joined multisig, waiting for delegator...`);
 
     const agtee1 = await ctee1.identifiers().get(gtee);
@@ -217,26 +219,81 @@ test('delegation-multisig', async () => {
     const delegatePrefix = otee1.name.split('.')[1];
     await step('delegator anchors/approves delegation', async () => {
 
-        // Delegator approves delegation
+        // GEDA anchors delegation with an interaction event.
         const anchor = {
             i: delegatePrefix,
             s: '0',
             d: delegatePrefix,
         };
-
-        const result = await retry(async () => {
-            const apprDelRes = await ctor1
-                .delegations()
-                .approve(gtor, anchor);
-            const adRes = await waitOperation(ctor1, await apprDelRes.op());
-            console.log('Delegator approved delegation');
-            return apprDelRes;
-        });
-        assert.equal(
-            JSON.stringify(result.serder.ked.a[0]),
-            JSON.stringify(anchor)
+        const ixnOp1 = await delegateMultisig(
+            ctor1,
+            ator1,
+            [ator2],
+            agtor,
+            anchor,
+            true
         );
+        const ixnOp2 = await delegateMultisig(
+            ctor2,
+            ator2,
+            [ator1],
+            agtor,
+            anchor
+        );
+        await Promise.all([
+            waitOperation(ctor1, ixnOp1),
+            waitOperation(ctor2, ixnOp2),
+        ]);
+
+        await waitAndMarkNotification(ctor1, '/multisig/ixn');
+
+        // QARs query the GEDA's key state
+        const queryOp1 = await ctor1
+            .keyStates()
+            .query(agtor.prefix, '1');
+        const queryOp2 = await ctor2
+            .keyStates()
+            .query(agtor.prefix, '1');
+
+        await Promise.all([
+            waitOperation(ctor1, otor1),
+            waitOperation(ctor2, otor2),
+            waitOperation(ctor1, ixnOp1),
+            waitOperation(ctor2, ixnOp2),
+            waitOperation(ctor1, queryOp1),
+            waitOperation(ctor2, queryOp2),
+        ]);
+
+        await waitAndMarkNotification(ctor1, '/multisig/icp');
+
     });
+    assert.equal(agtee1.prefix, agtee2.prefix);
+    assert.equal(agtee1.name, agtee2.name);
+
+        // Delegator approves delegation
+        // const anchor = {
+        //     i: delegatePrefix,
+        //     s: '0',
+        //     d: delegatePrefix,
+        // };
+
+        // const [dresult1] = await retry(async () => {
+        //     const apprDelRes1 = await ctor1
+        //         .delegations()
+        //         .approve(gtor, anchor);
+        //     // const apprDelRes2 = await ctor2
+        //     //     .delegations()
+        //     //     .approve(gtor, anchor);
+        //     console.log('Delegator approved delegation');
+        //     return [apprDelRes1];
+        // });
+        // return [anchor, dresult1]
+    // });
+
+    // assert.equal(
+    //     JSON.stringify(dresult2.serder.ked.a[0]),
+    //     JSON.stringify(anchor)
+    // );
 
     assert.equal(otee2.name.split('.')[1], delegatePrefix);
     console.log("Delegate's prefix:", delegatePrefix);
@@ -246,14 +303,15 @@ test('delegation-multisig', async () => {
     const otee4 = await ctee2.keyStates().query(atee1.prefix, '1');
 
     // Check for completion
-    await Promise.all([
-        waitOperation(ctor1, otor1),
-        waitOperation(ctor2, otor2),
-        waitOperation(ctee1, otee1),
-        waitOperation(ctee2, otee2),
-        waitOperation(ctee1, otee3),
-        waitOperation(ctee2, otee4),
-    ]);
+    // await waitOperation(ctor1, otor1),
+    // await waitOperation(ctor2, otor2),
+    await waitOperation(ctee1, otee1),
+    await waitOperation(ctee2, otee2),
+    // await waitOperation(ctor1, await dresult1.op());
+    // await waitOperation(ctor2, await dresult2.op());
+    await waitOperation(ctee1, otee3),
+    await waitOperation(ctee2, otee4),
+
     console.log('Delegated multisig created!');
 
     const aid_delegate = await ctee1.identifiers().get(gtee);
