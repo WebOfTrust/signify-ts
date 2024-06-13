@@ -220,12 +220,12 @@ export async function delegateMultisig(
         const res = await client.groups().getRequest(msgSaid);
         const exn = res[0].exn;
         const ixn = exn.e.ixn;
-        anchor = ixn.a;
+        anchor = ixn.a[0];
     }
 
     // const {delResult, delOp} = await retry(async () => {
-    const delResult = await client.delegations().approve(aid.name, anchor);
-    
+    const delResult = await client.delegations().approve(multisigAID.name, anchor);
+    const appOp = await delResult.op();
     console.log(`Delegator ${aid.name}(${aid.prefix}) approved delegation for ${multisigAID.name} with anchor ${JSON.stringify(anchor)}`);
     // return {delResult, delOp};
     // },RETRY_DEFAULTS);
@@ -259,13 +259,13 @@ export async function delegateMultisig(
     
     if (isInitiator) {
         console.log(
-            `${aid.name}(${aid.prefix}) initiates interaction event, waiting for others to join...`
+            `${aid.name}(${aid.prefix}) initiates delegation interaction event, waiting for others to join...`
         );
     } else {
         console.log(
-            `${aid.name}(${aid.prefix}) joins interaction event, waiting for others to join...`
+            `${aid.name}(${aid.prefix}) joins interaction event`
         );
     }
 
-    return delResult.op();
+    return appOp;
 }

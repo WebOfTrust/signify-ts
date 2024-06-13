@@ -58,12 +58,12 @@ test('delegation', async () => {
         ],
     });
     await waitOperation(client1, await icpResult1.op());
-    const aid1 = await client1.identifiers().get('delegator');
+    const ator = await client1.identifiers().get('delegator');
     const rpyResult1 = await client1
         .identifiers()
         .addEndRole('delegator', 'agent', client1!.agent!.pre);
     await waitOperation(client1, await rpyResult1.op());
-    console.log("Delegator's AID:", aid1.prefix);
+    console.log("Delegator's AID:", ator.prefix);
 
     // Client 2 resolves delegator OOBI
     console.log('Client 2 resolving delegator OOBI');
@@ -74,7 +74,7 @@ test('delegation', async () => {
     // Client 2 creates delegate AID
     const icpResult2 = await client2
         .identifiers()
-        .create('delegate', { delpre: aid1.prefix });
+        .create('delegate', { delpre: ator.prefix });
     const op2 = await icpResult2.op();
     const delegatePrefix = op2.name.split('.')[1];
     console.log("Delegate's prefix:", delegatePrefix);
@@ -97,7 +97,7 @@ test('delegation', async () => {
         assert.equal(JSON.stringify(result.serder.ked.a[0]), JSON.stringify(anchor));
     });
 
-    let op3 = await client2.keyStates().query(aid1.prefix, '1');
+    let op3 = await client2.keyStates().query(ator.prefix, '1');
     await waitOperation(client2, op3);
 
     // Client 2 check approval

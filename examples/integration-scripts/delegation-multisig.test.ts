@@ -158,6 +158,7 @@ test('delegation-multisig', async () => {
         await Promise.all(opList2.map((op) => waitOperation(ctor2, op)));
 
         await waitAndMarkNotification(ctor1, '/multisig/rpy');
+        await waitAndMarkNotification(ctor2, '/multisig/rpy');
 
         const [ogtor1, ogtor2] = await Promise.all([
             ctor1.oobis().get(agtor.name, 'agent'),
@@ -177,7 +178,7 @@ test('delegation-multisig', async () => {
     ]);
 
     const otee1 = await step(
-        `${tee1}(${atee1.prefix}) initiated delegatee multisig, waiting for ${tee1}(${atee1.prefix}) to join...`,
+        `${tee1}(${atee1.prefix}) initiated delegatee multisig, waiting for ${tee2}(${atee2.prefix}) to join...`,
         async () => {
             return await startMultisigIncept(ctee1, {
                 groupName: gtee,
@@ -214,16 +215,18 @@ test('delegation-multisig', async () => {
 
     assert.equal(agtee1.prefix, agtee2.prefix);
     assert.equal(agtee1.name, agtee2.name);
-    const agtee = agtee1;
 
-    const delegatePrefix = otee1.name.split('.')[1];
+    const teepre = otee1.name.split('.')[1];
+    assert.equal(otee2.name.split('.')[1], teepre);
+    console.log("Delegatee prefix:", teepre);
+
     await step('delegator anchors/approves delegation', async () => {
 
         // GEDA anchors delegation with an interaction event.
         const anchor = {
-            i: delegatePrefix,
+            i: teepre,
             s: '0',
-            d: delegatePrefix,
+            d: teepre,
         };
         const delApprOp1 = await delegateMultisig(
             ctor1,
@@ -240,82 +243,38 @@ test('delegation-multisig', async () => {
             agtor,
             anchor
         );
-        await Promise.all([
+        const [dresult1, dresult2] = await Promise.all([
             waitOperation(ctor1, delApprOp1),
             waitOperation(ctor2, delApprOp2),
         ]);
+
+        assert.equal(dresult1.response,dresult2.response);
 
         await waitAndMarkNotification(ctor1, '/multisig/ixn');
-
-        // QARs query the GEDA's key state
-        const queryOp1 = await ctor1
-            .keyStates()
-            .query(agtor.prefix, '1');
-        const queryOp2 = await ctor2
-            .keyStates()
-            .query(agtor.prefix, '1');
-
-        await Promise.all([
-            waitOperation(ctor1, otor1),
-            waitOperation(ctor2, otor2),
-            waitOperation(ctor1, delApprOp1),
-            waitOperation(ctor2, delApprOp2),
-            waitOperation(ctor1, queryOp1),
-            waitOperation(ctor2, queryOp2),
-        ]);
-
-        await waitAndMarkNotification(ctor1, '/multisig/icp');
-
     });
-    assert.equal(agtee1.prefix, agtee2.prefix);
-    assert.equal(agtee1.name, agtee2.name);
 
-        // Delegator approves delegation
-        // const anchor = {
-        //     i: delegatePrefix,
-        //     s: '0',
-        //     d: delegatePrefix,
-        // };
+    const queryOp1 = await ctor1
+        .keyStates()
+        .query(agtor.prefix, '1');
+    const queryOp2 = await ctor2
+        .keyStates()
+        .query(agtor.prefix, '1');
 
-        // const [dresult1] = await retry(async () => {
-        //     const apprDelRes1 = await ctor1
-        //         .delegations()
-        //         .approve(gtor, anchor);
-        //     // const apprDelRes2 = await ctor2
-        //     //     .delegations()
-        //     //     .approve(gtor, anchor);
-        //     console.log('Delegator approved delegation');
-        //     return [apprDelRes1];
-        // });
-        // return [anchor, dresult1]
-    // });
+    const kstor1 = await waitOperation(ctor1, queryOp1);
+    const kstor2 = await waitOperation(ctor2, queryOp2);
 
-    // assert.equal(
-    //     JSON.stringify(dresult2.serder.ked.a[0]),
-    //     JSON.stringify(anchor)
-    // );
+    // QARs query the GEDA's key state
+    const ksteetor1 = await ctee1.keyStates().query(agtor.prefix, '1');
+    const ksteetor2 = await ctee2.keyStates().query(agtor.prefix, '1');
+    const teeTor1 = await waitOperation(ctee1, ksteetor1);
+    const teeTor2 = await waitOperation(ctee2, ksteetor2);
 
-    assert.equal(otee2.name.split('.')[1], delegatePrefix);
-    console.log("Delegate's prefix:", delegatePrefix);
-    // console.log('Delegate waiting for approval...');
-
-    const otee3 = await ctee1.keyStates().query(atee1.prefix, '1');
-    const otee4 = await ctee2.keyStates().query(atee1.prefix, '1');
-
-    // Check for completion
-    // await waitOperation(ctor1, otor1),
-    // await waitOperation(ctor2, otor2),
-    await waitOperation(ctee1, otee1),
-    await waitOperation(ctee2, otee2),
-    // await waitOperation(ctor1, await dresult1.op());
-    // await waitOperation(ctor2, await dresult2.op());
-    await waitOperation(ctee1, otee3),
-    await waitOperation(ctee2, otee4),
-
+    const teeDone1 = await waitOperation(ctee1, otee1);
+    const teeDone2 = await waitOperation(ctee2, otee2);
     console.log('Delegated multisig created!');
 
-    const aid_delegate = await ctee1.identifiers().get(gtee);
-    assert.equal(aid_delegate.prefix, delegatePrefix);
+    const agtee = await ctee1.identifiers().get(gtee);
+    assert.equal(agtee.prefix, teepre);
 
     await assertOperations(ctor1, ctor2, ctee1, ctee2);
     await assertNotifications(ctor1, ctor2, ctee1, ctee2);
