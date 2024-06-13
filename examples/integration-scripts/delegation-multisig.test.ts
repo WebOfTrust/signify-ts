@@ -98,12 +98,12 @@ test('delegation-multisig', async () => {
                 participants: [ator1.prefix, ator2.prefix],
                 isith: 2,
                 nsith: 2,
-                // toad: 2,
-                // wits: [
-                //     'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-                //     'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-                //     'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-                // ],
+                toad: 2,
+                wits: [
+                    'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+                    'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+                    'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+                ],
 
             });
         }
@@ -186,13 +186,13 @@ test('delegation-multisig', async () => {
                 participants: [atee1.prefix, atee2.prefix],
                 isith: 2,
                 nsith: 2,
-                // toad: 2,
+                toad: 2,
                 delpre: torpre,
-                // wits: [
-                //     'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-                //     'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-                //     'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-                // ],
+                wits: [
+                    'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+                    'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+                    'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+                ],
             });
         }
     );
@@ -278,7 +278,7 @@ test('delegation-multisig', async () => {
 
     await assertOperations(ctor1, ctor2, ctee1, ctee2);
     await assertNotifications(ctor1, ctor2, ctee1, ctee2);
-}, 3000000);
+}, 600000);
 
 async function createAID(client: signify.SignifyClient, name: string) {
     await getOrCreateIdentifier(client, name);
