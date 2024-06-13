@@ -225,7 +225,7 @@ export async function delegateMultisig(
 
     // const {delResult, delOp} = await retry(async () => {
     const delResult = await client.delegations().approve(aid.name, anchor);
-    const delOp = await waitOperation(client, await delResult.op());
+    
     console.log(`Delegator ${aid.name}(${aid.prefix}) approved delegation for ${multisigAID.name} with anchor ${JSON.stringify(anchor)}`);
     // return {delResult, delOp};
     // },RETRY_DEFAULTS);
@@ -267,5 +267,5 @@ export async function delegateMultisig(
         );
     }
 
-    return delOp;
+    return delResult.op();
 }

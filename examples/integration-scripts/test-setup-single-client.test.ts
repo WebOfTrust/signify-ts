@@ -20,7 +20,7 @@ afterAll(async () => {
 describe('test-setup-single-client', () => {
     test('step1', async () => {
         expect(client.agent?.pre).toEqual(
-            "ELb5nO2NIQd7QpWCxxxQ90GEtv-_p71f4REJHxl159Tp"
+            "EHZVWQ-qCT5jWxRCtfS7flxPfUrF9si-oJsBCbRsbz93"
         );
         expect(client.controller?.pre).toEqual(
             'EB3UGWwIMq7ppzcQ697ImQIuXlBG5jzh-baSx-YG3-tY'
@@ -33,7 +33,7 @@ describe('test-setup-single-client', () => {
         switch (env.preset) {
             case 'local':
                 expect(name1_oobi).toEqual(
-                    `http://127.0.0.1:3902/oobi/${name1_id}/agent/ELb5nO2NIQd7QpWCxxxQ90GEtv-_p71f4REJHxl159Tp`
+                    `http://127.0.0.1:3902/oobi/${name1_id}/agent/${client.agent?.pre}`
                 );
                 expect(oobi.oobis[0]).toEqual(
                     `http://localhost:5642/oobi/${name1_id}/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha`

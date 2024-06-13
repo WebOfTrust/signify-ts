@@ -84,13 +84,13 @@ test('delegation-multisig', async () => {
             resolveOobi(ctee2, teeoobi1.oobis[0], tee1),
         ]);
     });
-    console.log('Tor1 and Tee1 resolved Tor2 and Tee2 OOBIs and vice versa');
+    console.log(`${tor1}(${ator1.prefix}) and ${tee1}(${atee1.prefix}) resolved ${tor2}(${ator2.prefix}) and ${tee2}(${atee2.prefix}) OOBIs and vice versa`);
 
     // First member start the creation of a multisig identifier
     // Create a multisig AID for the GEDA.
     // Skip if a GEDA AID has already been incepted.
     const otor1 = await step(
-        `${tor1} initiated delegator multisig, waiting for ${tor2} to join...`,
+        `${tor1}(${ator1.prefix}) initiated delegator multisig, waiting for ${tor2}(${ator2.prefix}) to join...`,
         async () => {
             return await startMultisigIncept(ctor1, {
                 groupName: gtor,
@@ -132,7 +132,7 @@ test('delegation-multisig', async () => {
     const agtor = agtor1;
 
     //Resolve delegator OOBI
-    const gtorOobi = await step('Add and resolve delegator OOBI', async () => {
+    const gtorOobi = await step(`Add and resolve delegator OOBI ${gtor}(${agtor.prefix})`, async () => {
         // const ogtor1 = await ctor1.oobis().get(gtor, 'agent');
         // return await resolveOobi(ctor1, ogtor1.oobis[0], gtor);
         const timestamp = createTimestamp();
@@ -177,7 +177,7 @@ test('delegation-multisig', async () => {
     ]);
 
     const otee1 = await step(
-        `${tee1} initiated delegatee multisig, waiting for ${tee2} to join...`,
+        `${tee1}(${atee1.prefix}) initiated delegatee multisig, waiting for ${tee1}(${atee1.prefix}) to join...`,
         async () => {
             return await startMultisigIncept(ctee1, {
                 groupName: gtee,
@@ -225,7 +225,7 @@ test('delegation-multisig', async () => {
             s: '0',
             d: delegatePrefix,
         };
-        const ixnOp1 = await delegateMultisig(
+        const delApprOp1 = await delegateMultisig(
             ctor1,
             ator1,
             [ator2],
@@ -233,7 +233,7 @@ test('delegation-multisig', async () => {
             anchor,
             true
         );
-        const ixnOp2 = await delegateMultisig(
+        const delApprOp2 = await delegateMultisig(
             ctor2,
             ator2,
             [ator1],
@@ -241,8 +241,8 @@ test('delegation-multisig', async () => {
             anchor
         );
         await Promise.all([
-            waitOperation(ctor1, ixnOp1),
-            waitOperation(ctor2, ixnOp2),
+            waitOperation(ctor1, delApprOp1),
+            waitOperation(ctor2, delApprOp2),
         ]);
 
         await waitAndMarkNotification(ctor1, '/multisig/ixn');
@@ -258,8 +258,8 @@ test('delegation-multisig', async () => {
         await Promise.all([
             waitOperation(ctor1, otor1),
             waitOperation(ctor2, otor2),
-            waitOperation(ctor1, ixnOp1),
-            waitOperation(ctor2, ixnOp2),
+            waitOperation(ctor1, delApprOp1),
+            waitOperation(ctor2, delApprOp2),
             waitOperation(ctor1, queryOp1),
             waitOperation(ctor2, queryOp2),
         ]);
