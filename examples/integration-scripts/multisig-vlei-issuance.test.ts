@@ -20,6 +20,7 @@ import { getOrCreateClients, getOrCreateContact } from './utils/test-setup';
 import { HabState } from '../../src/keri/core/state';
 import { retry } from './utils/retry';
 import { step } from './utils/test-step';
+import { addEndRoleMultisig, delegateMultisig } from './utils/multisig-utils';
 
 const { vleiServerUrl, witnessIds } = resolveEnvironment();
 
@@ -254,6 +255,7 @@ test('multisig-vlei-issuance', async function run() {
         const timestamp = createTimestamp();
         const opList1 = await addEndRoleMultisig(
             clientGAR1,
+            aidGEDA.name,
             aidGAR1,
             [aidGAR2],
             aidGEDA,
@@ -262,6 +264,7 @@ test('multisig-vlei-issuance', async function run() {
         );
         const opList2 = await addEndRoleMultisig(
             clientGAR2,
+            aidGEDA.name,
             aidGAR2,
             [aidGAR1],
             aidGEDA,
@@ -420,6 +423,7 @@ test('multisig-vlei-issuance', async function run() {
         const timestamp = createTimestamp();
         const opList1 = await addEndRoleMultisig(
             clientQAR1,
+            aidQVI.name,
             aidQAR1,
             [aidQAR2, aidQAR3],
             aidQVI,
@@ -428,6 +432,7 @@ test('multisig-vlei-issuance', async function run() {
         );
         const opList2 = await addEndRoleMultisig(
             clientQAR2,
+            aidQVI.name,
             aidQAR2,
             [aidQAR1, aidQAR3],
             aidQVI,
@@ -435,6 +440,7 @@ test('multisig-vlei-issuance', async function run() {
         );
         const opList3 = await addEndRoleMultisig(
             clientQAR3,
+            aidQVI.name,
             aidQAR3,
             [aidQAR1, aidQAR2],
             aidQVI,
@@ -737,6 +743,7 @@ test('multisig-vlei-issuance', async function run() {
         const timestamp = createTimestamp();
         const opList1 = await addEndRoleMultisig(
             clientLAR1,
+            aidLE.name,
             aidLAR1,
             [aidLAR2, aidLAR3],
             aidLE,
@@ -745,6 +752,7 @@ test('multisig-vlei-issuance', async function run() {
         );
         const opList2 = await addEndRoleMultisig(
             clientLAR2,
+            aidLE.name,
             aidLAR2,
             [aidLAR1, aidLAR3],
             aidLE,
@@ -752,6 +760,7 @@ test('multisig-vlei-issuance', async function run() {
         );
         const opList3 = await addEndRoleMultisig(
             clientLAR3,
+            aidLE.name,
             aidLAR3,
             [aidLAR1, aidLAR2],
             aidLE,
@@ -1312,112 +1321,65 @@ async function createAIDMultisig(
     return op;
 }
 
-async function delegateMultisig(
-    client: SignifyClient,
-    aid: HabState,
-    otherMembersAIDs: HabState[],
-    multisigAID: HabState,
-    anchor: { i: string; s: string; d: string },
-    isInitiator: boolean = false
-) {
-    if (!isInitiator) await waitAndMarkNotification(client, '/multisig/ixn');
+// async function addEndRoleMultisig(
+//     client: SignifyClient,
+//     aid: HabState,
+//     otherMembersAIDs: HabState[],
+//     multisigAID: HabState,
+//     timestamp: string,
+//     isInitiator: boolean = false
+// ) {
+//     if (!isInitiator) await waitAndMarkNotification(client, '/multisig/rpy');
 
-    const {delResult, delOp} = await retry(async () => {
-        const delResult = await client.delegations().approve(aid.name, anchor);
-        const delOp = await waitOperation(client, await delResult.op());
-        console.log(`Delegator ${aid.name} approved delegation for ${multisigAID.name} with anchor ${JSON.stringify(anchor)}`);
-        return {delResult, delOp};
-    },RETRY_DEFAULTS);
-    assert.equal(JSON.stringify(delResult.serder.ked.a[0]), JSON.stringify(anchor));
-    // const ixnResult = await client
-    //     .identifiers()
-    //     .interact(multisigAID.name, anchor);
-    // const op = await ixnResult.op();
-    const serder = delResult.serder;
-    const sigs = delResult.sigs;
-    const sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
-    const ims = signify.d(signify.messagize(serder, sigers));
-    const atc = ims.substring(serder.size);
-    const xembeds = {
-        ixn: [serder, atc],
-    };
-    const smids = [aid.prefix, ...otherMembersAIDs.map((aid) => aid.prefix)];
-    const recp = otherMembersAIDs.map((aid) => aid.prefix);
+//     const opList: any[] = [];
+//     const members = await client.identifiers().members(multisigAID.name);
+//     const signings = members['signing'];
 
-    await client
-        .exchanges()
-        .send(
-            aid.name,
-            'multisig',
-            aid,
-            '/multisig/ixn',
-            { gid: serder.pre, smids: smids, rmids: smids },
-            xembeds,
-            recp
-        );
+//     for (const signing of signings) {
+//         const eid = Object.keys(signing.ends.agent)[0];
+//         const endRoleResult = await client
+//             .identifiers()
+//             .addEndRole(multisigAID.name, 'agent', eid, timestamp);
+//         const op = await endRoleResult.op();
+//         opList.push(op);
 
-    return delOp;
-}
+//         const rpy = endRoleResult.serder;
+//         const sigs = endRoleResult.sigs;
+//         const ghabState1 = multisigAID.state;
+//         const seal = [
+//             'SealEvent',
+//             {
+//                 i: multisigAID.prefix,
+//                 s: ghabState1['ee']['s'],
+//                 d: ghabState1['ee']['d'],
+//             },
+//         ];
+//         const sigers = sigs.map(
+//             (sig: string) => new signify.Siger({ qb64: sig })
+//         );
+//         const roleims = signify.d(
+//             signify.messagize(rpy, sigers, seal, undefined, undefined, false)
+//         );
+//         const atc = roleims.substring(rpy.size);
+//         const roleembeds = {
+//             rpy: [rpy, atc],
+//         };
+//         const recp = otherMembersAIDs.map((aid) => aid.prefix);
+//         await client
+//             .exchanges()
+//             .send(
+//                 aid.name,
+//                 'multisig',
+//                 aid,
+//                 '/multisig/rpy',
+//                 { gid: multisigAID.prefix },
+//                 roleembeds,
+//                 recp
+//             );
+//     }
 
-async function addEndRoleMultisig(
-    client: SignifyClient,
-    aid: HabState,
-    otherMembersAIDs: HabState[],
-    multisigAID: HabState,
-    timestamp: string,
-    isInitiator: boolean = false
-) {
-    if (!isInitiator) await waitAndMarkNotification(client, '/multisig/rpy');
-
-    const opList: any[] = [];
-    const members = await client.identifiers().members(multisigAID.name);
-    const signings = members['signing'];
-
-    for (const signing of signings) {
-        const eid = Object.keys(signing.ends.agent)[0];
-        const endRoleResult = await client
-            .identifiers()
-            .addEndRole(multisigAID.name, 'agent', eid, timestamp);
-        const op = await endRoleResult.op();
-        opList.push(op);
-
-        const rpy = endRoleResult.serder;
-        const sigs = endRoleResult.sigs;
-        const ghabState1 = multisigAID.state;
-        const seal = [
-            'SealEvent',
-            {
-                i: multisigAID.prefix,
-                s: ghabState1['ee']['s'],
-                d: ghabState1['ee']['d'],
-            },
-        ];
-        const sigers = sigs.map(
-            (sig: string) => new signify.Siger({ qb64: sig })
-        );
-        const roleims = signify.d(
-            signify.messagize(rpy, sigers, seal, undefined, undefined, false)
-        );
-        const atc = roleims.substring(rpy.size);
-        const roleembeds = {
-            rpy: [rpy, atc],
-        };
-        const recp = otherMembersAIDs.map((aid) => aid.prefix);
-        await client
-            .exchanges()
-            .send(
-                aid.name,
-                'multisig',
-                aid,
-                '/multisig/rpy',
-                { gid: multisigAID.prefix },
-                roleembeds,
-                recp
-            );
-    }
-
-    return opList;
-}
+//     return opList;
+// }
 
 async function createRegistryMultisig(
     client: SignifyClient,

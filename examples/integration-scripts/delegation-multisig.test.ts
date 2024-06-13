@@ -18,7 +18,6 @@ import {
     startMultisigIncept,
     waitAndMarkNotification,
 } from './utils/multisig-utils';
-import { retry } from './utils/retry';
 import { step } from './utils/test-step';
 
 const gtor = 'gtor';
