@@ -8,15 +8,6 @@ import {
 } from 'signify-ts';
 import { resolveEnvironment } from './resolve-env';
 import { waitOperation } from './test-util';
-// import { retry } from './retry';
-// import assert from 'assert';
-
-// const RETRY_DEFAULTS = {
-//     maxSleep: 10000,
-//     minSleep: 1000,
-//     maxRetries: 10,
-//     timeout: 30000,
-// };
 
 /**
  * Connect or boot a number of SignifyClient instances
@@ -115,17 +106,9 @@ export async function getOrCreateIdentifier(
         console.log("identifiers.addEndRole", op);
     }
 
-    // const result = await retry(async () => {
     const oobi = await client.oobis().get(name, 'agent');
-        // if (oobi.oobis.length == 0) {
-        //     console.log("Agent oobi not found, retrying...")
-        //     throw new Error(`No agent oobi found for controller: ${name}`);
-        // }
     const result: [string, string] = [id, oobi.oobis[0]];
     console.log(name, result);
-    //     return result;
-    // },RETRY_DEFAULTS);
-    // assert.equal(result[0], id);
     return result;
 }
 
@@ -191,9 +174,5 @@ export async function getOrCreateContact(
     }
     let op = await client.oobis().resolve(oobi, name);
     op = await waitOperation(client, op);
-    // console.dir(op, { depth: 100 });
-    // const id = op.response.i;
-
-    // await client.contacts().get(id);
     return op.response.i;
 }
