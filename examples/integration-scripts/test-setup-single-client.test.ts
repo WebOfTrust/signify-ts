@@ -28,7 +28,7 @@ describe('test-setup-single-client', () => {
                 break;
             case 'docker':
                 expect(client.agent?.pre).toEqual(
-                    'EHf7MwSrGSn8ACgFuwYh1iTnZgjxUp_kHk_pbWr5E2i-'
+                    'EDlb0yDRX-0y_PVgKDFF-5zeWL7tNKzx-o-pQRL-iNle'
                 );
                 break;
         }
