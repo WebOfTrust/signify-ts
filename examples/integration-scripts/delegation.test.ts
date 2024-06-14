@@ -3,10 +3,10 @@ import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assertOperations,
+    getOrCreateContact,
     resolveOobi,
     waitOperation,
 } from './utils/test-util';
-import { getOrCreateContact } from './utils/test-setup';
 import { retry } from './utils/retry';
 import { step } from './utils/test-step';
 

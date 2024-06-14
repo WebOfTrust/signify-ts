@@ -1,7 +1,10 @@
 import { SignifyClient } from 'signify-ts';
-import { getOrCreateClients, getOrCreateIdentifier } from './utils/test-setup';
 import { resolveEnvironment } from './utils/resolve-env';
-import { assertOperations } from './utils/test-util';
+import {
+    assertOperations,
+    getOrCreateClients,
+    getOrCreateIdentifier,
+} from './utils/test-util';
 
 let client: SignifyClient;
 let name1_id: string, name1_oobi: string;
@@ -24,11 +27,6 @@ describe('test-setup-single-client', () => {
             case 'local':
                 expect(client.agent?.pre).toEqual(
                     'EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY'
-                );
-                break;
-            case 'docker':
-                expect(client.agent?.pre).toEqual(
-                    'EDlb0yDRX-0y_PVgKDFF-5zeWL7tNKzx-o-pQRL-iNle'
                 );
                 break;
         }

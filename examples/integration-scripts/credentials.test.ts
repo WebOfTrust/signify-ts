@@ -4,17 +4,15 @@ import { resolveEnvironment } from './utils/resolve-env';
 import {
     assertNotifications,
     assertOperations,
+    createAid,
+    getOrCreateClients,
+    getOrCreateContact,
     markAndRemoveNotification,
     resolveOobi,
     waitForNotifications,
     waitOperation,
 } from './utils/test-util';
 import { retry } from './utils/retry';
-import {
-    getOrCreateClients,
-    getOrCreateContact,
-    getOrCreateIdentifier,
-} from './utils/test-setup';
 import { randomUUID } from 'crypto';
 import { step } from './utils/test-step';
 
@@ -34,11 +32,6 @@ interface Aid {
 
 function createTimestamp() {
     return new Date().toISOString().replace('Z', '000+00:00');
-}
-
-async function createAid(client: SignifyClient, name: string): Promise<Aid> {
-    const [prefix, oobi] = await getOrCreateIdentifier(client, name);
-    return { prefix, oobi, name };
 }
 
 let issuerClient: SignifyClient;

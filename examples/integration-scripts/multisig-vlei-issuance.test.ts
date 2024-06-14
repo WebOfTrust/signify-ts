@@ -12,13 +12,14 @@ import {
     resolveOobi,
     waitOperation,
     getOrCreateAID,
+    getOrCreateClients, 
+    getOrCreateContact,
     createTimestamp,
     getIssuedCredential,
     getReceivedCredential,
     waitForCredential,
     admitSinglesig,
 } from './utils/test-util';
-import { getOrCreateClients, getOrCreateContact } from './utils/test-setup';
 import { HabState } from '../../src/keri/core/state';
 import {
     addEndRoleMultisig,

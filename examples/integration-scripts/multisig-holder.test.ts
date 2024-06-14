@@ -3,12 +3,13 @@ import signify, { SignifyClient, Operation, CredentialData } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assertOperations,
+    getOrCreateClient,
+    getOrCreateIdentifier,
     markNotification,
     waitForNotifications,
     waitOperation,
     warnNotifications,
 } from './utils/test-util';
-import { getOrCreateClient, getOrCreateIdentifier } from './utils/test-setup';
 import {
     acceptMultisigIncept,
     startMultisigIncept,

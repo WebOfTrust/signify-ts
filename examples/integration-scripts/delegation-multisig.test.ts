@@ -1,19 +1,17 @@
 import { strict as assert } from 'assert';
-import signify, { Operation } from 'signify-ts';
+import signify from 'signify-ts';
 import {
     assertNotifications,
     assertOperations,
+    createAID,
     createTimestamp,
+    getOrCreateClient,
+    getOrCreateContact,
     markAndRemoveNotification,
     resolveOobi,
     waitForNotifications,
     waitOperation,
 } from './utils/test-util';
-import {
-    getOrCreateClient,
-    getOrCreateContact,
-    getOrCreateIdentifier,
-} from './utils/test-setup';
 import {
     acceptMultisigIncept,
     addEndRoleMultisig,
@@ -284,10 +282,3 @@ test('delegation-multisig', async () => {
     await assertOperations(ctor1, ctor2, ctee1, ctee2);
     await assertNotifications(ctor1, ctor2, ctee1, ctee2);
 }, 600000);
-
-async function createAID(client: signify.SignifyClient, name: string) {
-    await getOrCreateIdentifier(client, name);
-    const aid = await client.identifiers().get(name);
-    console.log(name, 'AID:', aid.prefix);
-    return aid;
-}

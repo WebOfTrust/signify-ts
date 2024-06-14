@@ -7,12 +7,13 @@ import signify, {
 import { resolveEnvironment } from './utils/resolve-env';
 import {
     assertOperations,
+    getOrCreateClient,
+    getOrCreateIdentifier,
     markNotification,
     waitForNotifications,
     waitOperation,
     warnNotifications,
 } from './utils/test-util';
-import { getOrCreateClient, getOrCreateIdentifier } from './utils/test-setup';
 
 const { vleiServerUrl } = resolveEnvironment();
 const WITNESS_AIDS = [
