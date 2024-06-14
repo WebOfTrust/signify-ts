@@ -19,9 +19,17 @@ afterAll(async () => {
 
 describe('test-setup-single-client', () => {
     test('step1', async () => {
-        expect(client.agent?.pre).toEqual(
-            "EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY"
-        );
+        const env = resolveEnvironment();
+        switch (env.preset) {
+            case 'local':
+                expect(client.agent?.pre).toEqual(
+                    "EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY"
+                );
+            case 'docker':
+                expect(client.agent?.pre).toEqual(
+                    "EHf7MwSrGSn8ACgFuwYh1iTnZgjxUp_kHk_pbWr5E2i-"
+                );
+        }
         expect(client.controller?.pre).toEqual(
             'EB3UGWwIMq7ppzcQ697ImQIuXlBG5jzh-baSx-YG3-tY'
         );
@@ -47,7 +55,7 @@ describe('test-setup-single-client', () => {
                 break;
             case 'docker':
                 expect(name1_oobi).toEqual(
-                    `http://keria:3902/oobi/${name1_id}/agent/EC60ue9GOpQGrLBlS9T0dO6JkBTbv3V05Y4O730QBBoc`
+                    `http://keria:3902/oobi/${name1_id}/agent/${client.agent?.pre}`
                 );
                 expect(oobi.oobis[0]).toEqual(
                     `http://witness-demo:5642/oobi/${name1_id}/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha`
