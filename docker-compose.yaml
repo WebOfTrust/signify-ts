@@ -44,7 +44,7 @@ services:
             - --name
             - agent
         healthcheck:
-            test: ["CMD", "wget", "--spider", 'http://keria:3902/spec.yaml']
+            test: ['CMD', 'wget', '--spider', 'http://keria:3902/spec.yaml']
             interval: 2s
             timeout: 3s
             retries: 5
