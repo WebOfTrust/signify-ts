@@ -476,6 +476,6 @@ export class SignifyClient {
      * @returns {Delegations}
      */
     delegations(): Delegations {
-            return new Delegations(this);
+        return new Delegations(this);
     }
 }

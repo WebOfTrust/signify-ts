@@ -428,7 +428,7 @@ describe('Ipex', () => {
             r: '/ipex/grant',
             rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
-            a: { m: '', i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k', },
+            a: { m: '', i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k' },
             e: {
                 acdc: {
                     v: 'ACDC10JSON000197_',
@@ -518,7 +518,7 @@ describe('Ipex', () => {
             r: '/ipex/admit',
             rp: '',
             q: {},
-            a: { m: '', i: ''},
+            a: { m: '', i: '' },
             e: {},
         });
 

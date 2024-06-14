@@ -85,7 +85,7 @@ export class Exchanges {
                 route,
                 payload,
                 embeds,
-                recipient,
+                recipient
             );
             return await this.sendFromEvents(
                 name,

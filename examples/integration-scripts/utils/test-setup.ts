@@ -103,7 +103,7 @@ export async function getOrCreateIdentifier(
             .addEndRole(name, 'agent', eid);
         let op = await result.op();
         op = await waitOperation(client, op);
-        console.log("identifiers.addEndRole", op);
+        console.log('identifiers.addEndRole', op);
     }
 
     const oobi = await client.oobis().get(name, 'agent');

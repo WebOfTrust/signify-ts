@@ -1,6 +1,6 @@
-import { EventResult } from "./aiding";
-import { SignifyClient } from "./clienting";
-import { Operation } from "./coring";
+import { EventResult } from './aiding';
+import { SignifyClient } from './clienting';
+import { Operation } from './coring';
 
 export class Delegations {
     public client: SignifyClient;
@@ -20,7 +20,9 @@ export class Delegations {
      * @returns {Promise<EventResult>} A promise to the delegated approval result
      */
     async approve(name: string, data?: any): Promise<EventResult> {
-        let {serder, sigs, jsondata} = await this.client.identifiers().createInteract(name, data);
+        let { serder, sigs, jsondata } = await this.client
+            .identifiers()
+            .createInteract(name, data);
 
         const res = await this.client.fetch(
             '/identifiers/' + name + '/delegation',

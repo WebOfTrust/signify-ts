@@ -224,12 +224,21 @@ export async function delegateMultisig(
     }
 
     // const {delResult, delOp} = await retry(async () => {
-    const delResult = await client.delegations().approve(multisigAID.name, anchor);
+    const delResult = await client
+        .delegations()
+        .approve(multisigAID.name, anchor);
     const appOp = await delResult.op();
-    console.log(`Delegator ${aid.name}(${aid.prefix}) approved delegation for ${multisigAID.name} with anchor ${JSON.stringify(anchor)}`);
+    console.log(
+        `Delegator ${aid.name}(${aid.prefix}) approved delegation for ${
+            multisigAID.name
+        } with anchor ${JSON.stringify(anchor)}`
+    );
     // return {delResult, delOp};
     // },RETRY_DEFAULTS);
-    assert.equal(JSON.stringify(delResult.serder.ked.a[0]), JSON.stringify(anchor));
+    assert.equal(
+        JSON.stringify(delResult.serder.ked.a[0]),
+        JSON.stringify(anchor)
+    );
     // const ixnResult = await client
     //     .identifiers()
     //     .interact(multisigAID.name, anchor);
@@ -256,15 +265,13 @@ export async function delegateMultisig(
             xembeds,
             recp
         );
-    
+
     if (isInitiator) {
         console.log(
             `${aid.name}(${aid.prefix}) initiates delegation interaction event, waiting for others to join...`
         );
     } else {
-        console.log(
-            `${aid.name}(${aid.prefix}) joins interaction event`
-        );
+        console.log(`${aid.name}(${aid.prefix}) joins interaction event`);
     }
 
     return appOp;

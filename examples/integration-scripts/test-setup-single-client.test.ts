@@ -23,11 +23,11 @@ describe('test-setup-single-client', () => {
         switch (env.preset) {
             case 'local':
                 expect(client.agent?.pre).toEqual(
-                    "EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY"
+                    'EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY'
                 );
             case 'docker':
                 expect(client.agent?.pre).toEqual(
-                    "EHf7MwSrGSn8ACgFuwYh1iTnZgjxUp_kHk_pbWr5E2i-"
+                    'EHf7MwSrGSn8ACgFuwYh1iTnZgjxUp_kHk_pbWr5E2i-'
                 );
         }
         expect(client.controller?.pre).toEqual(

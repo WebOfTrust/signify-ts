@@ -89,12 +89,17 @@ test('delegation', async () => {
 
     await step('delegator approves delegation', async () => {
         const result = await retry(async () => {
-            const apprDelRes = await client1.delegations().approve('delegator', anchor);
+            const apprDelRes = await client1
+                .delegations()
+                .approve('delegator', anchor);
             const adRes = await waitOperation(client1, await apprDelRes.op());
             console.log('Delegator approve delegation submitted');
             return apprDelRes;
         });
-        assert.equal(JSON.stringify(result.serder.ked.a[0]), JSON.stringify(anchor));
+        assert.equal(
+            JSON.stringify(result.serder.ked.a[0]),
+            JSON.stringify(anchor)
+        );
     });
 
     let op3 = await client2.keyStates().query(ator.prefix, '1');
@@ -108,8 +113,8 @@ test('delegation', async () => {
 
     await assertOperations(client1, client2);
     const rpyResult2 = await client2
-    .identifiers()
-    .addEndRole('delegate', 'agent', client2!.agent!.pre);
+        .identifiers()
+        .addEndRole('delegate', 'agent', client2!.agent!.pre);
     await waitOperation(client2, await rpyResult2.op());
     const oobis = await client2.oobis().get('delegate');
 
@@ -119,5 +124,5 @@ test('delegation', async () => {
         'delegate',
         oobis.oobis[0].split('/agent/')[0]
     );
-// console.log(res);
+    // console.log(res);
 }, 600000);

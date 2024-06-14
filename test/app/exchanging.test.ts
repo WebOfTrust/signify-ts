@@ -170,19 +170,19 @@ describe('exchange', () => {
         await libsodium.ready;
         const dt = '2023-08-30T17:22:54.183Z';
 
-        let [exn, end] = exchange('/multisig/vcp', {}, 'test', "", dt);
+        let [exn, end] = exchange('/multisig/vcp', {}, 'test', '', dt);
         assert.deepStrictEqual(exn.ked, {
             a: {
-                "i": "",
+                i: '',
             },
-            d: "EPWm8LWxxQXmXlB8gbTZKDy7NIwXxpx49N_ZYTa5QkJV",
+            d: 'EPWm8LWxxQXmXlB8gbTZKDy7NIwXxpx49N_ZYTa5QkJV',
             dt: '2023-08-30T17:22:54.183Z',
             e: {},
             i: 'test',
             p: '',
             q: {},
             r: '/multisig/vcp',
-            rp: "",
+            rp: '',
             t: 'exn',
             v: 'KERI10JSON0000bf_',
         });
@@ -263,7 +263,7 @@ describe('exchange', () => {
             '/multisig/vcp',
             {},
             'test',
-            "",
+            '',
             dt,
             undefined,
             undefined,
@@ -272,9 +272,9 @@ describe('exchange', () => {
 
         assert.deepStrictEqual(exn.ked, {
             a: {
-                i: "",
+                i: '',
             },
-            d: "EOK2xNjB5xlSvizCUrkFKbdF4j1nsGpvt6TR1HL0wvaY",
+            d: 'EOK2xNjB5xlSvizCUrkFKbdF4j1nsGpvt6TR1HL0wvaY',
             dt: '2023-08-30T17:22:54.183Z',
             e: {
                 d: 'EDPWpKtMoPwro_Of8TQzpNMGdtmfyWzqTcRKQ01fGFRi',

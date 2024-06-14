@@ -10,7 +10,11 @@ import {
     waitOperation,
     warnNotifications,
 } from './utils/test-util';
-import { getOrCreateClient, getOrCreateContact, getOrCreateIdentifier } from './utils/test-setup';
+import {
+    getOrCreateClient,
+    getOrCreateContact,
+    getOrCreateIdentifier,
+} from './utils/test-setup';
 import {
     acceptMultisigIncept,
     addEndRoleMultisig,
@@ -83,7 +87,9 @@ test('delegation-multisig', async () => {
             resolveOobi(ctee2, teeoobi1.oobis[0], tee1),
         ]);
     });
-    console.log(`${tor1}(${ator1.prefix}) and ${tee1}(${atee1.prefix}) resolved ${tor2}(${ator2.prefix}) and ${tee2}(${atee2.prefix}) OOBIs and vice versa`);
+    console.log(
+        `${tor1}(${ator1.prefix}) and ${tee1}(${atee1.prefix}) resolved ${tor2}(${ator2.prefix}) and ${tee2}(${atee2.prefix}) OOBIs and vice versa`
+    );
 
     // First member start the creation of a multisig identifier
     // Create a multisig AID for the GEDA.
@@ -103,12 +109,15 @@ test('delegation-multisig', async () => {
                     'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
                     'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
                 ],
-
             });
         }
     );
 
-    const [ntor] = await waitForNotifications(ctor2, '/multisig/icp', RETRY_DEFAULTS);
+    const [ntor] = await waitForNotifications(
+        ctor2,
+        '/multisig/icp',
+        RETRY_DEFAULTS
+    );
     await markAndRemoveNotification(ctor2, ntor);
     assert(ntor.a.d);
     const otor2 = await acceptMultisigIncept(ctor2, {
@@ -131,44 +140,47 @@ test('delegation-multisig', async () => {
     const agtor = agtor1;
 
     //Resolve delegator OOBI
-    const gtorOobi = await step(`Add and resolve delegator OOBI ${gtor}(${agtor.prefix})`, async () => {
-        // const ogtor1 = await ctor1.oobis().get(gtor, 'agent');
-        // return await resolveOobi(ctor1, ogtor1.oobis[0], gtor);
-        const timestamp = createTimestamp();
-        const opList1 = await addEndRoleMultisig(
-            ctor1,
-            gtor,
-            ator1,
-            [ator2],
-            agtor,
-            timestamp,
-            true
-        );
-        const opList2 = await addEndRoleMultisig(
-            ctor2,
-            gtor,
-            ator2,
-            [ator1],
-            agtor,
-            timestamp
-        );
+    const gtorOobi = await step(
+        `Add and resolve delegator OOBI ${gtor}(${agtor.prefix})`,
+        async () => {
+            // const ogtor1 = await ctor1.oobis().get(gtor, 'agent');
+            // return await resolveOobi(ctor1, ogtor1.oobis[0], gtor);
+            const timestamp = createTimestamp();
+            const opList1 = await addEndRoleMultisig(
+                ctor1,
+                gtor,
+                ator1,
+                [ator2],
+                agtor,
+                timestamp,
+                true
+            );
+            const opList2 = await addEndRoleMultisig(
+                ctor2,
+                gtor,
+                ator2,
+                [ator1],
+                agtor,
+                timestamp
+            );
 
-        await Promise.all(opList1.map((op) => waitOperation(ctor1, op)));
-        await Promise.all(opList2.map((op) => waitOperation(ctor2, op)));
+            await Promise.all(opList1.map((op) => waitOperation(ctor1, op)));
+            await Promise.all(opList2.map((op) => waitOperation(ctor2, op)));
 
-        await waitAndMarkNotification(ctor1, '/multisig/rpy');
-        await waitAndMarkNotification(ctor2, '/multisig/rpy');
+            await waitAndMarkNotification(ctor1, '/multisig/rpy');
+            await waitAndMarkNotification(ctor2, '/multisig/rpy');
 
-        const [ogtor1, ogtor2] = await Promise.all([
-            ctor1.oobis().get(agtor.name, 'agent'),
-            ctor2.oobis().get(agtor.name, 'agent'),
-        ]);
+            const [ogtor1, ogtor2] = await Promise.all([
+                ctor1.oobis().get(agtor.name, 'agent'),
+                ctor2.oobis().get(agtor.name, 'agent'),
+            ]);
 
-        assert.equal(ogtor1.role, ogtor2.role);
-        assert.equal(ogtor1.oobis[0], ogtor2.oobis[0]);
+            assert.equal(ogtor1.role, ogtor2.role);
+            assert.equal(ogtor1.oobis[0], ogtor2.oobis[0]);
 
-        return ogtor1.oobis[0];
-    });
+            return ogtor1.oobis[0];
+        }
+    );
 
     const oobiGtor = gtorOobi.split('/agent/')[0];
     await Promise.all([
@@ -217,10 +229,9 @@ test('delegation-multisig', async () => {
 
     const teepre = otee1.name.split('.')[1];
     assert.equal(otee2.name.split('.')[1], teepre);
-    console.log("Delegatee prefix:", teepre);
+    console.log('Delegatee prefix:', teepre);
 
     await step('delegator anchors/approves delegation', async () => {
-
         // GEDA anchors delegation with an interaction event.
         const anchor = {
             i: teepre,
@@ -247,17 +258,13 @@ test('delegation-multisig', async () => {
             waitOperation(ctor2, delApprOp2),
         ]);
 
-        assert.equal(dresult1.response,dresult2.response);
+        assert.equal(dresult1.response, dresult2.response);
 
         await waitAndMarkNotification(ctor1, '/multisig/ixn');
     });
 
-    const queryOp1 = await ctor1
-        .keyStates()
-        .query(agtor.prefix, '1');
-    const queryOp2 = await ctor2
-        .keyStates()
-        .query(agtor.prefix, '1');
+    const queryOp1 = await ctor1.keyStates().query(agtor.prefix, '1');
+    const queryOp2 = await ctor2.keyStates().query(agtor.prefix, '1');
 
     const kstor1 = await waitOperation(ctor1, queryOp1);
     const kstor2 = await waitOperation(ctor2, queryOp2);
