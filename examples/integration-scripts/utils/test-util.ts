@@ -473,7 +473,7 @@ async function waitAndMarkNotification(client: SignifyClient, route: string) {
 export async function waitForNotifications(
     client: SignifyClient,
     route: string,
-    options: RetryOptions = DE
+    options: RetryOptions = {},
 ): Promise<Notification[]> {
     return retry(async () => {
         const response: { notes: Notification[] } = await client
