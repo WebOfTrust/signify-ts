@@ -28,13 +28,6 @@ const tor2 = 'tor2';
 const tee1 = 'tee1';
 const tee2 = 'tee2';
 
-const RETRY_DEFAULTS = {
-    maxSleep: 10000,
-    minSleep: 1000,
-    maxRetries: 10,
-    timeout: 30000,
-};
-
 test('delegation-multisig', async () => {
     await signify.ready();
     // Boot three clients
@@ -110,11 +103,12 @@ test('delegation-multisig', async () => {
         }
     );
 
-    const [ntor] = await waitForNotifications(
-        ctor2,
-        '/multisig/icp',
-        RETRY_DEFAULTS
-    );
+    const [ntor] = await waitForNotifications(ctor2, '/multisig/icp', {
+        maxSleep: 10000,
+        minSleep: 1000,
+        maxRetries: undefined,
+        timeout: 30000,
+    });
     await markAndRemoveNotification(ctor2, ntor);
     assert(ntor.a.d);
     const otor2 = await acceptMultisigIncept(ctor2, {

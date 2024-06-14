@@ -81,7 +81,10 @@ export async function assertNotifications(
     }
 }
 
-export async function createAid(client: SignifyClient, name: string): Promise<Aid> {
+export async function createAid(
+    client: SignifyClient,
+    name: string
+): Promise<Aid> {
     const [prefix, oobi] = await getOrCreateIdentifier(client, name);
     return { prefix, oobi, name };
 }
@@ -470,7 +473,7 @@ async function waitAndMarkNotification(client: SignifyClient, route: string) {
 export async function waitForNotifications(
     client: SignifyClient,
     route: string,
-    options: RetryOptions = {}
+    options: RetryOptions = DE
 ): Promise<Notification[]> {
     return retry(async () => {
         const response: { notes: Notification[] } = await client

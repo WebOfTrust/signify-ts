@@ -355,14 +355,20 @@ test('singlesig-vlei-issuance', async function run() {
         true
     );
 
-    let ecrCredHolder2 = await getReceivedCredential(roleClient, ecrCred2.sad.d);
+    let ecrCredHolder2 = await getReceivedCredential(
+        roleClient,
+        ecrCred2.sad.d
+    );
 
     if (!ecrCredHolder2) {
         await sendGrantMessage(qviClient, qviAid, roleAid, ecrCred2);
         await sendAdmitMessage(roleClient, roleAid, qviAid);
 
         ecrCredHolder2 = await retry(async () => {
-            const cred = await getReceivedCredential(roleClient, ecrCred2.sad.d);
+            const cred = await getReceivedCredential(
+                roleClient,
+                ecrCred2.sad.d
+            );
             assert(cred !== undefined);
             return cred;
         }, CRED_RETRY_DEFAULTS);

@@ -12,7 +12,7 @@ import {
     resolveOobi,
     waitOperation,
     getOrCreateAID,
-    getOrCreateClients, 
+    getOrCreateClients,
     getOrCreateContact,
     createTimestamp,
     getIssuedCredential,
