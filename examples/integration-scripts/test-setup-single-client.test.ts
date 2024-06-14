@@ -25,10 +25,12 @@ describe('test-setup-single-client', () => {
                 expect(client.agent?.pre).toEqual(
                     'EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY'
                 );
+                break;
             case 'docker':
                 expect(client.agent?.pre).toEqual(
                     'EHf7MwSrGSn8ACgFuwYh1iTnZgjxUp_kHk_pbWr5E2i-'
                 );
+                break;
         }
         expect(client.controller?.pre).toEqual(
             'EB3UGWwIMq7ppzcQ697ImQIuXlBG5jzh-baSx-YG3-tY'

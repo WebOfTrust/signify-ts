@@ -1,10 +1,45 @@
-import { Operation, SignifyClient } from 'signify-ts';
+import signify, {
+    CreateIdentiferArgs,
+    CredentialData,
+    EventResult,
+    Operation,
+    Serder,
+    SignifyClient,
+} from 'signify-ts';
 import { RetryOptions, retry } from './retry';
+import { HabState } from '../../../src/keri/core/state';
+import assert from 'assert';
+
+export interface Notification {
+    i: string;
+    dt: string;
+    r: boolean;
+    a: { r: string; d?: string; m?: string };
+}
 
 export function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
+}
+
+export async function admitSinglesig(
+    client: SignifyClient,
+    aid: HabState,
+    recipientAid: HabState
+) {
+    const grantMsgSaid = await waitAndMarkNotification(
+        client,
+        '/exn/ipex/grant'
+    );
+
+    const [admit, sigs, aend] = await client
+        .ipex()
+        .admit(aid.name, '', grantMsgSaid);
+
+    await client
+        .ipex()
+        .submitAdmit(aid.name, admit, sigs, aend, [recipientAid.prefix]);
 }
 
 /**
@@ -37,6 +72,58 @@ export async function assertNotifications(
     }
 }
 
+export function createTimestamp() {
+    return new Date().toISOString().replace('Z', '000+00:00');
+}
+
+export async function getIssuedCredential(
+    issuerClient: SignifyClient,
+    issuerAID: HabState,
+    recipientAID: HabState,
+    schemaSAID: string
+) {
+    const credentialList = await issuerClient.credentials().list({
+        filter: {
+            '-i': issuerAID.prefix,
+            '-s': schemaSAID,
+            '-a-i': recipientAID.prefix,
+        },
+    });
+    assert(credentialList.length <= 1);
+    return credentialList[0];
+}
+
+export async function getOrCreateAID(
+    client: SignifyClient,
+    name: string,
+    kargs: CreateIdentiferArgs
+): Promise<HabState> {
+    try {
+        return await client.identifiers().get(name);
+    } catch {
+        const result: EventResult = await client
+            .identifiers()
+            .create(name, kargs);
+
+        await waitOperation(client, await result.op());
+        const aid = await client.identifiers().get(name);
+
+        const op = await client
+            .identifiers()
+            .addEndRole(name, 'agent', client!.agent!.pre);
+        await waitOperation(client, await op.op());
+        console.log(name, 'AID:', aid.prefix);
+        return aid;
+    }
+}
+
+export async function getStates(client: SignifyClient, prefixes: string[]) {
+    const participantStates = await Promise.all(
+        prefixes.map((p) => client.keyStates().get(p))
+    );
+    return participantStates.map((s) => s[0]);
+}
+
 /**
  * Logs a warning for each un-handled notification.
  * <p>Replace warnNotifications with assertNotifications when test handles all notifications
@@ -57,27 +144,6 @@ export async function warnNotifications(
     expect(count).toBeGreaterThan(0); // replace warnNotifications with assertNotifications
 }
 
-/**
- * Poll for operation to become completed.
- * Removes completed operation
- */
-export async function waitOperation<T = any>(
-    client: SignifyClient,
-    op: Operation<T> | string,
-    signal?: AbortSignal
-): Promise<Operation<T>> {
-    if (typeof op === 'string') {
-        op = await client.operations().get(op);
-    }
-
-    op = await client
-        .operations()
-        .wait(op, { signal: signal ?? AbortSignal.timeout(30000) });
-    await deleteOperations(client, op);
-
-    return op;
-}
-
 async function deleteOperations<T = any>(
     client: SignifyClient,
     op: Operation<T>
@@ -89,6 +155,42 @@ async function deleteOperations<T = any>(
     await client.operations().delete(op.name);
 }
 
+export async function getReceivedCredential(
+    client: SignifyClient,
+    credId: string
+): Promise<any> {
+    const credentialList = await client.credentials().list({
+        filter: {
+            '-d': credId,
+        },
+    });
+    return credentialList[0];
+}
+
+/**
+ * Mark and remove notification.
+ */
+export async function markAndRemoveNotification(
+    client: SignifyClient,
+    note: Notification
+): Promise<void> {
+    try {
+        await client.notifications().mark(note.i);
+    } finally {
+        await client.notifications().delete(note.i);
+    }
+}
+
+/**
+ * Mark notification as read.
+ */
+export async function markNotification(
+    client: SignifyClient,
+    note: Notification
+): Promise<void> {
+    await client.notifications().mark(note.i);
+}
+
 export async function resolveOobi(
     client: SignifyClient,
     oobi: string,
@@ -98,11 +200,33 @@ export async function resolveOobi(
     await waitOperation(client, op);
 }
 
-export interface Notification {
-    i: string;
-    dt: string;
-    r: boolean;
-    a: { r: string; d?: string; m?: string };
+export async function waitForCredential(
+    client: SignifyClient,
+    credSAID: string,
+    MAX_RETRIES: number = 10
+) {
+    let retryCount = 0;
+    while (retryCount < MAX_RETRIES) {
+        const cred = await getReceivedCredential(client, credSAID);
+        if (cred) return cred;
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        console.log(` retry-${retryCount}: No credentials yet...`);
+        retryCount = retryCount + 1;
+    }
+    throw Error('Credential SAID: ' + credSAID + ' has not been received');
+}
+
+async function waitAndMarkNotification(client: SignifyClient, route: string) {
+    const notes = await waitForNotifications(client, route);
+
+    await Promise.all(
+        notes.map(async (note) => {
+            await client.notifications().mark(note.i);
+        })
+    );
+
+    return notes[notes.length - 1]?.a.d ?? '';
 }
 
 export async function waitForNotifications(
@@ -128,29 +252,22 @@ export async function waitForNotifications(
 }
 
 /**
- * Mark notification as read.
+ * Poll for operation to become completed.
+ * Removes completed operation
  */
-export async function markNotification(
+export async function waitOperation<T = any>(
     client: SignifyClient,
-    note: Notification
-): Promise<void> {
-    await client.notifications().mark(note.i);
-}
-
-/**
- * Mark and remove notification.
- */
-export async function markAndRemoveNotification(
-    client: SignifyClient,
-    note: Notification
-): Promise<void> {
-    try {
-        await client.notifications().mark(note.i);
-    } finally {
-        await client.notifications().delete(note.i);
+    op: Operation<T> | string,
+    signal?: AbortSignal
+): Promise<Operation<T>> {
+    if (typeof op === 'string') {
+        op = await client.operations().get(op);
     }
-}
 
-export function createTimestamp() {
-    return new Date().toISOString().replace('Z', '000+00:00');
+    op = await client
+        .operations()
+        .wait(op, { signal: signal ?? AbortSignal.timeout(30000) });
+    await deleteOperations(client, op);
+
+    return op;
 }

@@ -8,7 +8,6 @@ import {
     resolveOobi,
     waitForNotifications,
     waitOperation,
-    warnNotifications,
 } from './utils/test-util';
 import {
     getOrCreateClient,
