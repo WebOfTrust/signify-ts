@@ -20,7 +20,7 @@ afterAll(async () => {
 describe('test-setup-single-client', () => {
     test('step1', async () => {
         expect(client.agent?.pre).toEqual(
-            "EHZVWQ-qCT5jWxRCtfS7flxPfUrF9si-oJsBCbRsbz93"
+            "EG7nnJFpAgUxrz1vBE58nQ7mb77TwFCxcL7E5iO9UCjY"
         );
         expect(client.controller?.pre).toEqual(
             'EB3UGWwIMq7ppzcQ697ImQIuXlBG5jzh-baSx-YG3-tY'
