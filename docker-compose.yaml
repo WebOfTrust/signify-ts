@@ -26,7 +26,7 @@ services:
             - 7723:7723
 
     keria:
-        image: ${KERIA_IMAGE:-weboftrust/keria}:${KERIA_IMAGE_TAG:-latest}
+        image: 2byrds/keria:latest
         environment:
             - KERI_AGENT_CORS=1
             - KERI_URL=http://keria:3902
@@ -78,7 +78,7 @@ services:
         depends_on:
             vlei-server:
                 condition: service_healthy
-            # keria:
-            #     condition: service_healthy
+            keria:
+                condition: service_healthy
             witness-demo:
                 condition: service_healthy
