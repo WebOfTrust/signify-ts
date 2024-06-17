@@ -21,17 +21,17 @@ import {
 } from './utils/multisig-utils';
 import { step } from './utils/test-step';
 
-const gtor = 'gtor';
-const gtee = 'gtee';
-const tor1 = 'tor1';
-const tor2 = 'tor2';
-const tee1 = 'tee1';
-const tee2 = 'tee2';
+const delegatorGroupName = 'delegator_group';
+const delegateeGroupName = 'delegatee_group';
+const delegator1Name = 'delegator1';
+const delegator2Name = 'delegator2';
+const delegatee1Name = 'delegatee1';
+const delegatee2Name = 'delegatee2';
 
 test('delegation-multisig', async () => {
     await signify.ready();
     // Boot three clients
-    const [ctor1, ctor2, ctee1, ctee2] = await step(
+    const [delegator1Client, delegator2Client, delegatee1Client, delegatee2Client] = await step(
         'Creating single sig clients',
         async () => {
             return await Promise.all([
@@ -44,53 +44,53 @@ test('delegation-multisig', async () => {
     );
 
     // Create delegator and delegatee identifiers clients
-    const [ator1, ator2, atee1, atee2] = await step(
+    const [delegator1Aid, delegator2Aid, delegatee1Aid, delegatee2Aid] = await step(
         'Creating single sig aids',
         async () => {
             return await Promise.all([
-                createAID(ctor1, tor1),
-                createAID(ctor2, tor2),
-                createAID(ctee1, tee1),
-                createAID(ctee2, tee2),
+                createAID(delegator1Client, delegator1Name),
+                createAID(delegator2Client, delegator2Name),
+                createAID(delegatee1Client, delegatee1Name),
+                createAID(delegatee2Client, delegatee2Name),
             ]);
         }
     );
 
     // Exchange OOBIs
-    const [toroobi1, toroobi2, teeoobi1, teeoobi2] = await step(
+    const [delegator1Oobi, delegator2Oobi, delegatee1Oobi, delegatee2Oobi] = await step(
         'Getting OOBIs before resolving...',
         async () => {
             return await Promise.all([
-                await ctor1.oobis().get(tor1, 'agent'),
-                await ctor2.oobis().get(tor2, 'agent'),
-                await ctee1.oobis().get(tee1, 'agent'),
-                await ctee2.oobis().get(tee2, 'agent'),
+                await delegator1Client.oobis().get(delegator1Name, 'agent'),
+                await delegator2Client.oobis().get(delegator2Name, 'agent'),
+                await delegatee1Client.oobis().get(delegatee1Name, 'agent'),
+                await delegatee2Client.oobis().get(delegatee2Name, 'agent'),
             ]);
         }
     );
 
     await step('Resolving OOBIs', async () => {
         await Promise.all([
-            resolveOobi(ctor1, toroobi2.oobis[0], tor2),
-            resolveOobi(ctor2, toroobi1.oobis[0], tor1),
-            resolveOobi(ctee1, teeoobi2.oobis[0], tee2),
-            resolveOobi(ctee2, teeoobi1.oobis[0], tee1),
+            resolveOobi(delegator1Client, delegator2Oobi.oobis[0], delegator2Name),
+            resolveOobi(delegator2Client, delegator1Oobi.oobis[0], delegator1Name),
+            resolveOobi(delegatee1Client, delegatee2Oobi.oobis[0], delegatee2Name),
+            resolveOobi(delegatee2Client, delegatee1Oobi.oobis[0], delegatee1Name),
         ]);
     });
     console.log(
-        `${tor1}(${ator1.prefix}) and ${tee1}(${atee1.prefix}) resolved ${tor2}(${ator2.prefix}) and ${tee2}(${atee2.prefix}) OOBIs and vice versa`
+        `${delegator1Name}(${delegator1Aid.prefix}) and ${delegatee1Name}(${delegatee1Aid.prefix}) resolved ${delegator2Name}(${delegator2Aid.prefix}) and ${delegatee2Name}(${delegatee2Aid.prefix}) OOBIs and vice versa`
     );
 
     // First member start the creation of a multisig identifier
     // Create a multisig AID for the GEDA.
     // Skip if a GEDA AID has already been incepted.
     const otor1 = await step(
-        `${tor1}(${ator1.prefix}) initiated delegator multisig, waiting for ${tor2}(${ator2.prefix}) to join...`,
+        `${delegator1Name}(${delegator1Aid.prefix}) initiated delegator multisig, waiting for ${delegator2Name}(${delegator2Aid.prefix}) to join...`,
         async () => {
-            return await startMultisigIncept(ctor1, {
-                groupName: gtor,
-                localMemberName: ator1.name,
-                participants: [ator1.prefix, ator2.prefix],
+            return await startMultisigIncept(delegator1Client, {
+                groupName: delegatorGroupName,
+                localMemberName: delegator1Aid.name,
+                participants: [delegator1Aid.prefix, delegator2Aid.prefix],
                 isith: 2,
                 nsith: 2,
                 toad: 2,
@@ -103,89 +103,89 @@ test('delegation-multisig', async () => {
         }
     );
 
-    const [ntor] = await waitForNotifications(ctor2, '/multisig/icp', {
+    const [ntor] = await waitForNotifications(delegator2Client, '/multisig/icp', {
         maxSleep: 10000,
         minSleep: 1000,
         maxRetries: undefined,
         timeout: 30000,
     });
-    await markAndRemoveNotification(ctor2, ntor);
+    await markAndRemoveNotification(delegator2Client, ntor);
     assert(ntor.a.d);
-    const otor2 = await acceptMultisigIncept(ctor2, {
-        localMemberName: ator2.name,
-        groupName: gtor,
+    const otor2 = await acceptMultisigIncept(delegator2Client, {
+        localMemberName: delegator2Aid.name,
+        groupName: delegatorGroupName,
         msgSaid: ntor.a.d,
     });
 
     const torpre = otor1.name.split('.')[1];
     await Promise.all([
-        waitOperation(ctor1, otor1),
-        waitOperation(ctor2, otor2),
+        waitOperation(delegator1Client, otor1),
+        waitOperation(delegator2Client, otor2),
     ]);
 
-    const agtor1 = await ctor1.identifiers().get(gtor);
-    const agtor2 = await ctor2.identifiers().get(gtor);
+    const adelegatorGroupName1 = await delegator1Client.identifiers().get(delegatorGroupName);
+    const adelegatorGroupName2 = await delegator2Client.identifiers().get(delegatorGroupName);
 
-    assert.equal(agtor1.prefix, agtor2.prefix);
-    assert.equal(agtor1.name, agtor2.name);
-    const agtor = agtor1;
+    assert.equal(adelegatorGroupName1.prefix, adelegatorGroupName2.prefix);
+    assert.equal(adelegatorGroupName1.name, adelegatorGroupName2.name);
+    const adelegatorGroupName = adelegatorGroupName1;
 
     //Resolve delegator OOBI
-    const gtorOobi = await step(
-        `Add and resolve delegator OOBI ${gtor}(${agtor.prefix})`,
+    const delegatorGroupNameOobi = await step(
+        `Add and resolve delegator OOBI ${delegatorGroupName}(${adelegatorGroupName.prefix})`,
         async () => {
-            // const ogtor1 = await ctor1.oobis().get(gtor, 'agent');
-            // return await resolveOobi(ctor1, ogtor1.oobis[0], gtor);
+            // const odelegatorGroupName1 = await ctor1.oobis().get(delegatorGroupName, 'agent');
+            // return await resolveOobi(ctor1, odelegatorGroupName1.oobis[0], delegatorGroupName);
             const timestamp = createTimestamp();
             const opList1 = await addEndRoleMultisig(
-                ctor1,
-                gtor,
-                ator1,
-                [ator2],
-                agtor,
+                delegator1Client,
+                delegatorGroupName,
+                delegator1Aid,
+                [delegator2Aid],
+                adelegatorGroupName,
                 timestamp,
                 true
             );
             const opList2 = await addEndRoleMultisig(
-                ctor2,
-                gtor,
-                ator2,
-                [ator1],
-                agtor,
+                delegator2Client,
+                delegatorGroupName,
+                delegator2Aid,
+                [delegator1Aid],
+                adelegatorGroupName,
                 timestamp
             );
 
-            await Promise.all(opList1.map((op) => waitOperation(ctor1, op)));
-            await Promise.all(opList2.map((op) => waitOperation(ctor2, op)));
+            await Promise.all(opList1.map((op) => waitOperation(delegator1Client, op)));
+            await Promise.all(opList2.map((op) => waitOperation(delegator2Client, op)));
 
-            await waitAndMarkNotification(ctor1, '/multisig/rpy');
-            await waitAndMarkNotification(ctor2, '/multisig/rpy');
+            await waitAndMarkNotification(delegator1Client, '/multisig/rpy');
+            await waitAndMarkNotification(delegator2Client, '/multisig/rpy');
 
-            const [ogtor1, ogtor2] = await Promise.all([
-                ctor1.oobis().get(agtor.name, 'agent'),
-                ctor2.oobis().get(agtor.name, 'agent'),
+            const [odelegatorGroupName1, odelegatorGroupName2] = await Promise.all([
+                delegator1Client.oobis().get(adelegatorGroupName.name, 'agent'),
+                delegator2Client.oobis().get(adelegatorGroupName.name, 'agent'),
             ]);
 
-            assert.equal(ogtor1.role, ogtor2.role);
-            assert.equal(ogtor1.oobis[0], ogtor2.oobis[0]);
+            assert.equal(odelegatorGroupName1.role, odelegatorGroupName2.role);
+            assert.equal(odelegatorGroupName1.oobis[0], odelegatorGroupName2.oobis[0]);
 
-            return ogtor1.oobis[0];
+            return odelegatorGroupName1.oobis[0];
         }
     );
 
-    const oobiGtor = gtorOobi.split('/agent/')[0];
+    const oobiGtor = delegatorGroupNameOobi.split('/agent/')[0];
     await Promise.all([
-        getOrCreateContact(ctee1, agtor.name, oobiGtor),
-        getOrCreateContact(ctee2, agtor.name, oobiGtor),
+        getOrCreateContact(delegatee1Client, adelegatorGroupName.name, oobiGtor),
+        getOrCreateContact(delegatee2Client, adelegatorGroupName.name, oobiGtor),
     ]);
 
-    const otee1 = await step(
-        `${tee1}(${atee1.prefix}) initiated delegatee multisig, waiting for ${tee2}(${atee2.prefix}) to join...`,
+    const opDelegatee1 = await step(
+        `${delegatee1Name}(${delegatee1Aid.prefix}) initiated delegatee multisig, waiting for ${delegatee2Name}(${delegatee2Aid.prefix}) to join...`,
         async () => {
-            return await startMultisigIncept(ctee1, {
-                groupName: gtee,
-                localMemberName: atee1.name,
-                participants: [atee1.prefix, atee2.prefix],
+            return await startMultisigIncept(delegatee1Client, {
+                groupName: delegateeGroupName,
+                localMemberName: delegatee1Aid.name,
+                participants: [delegatee1Aid.prefix, delegatee2Aid.prefix],
                 isith: 2,
                 nsith: 2,
                 toad: 2,
@@ -200,26 +200,26 @@ test('delegation-multisig', async () => {
     );
 
     // Second member of delegatee check notifications and join the multisig
-    const [ntee] = await waitForNotifications(ctee2, '/multisig/icp');
-    await markAndRemoveNotification(ctee2, ntee);
+    const [ntee] = await waitForNotifications(delegatee2Client, '/multisig/icp');
+    await markAndRemoveNotification(delegatee2Client, ntee);
     assert(ntee.a.d);
 
-    const otee2 = await acceptMultisigIncept(ctee2, {
-        localMemberName: atee2.name,
-        groupName: gtee,
+    const opDelegatee2 = await acceptMultisigIncept(delegatee2Client, {
+        localMemberName: delegatee2Aid.name,
+        groupName: delegateeGroupName,
         msgSaid: ntee.a.d,
     });
 
-    console.log(`${tee2} joined multisig, waiting for delegator...`);
+    console.log(`${delegatee2Name} joined multisig, waiting for delegator...`);
 
-    const agtee1 = await ctee1.identifiers().get(gtee);
-    const agtee2 = await ctee2.identifiers().get(gtee);
+    const agtee1 = await delegatee1Client.identifiers().get(delegateeGroupName);
+    const agtee2 = await delegatee2Client.identifiers().get(delegateeGroupName);
 
     assert.equal(agtee1.prefix, agtee2.prefix);
     assert.equal(agtee1.name, agtee2.name);
 
-    const teepre = otee1.name.split('.')[1];
-    assert.equal(otee2.name.split('.')[1], teepre);
+    const teepre = opDelegatee1.name.split('.')[1];
+    assert.equal(opDelegatee2.name.split('.')[1], teepre);
     console.log('Delegatee prefix:', teepre);
 
     await step('delegator anchors/approves delegation', async () => {
@@ -230,49 +230,49 @@ test('delegation-multisig', async () => {
             d: teepre,
         };
         const delApprOp1 = await delegateMultisig(
-            ctor1,
-            ator1,
-            [ator2],
-            agtor,
+            delegator1Client,
+            delegator1Aid,
+            [delegator2Aid],
+            adelegatorGroupName,
             anchor,
             true
         );
         const delApprOp2 = await delegateMultisig(
-            ctor2,
-            ator2,
-            [ator1],
-            agtor,
+            delegator2Client,
+            delegator2Aid,
+            [delegator1Aid],
+            adelegatorGroupName,
             anchor
         );
         const [dresult1, dresult2] = await Promise.all([
-            waitOperation(ctor1, delApprOp1),
-            waitOperation(ctor2, delApprOp2),
+            waitOperation(delegator1Client, delApprOp1),
+            waitOperation(delegator2Client, delApprOp2),
         ]);
 
         assert.equal(dresult1.response, dresult2.response);
 
-        await waitAndMarkNotification(ctor1, '/multisig/ixn');
+        await waitAndMarkNotification(delegator1Client, '/multisig/ixn');
     });
 
-    const queryOp1 = await ctor1.keyStates().query(agtor.prefix, '1');
-    const queryOp2 = await ctor2.keyStates().query(agtor.prefix, '1');
+    const queryOp1 = await delegator1Client.keyStates().query(adelegatorGroupName.prefix, '1');
+    const queryOp2 = await delegator2Client.keyStates().query(adelegatorGroupName.prefix, '1');
 
-    const kstor1 = await waitOperation(ctor1, queryOp1);
-    const kstor2 = await waitOperation(ctor2, queryOp2);
+    const kstor1 = await waitOperation(delegator1Client, queryOp1);
+    const kstor2 = await waitOperation(delegator2Client, queryOp2);
 
     // QARs query the GEDA's key state
-    const ksteetor1 = await ctee1.keyStates().query(agtor.prefix, '1');
-    const ksteetor2 = await ctee2.keyStates().query(agtor.prefix, '1');
-    const teeTor1 = await waitOperation(ctee1, ksteetor1);
-    const teeTor2 = await waitOperation(ctee2, ksteetor2);
+    const ksteetor1 = await delegatee1Client.keyStates().query(adelegatorGroupName.prefix, '1');
+    const ksteetor2 = await delegatee2Client.keyStates().query(adelegatorGroupName.prefix, '1');
+    const teeTor1 = await waitOperation(delegatee1Client, ksteetor1);
+    const teeTor2 = await waitOperation(delegatee2Client, ksteetor2);
 
-    const teeDone1 = await waitOperation(ctee1, otee1);
-    const teeDone2 = await waitOperation(ctee2, otee2);
+    const teeDone1 = await waitOperation(delegatee1Client, opDelegatee1);
+    const teeDone2 = await waitOperation(delegatee2Client, opDelegatee2);
     console.log('Delegated multisig created!');
 
-    const agtee = await ctee1.identifiers().get(gtee);
+    const agtee = await delegatee1Client.identifiers().get(delegateeGroupName);
     assert.equal(agtee.prefix, teepre);
 
-    await assertOperations(ctor1, ctor2, ctee1, ctee2);
-    await assertNotifications(ctor1, ctor2, ctee1, ctee2);
+    await assertOperations(delegator1Client, delegator2Client, delegatee1Client, delegatee2Client);
+    await assertNotifications(delegator1Client, delegator2Client, delegatee1Client, delegatee2Client);
 }, 600000);
