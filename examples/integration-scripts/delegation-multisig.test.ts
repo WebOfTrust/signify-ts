@@ -31,50 +31,64 @@ const delegatee2Name = 'delegatee2';
 test('delegation-multisig', async () => {
     await signify.ready();
     // Boot three clients
-    const [delegator1Client, delegator2Client, delegatee1Client, delegatee2Client] = await step(
-        'Creating single sig clients',
-        async () => {
-            return await Promise.all([
-                getOrCreateClient(),
-                getOrCreateClient(),
-                getOrCreateClient(),
-                getOrCreateClient(),
-            ]);
-        }
-    );
+    const [
+        delegator1Client,
+        delegator2Client,
+        delegatee1Client,
+        delegatee2Client,
+    ] = await step('Creating single sig clients', async () => {
+        return await Promise.all([
+            getOrCreateClient(),
+            getOrCreateClient(),
+            getOrCreateClient(),
+            getOrCreateClient(),
+        ]);
+    });
 
     // Create delegator and delegatee identifiers clients
-    const [delegator1Aid, delegator2Aid, delegatee1Aid, delegatee2Aid] = await step(
-        'Creating single sig aids',
-        async () => {
+    const [delegator1Aid, delegator2Aid, delegatee1Aid, delegatee2Aid] =
+        await step('Creating single sig aids', async () => {
             return await Promise.all([
                 createAID(delegator1Client, delegator1Name),
                 createAID(delegator2Client, delegator2Name),
                 createAID(delegatee1Client, delegatee1Name),
                 createAID(delegatee2Client, delegatee2Name),
             ]);
-        }
-    );
+        });
 
     // Exchange OOBIs
-    const [delegator1Oobi, delegator2Oobi, delegatee1Oobi, delegatee2Oobi] = await step(
-        'Getting OOBIs before resolving...',
-        async () => {
+    const [delegator1Oobi, delegator2Oobi, delegatee1Oobi, delegatee2Oobi] =
+        await step('Getting OOBIs before resolving...', async () => {
             return await Promise.all([
                 await delegator1Client.oobis().get(delegator1Name, 'agent'),
                 await delegator2Client.oobis().get(delegator2Name, 'agent'),
                 await delegatee1Client.oobis().get(delegatee1Name, 'agent'),
                 await delegatee2Client.oobis().get(delegatee2Name, 'agent'),
             ]);
-        }
-    );
+        });
 
     await step('Resolving OOBIs', async () => {
         await Promise.all([
-            resolveOobi(delegator1Client, delegator2Oobi.oobis[0], delegator2Name),
-            resolveOobi(delegator2Client, delegator1Oobi.oobis[0], delegator1Name),
-            resolveOobi(delegatee1Client, delegatee2Oobi.oobis[0], delegatee2Name),
-            resolveOobi(delegatee2Client, delegatee1Oobi.oobis[0], delegatee1Name),
+            resolveOobi(
+                delegator1Client,
+                delegator2Oobi.oobis[0],
+                delegator2Name
+            ),
+            resolveOobi(
+                delegator2Client,
+                delegator1Oobi.oobis[0],
+                delegator1Name
+            ),
+            resolveOobi(
+                delegatee1Client,
+                delegatee2Oobi.oobis[0],
+                delegatee2Name
+            ),
+            resolveOobi(
+                delegatee2Client,
+                delegatee1Oobi.oobis[0],
+                delegatee1Name
+            ),
         ]);
     });
     console.log(
@@ -103,12 +117,16 @@ test('delegation-multisig', async () => {
         }
     );
 
-    const [ntor] = await waitForNotifications(delegator2Client, '/multisig/icp', {
-        maxSleep: 10000,
-        minSleep: 1000,
-        maxRetries: undefined,
-        timeout: 30000,
-    });
+    const [ntor] = await waitForNotifications(
+        delegator2Client,
+        '/multisig/icp',
+        {
+            maxSleep: 10000,
+            minSleep: 1000,
+            maxRetries: undefined,
+            timeout: 30000,
+        }
+    );
     await markAndRemoveNotification(delegator2Client, ntor);
     assert(ntor.a.d);
     const otor2 = await acceptMultisigIncept(delegator2Client, {
@@ -123,8 +141,12 @@ test('delegation-multisig', async () => {
         waitOperation(delegator2Client, otor2),
     ]);
 
-    const adelegatorGroupName1 = await delegator1Client.identifiers().get(delegatorGroupName);
-    const adelegatorGroupName2 = await delegator2Client.identifiers().get(delegatorGroupName);
+    const adelegatorGroupName1 = await delegator1Client
+        .identifiers()
+        .get(delegatorGroupName);
+    const adelegatorGroupName2 = await delegator2Client
+        .identifiers()
+        .get(delegatorGroupName);
 
     assert.equal(adelegatorGroupName1.prefix, adelegatorGroupName2.prefix);
     assert.equal(adelegatorGroupName1.name, adelegatorGroupName2.name);
@@ -155,19 +177,31 @@ test('delegation-multisig', async () => {
                 timestamp
             );
 
-            await Promise.all(opList1.map((op) => waitOperation(delegator1Client, op)));
-            await Promise.all(opList2.map((op) => waitOperation(delegator2Client, op)));
+            await Promise.all(
+                opList1.map((op) => waitOperation(delegator1Client, op))
+            );
+            await Promise.all(
+                opList2.map((op) => waitOperation(delegator2Client, op))
+            );
 
             await waitAndMarkNotification(delegator1Client, '/multisig/rpy');
             await waitAndMarkNotification(delegator2Client, '/multisig/rpy');
 
-            const [odelegatorGroupName1, odelegatorGroupName2] = await Promise.all([
-                delegator1Client.oobis().get(adelegatorGroupName.name, 'agent'),
-                delegator2Client.oobis().get(adelegatorGroupName.name, 'agent'),
-            ]);
+            const [odelegatorGroupName1, odelegatorGroupName2] =
+                await Promise.all([
+                    delegator1Client
+                        .oobis()
+                        .get(adelegatorGroupName.name, 'agent'),
+                    delegator2Client
+                        .oobis()
+                        .get(adelegatorGroupName.name, 'agent'),
+                ]);
 
             assert.equal(odelegatorGroupName1.role, odelegatorGroupName2.role);
-            assert.equal(odelegatorGroupName1.oobis[0], odelegatorGroupName2.oobis[0]);
+            assert.equal(
+                odelegatorGroupName1.oobis[0],
+                odelegatorGroupName2.oobis[0]
+            );
 
             return odelegatorGroupName1.oobis[0];
         }
@@ -175,8 +209,16 @@ test('delegation-multisig', async () => {
 
     const oobiGtor = delegatorGroupNameOobi.split('/agent/')[0];
     await Promise.all([
-        getOrCreateContact(delegatee1Client, adelegatorGroupName.name, oobiGtor),
-        getOrCreateContact(delegatee2Client, adelegatorGroupName.name, oobiGtor),
+        getOrCreateContact(
+            delegatee1Client,
+            adelegatorGroupName.name,
+            oobiGtor
+        ),
+        getOrCreateContact(
+            delegatee2Client,
+            adelegatorGroupName.name,
+            oobiGtor
+        ),
     ]);
 
     const opDelegatee1 = await step(
@@ -200,7 +242,10 @@ test('delegation-multisig', async () => {
     );
 
     // Second member of delegatee check notifications and join the multisig
-    const [ntee] = await waitForNotifications(delegatee2Client, '/multisig/icp');
+    const [ntee] = await waitForNotifications(
+        delegatee2Client,
+        '/multisig/icp'
+    );
     await markAndRemoveNotification(delegatee2Client, ntee);
     assert(ntee.a.d);
 
@@ -254,15 +299,23 @@ test('delegation-multisig', async () => {
         await waitAndMarkNotification(delegator1Client, '/multisig/ixn');
     });
 
-    const queryOp1 = await delegator1Client.keyStates().query(adelegatorGroupName.prefix, '1');
-    const queryOp2 = await delegator2Client.keyStates().query(adelegatorGroupName.prefix, '1');
+    const queryOp1 = await delegator1Client
+        .keyStates()
+        .query(adelegatorGroupName.prefix, '1');
+    const queryOp2 = await delegator2Client
+        .keyStates()
+        .query(adelegatorGroupName.prefix, '1');
 
     const kstor1 = await waitOperation(delegator1Client, queryOp1);
     const kstor2 = await waitOperation(delegator2Client, queryOp2);
 
     // QARs query the GEDA's key state
-    const ksteetor1 = await delegatee1Client.keyStates().query(adelegatorGroupName.prefix, '1');
-    const ksteetor2 = await delegatee2Client.keyStates().query(adelegatorGroupName.prefix, '1');
+    const ksteetor1 = await delegatee1Client
+        .keyStates()
+        .query(adelegatorGroupName.prefix, '1');
+    const ksteetor2 = await delegatee2Client
+        .keyStates()
+        .query(adelegatorGroupName.prefix, '1');
     const teeTor1 = await waitOperation(delegatee1Client, ksteetor1);
     const teeTor2 = await waitOperation(delegatee2Client, ksteetor2);
 
@@ -273,6 +326,16 @@ test('delegation-multisig', async () => {
     const agtee = await delegatee1Client.identifiers().get(delegateeGroupName);
     assert.equal(agtee.prefix, teepre);
 
-    await assertOperations(delegator1Client, delegator2Client, delegatee1Client, delegatee2Client);
-    await assertNotifications(delegator1Client, delegator2Client, delegatee1Client, delegatee2Client);
+    await assertOperations(
+        delegator1Client,
+        delegator2Client,
+        delegatee1Client,
+        delegatee2Client
+    );
+    await assertNotifications(
+        delegator1Client,
+        delegator2Client,
+        delegatee1Client,
+        delegatee2Client
+    );
 }, 600000);
