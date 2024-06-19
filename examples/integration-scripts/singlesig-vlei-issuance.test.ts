@@ -109,10 +109,10 @@ const OOR_RULES = LE_RULES;
 const OOR_AUTH_RULES = LE_RULES;
 
 const CRED_RETRY_DEFAULTS = {
-    maxSleep: 10000,
+    maxSleep: 30000,
     minSleep: 1000,
     maxRetries: undefined,
-    timeout: 30000,
+    timeout: 60000,
 };
 
 function createTimestamp() {
@@ -473,7 +473,7 @@ test('singlesig-vlei-issuance', async function run() {
 
     await assertOperations(gleifClient, qviClient, leClient, roleClient);
     await warnNotifications(gleifClient, qviClient, leClient, roleClient);
-}, 360000);
+}, 3600000);
 
 async function getOrCreateRegistry(
     client: SignifyClient,

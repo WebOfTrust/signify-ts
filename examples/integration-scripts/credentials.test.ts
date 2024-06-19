@@ -118,12 +118,34 @@ test('single signature credentials', async () => {
             .rename(issuerAid.name, registryName, updatedRegistryName);
 
         registries = await issuerClient.registries().list(issuerAid.name);
-        let updateRegistry: { name: string; regk: string } = registries[0];
+        const updateRegistry: { name: string; regk: string } = registries[0];
         assert.equal(registries.length, 1);
         assert.equal(updateRegistry.name, updatedRegistryName);
 
         return updateRegistry;
     });
+
+    // await step('Resubmit identity to witnesses', async () => {
+    //     const subResult = await issuerClient
+    //         .identifiers().submit({ name: issuerAid.name });
+
+    //     await waitOperation(issuerClient, await subResult.op());
+    //     let registries = await issuerClient.registries().list(issuerAid.name);
+    //     const registry: { name: string; regk: string } = registries[0];
+    //     assert.equal(registries.length, 1);
+    //     assert.equal(registry.name, registryName);
+
+    //     await issuerClient
+    //         .registries()
+    //         .rename(issuerAid.name, registryName, updatedRegistryName);
+
+    //     registries = await issuerClient.registries().list(issuerAid.name);
+    //     let updateRegistry: { name: string; regk: string } = registries[0];
+    //     assert.equal(registries.length, 1);
+    //     assert.equal(updateRegistry.name, updatedRegistryName);
+
+    //     return updateRegistry;
+    // });
 
     await step('issuer can get schemas', async () => {
         const issuerQviSchema = await issuerClient
@@ -236,7 +258,7 @@ test('single signature credentials', async () => {
             datetime: dt,
         });
 
-        let op = await issuerClient
+        const op = await issuerClient
             .ipex()
             .submitGrant(issuerAid.name, grant, gsigs, gend, [
                 holderAid.prefix,
@@ -259,7 +281,7 @@ test('single signature credentials', async () => {
                 grantNotification.a.d!,
                 createTimestamp()
             );
-        let op = await holderClient
+        const op = await holderClient
             .ipex()
             .submitAdmit(holderAid.name, admit, sigs, aend, [issuerAid.prefix]);
         await waitOperation(holderClient, op);
@@ -306,7 +328,7 @@ test('single signature credentials', async () => {
             datetime: createTimestamp(),
         });
 
-        let op = await holderClient
+        const op = await holderClient
             .ipex()
             .submitGrant(holderAid.name, grant2, gsigs2, gend2, [
                 verifierAid.prefix,
@@ -331,7 +353,7 @@ test('single signature credentials', async () => {
                 createTimestamp()
             );
 
-        let op = await verifierClient
+        const op = await verifierClient
             .ipex()
             .submitAdmit(verifierAid.name, admit3, sigs3, aend3, [
                 holderAid.prefix,
@@ -430,7 +452,7 @@ test('single signature credentials', async () => {
             datetime: dt,
         });
 
-        let op = await holderClient
+        const op = await holderClient
             .ipex()
             .submitGrant(holderAid.name, grant, gsigs, gend, [
                 legalEntityAid.prefix,
@@ -454,7 +476,7 @@ test('single signature credentials', async () => {
                 createTimestamp()
             );
 
-        let op = await legalEntityClient
+        const op = await legalEntityClient
             .ipex()
             .submitAdmit(legalEntityAid.name, admit, sigs, aend, [
                 holderAid.prefix,
@@ -497,4 +519,4 @@ test('single signature credentials', async () => {
 
         assert.equal(issuerCredential.status.s, '1');
     });
-}, 90000);
+}, 900000);

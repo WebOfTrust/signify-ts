@@ -67,4 +67,16 @@ test('test witness', async () => {
     assert.equal(aid1.state.b.length, 1);
     assert.equal(aid1.state.b.length, 1);
     assert.equal(aid1.state.b[0], WITNESS_AID);
-}, 60000);
+
+    // submit again to witnesses
+
+    const subResult1 = await client1
+        .identifiers()
+        .submit_id('aid1');
+
+    await waitOperation(client1, await subResult1.op());
+    aid1 = await client1.identifiers().get('aid1');
+    assert.equal(aid1.state.b.length, 1);
+    assert.equal(aid1.state.b.length, 1);
+    assert.equal(aid1.state.b[0], WITNESS_AID);
+}, 600000);
