@@ -481,7 +481,7 @@ export class Identifier {
             'POST',
             {submit: "lets rock"}
         );
-        return new EventResult(serder, sigs, res.json());
+        return res.json();
     }
 }
 
