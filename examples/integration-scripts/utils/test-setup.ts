@@ -166,16 +166,18 @@ export async function getOrCreateContact(
     oobi: string
 ): Promise<string> {
     const list = await client.contacts().list(undefined, 'alias', `^${name}$`);
-    // console.log("contacts.list", list);
     if (list.length > 0) {
         const contact = list[0];
         if (contact.oobi === oobi) {
-            // console.log("contacts.id", contact.id);
+            console.log('OOBI Already found', oobi);
             return contact.id;
         }
     }
     let op = await client.oobis().resolve(oobi, name);
     op = await waitOperation(client, op);
-    // console.log("oobis.resolve", op);
+    console.dir(op, { depth: 100 });
+    const id = op.response.i;
+
+    await client.contacts().get(id);
     return op.response.i;
 }
