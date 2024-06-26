@@ -156,15 +156,30 @@ test('salty', async () => {
     const events = client1.keyEvents();
     const log = await events.get(aid['prefix']);
     assert.equal(log.length, 3);
-    let serder = new signify.Serder(log[0]);
+    let serder = new signify.Serder(log[0].ked);
     assert.equal(serder.pre, icp.pre);
     assert.equal(serder.ked['d'], icp.ked['d']);
-    serder = new signify.Serder(log[1]);
+    serder = new signify.Serder(log[1].ked);
     assert.equal(serder.pre, rot.pre);
     assert.equal(serder.ked['d'], rot.ked['d']);
-    serder = new signify.Serder(log[2]);
+    serder = new signify.Serder(log[2].ked);
     assert.equal(serder.pre, ixn.pre);
     assert.equal(serder.ked['d'], ixn.ked['d']);
+
+    const renameResult = await client1
+        .identifiers()
+        .rename('aid1', 'aidRenamed');
+    assert.equal(renameResult.name, 'aidRenamed');
+    aids = await client1.identifiers().list();
+    assert.equal(aids.aids.length, 3);
+    aid = aids.aids.pop();
+    assert.equal(aid.name, 'aidRenamed');
+
+    await client1.identifiers().delete('aidRenamed');
+    aids = await client1.identifiers().list();
+    assert.equal(aids.aids.length, 2);
+    aid = aids.aids.pop();
+    assert.equal(aid.name, 'aid3');
 
     await assertOperations(client1);
 

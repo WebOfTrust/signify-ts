@@ -121,6 +121,34 @@ export class Identifier {
     }
 
     /**
+     * Get information for a managed identifier
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @param {string} newName New name or alias of the identifier
+     * @returns {Promise<any>} A promise to the identifier information
+     */
+    async rename(name: string, newName: string): Promise<any> {
+        const path = `/identifiers/${encodeURIComponent(name)}`;
+        const data = { name: newName };
+        const method = 'PUT';
+        const res = await this.client.fetch(path, method, data);
+        return res.json();
+    }
+
+    /**
+     * Delete a managed identifier
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @returns {Promise<any>} A promise to the identifier information
+     */
+    async delete(name: string): Promise<any> {
+        const path = `/identifiers/${encodeURIComponent(name)}`;
+        const method = 'DELETE';
+        await this.client.fetch(path, method, null);
+        return;
+    }
+
+    /**
      * Create a managed identifier
      * @async
      * @param {string} name Name or alias of the identifier
@@ -233,14 +261,8 @@ export class Identifier {
             icp: serder.ked,
             sigs: sigs,
             proxy: proxy,
-            smids:
-                states != undefined
-                    ? states.map((state) => state.i)
-                    : undefined,
-            rmids:
-                rstates != undefined
-                    ? rstates.map((state) => state.i)
-                    : undefined,
+            smids: states,
+            rmids: states,
         };
         jsondata[algo] = keeper.params();
 
@@ -284,8 +306,8 @@ export class Identifier {
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
-            'PUT',
+            `/identifiers/${encodeURIComponent(name)}/events`,
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
@@ -370,20 +392,14 @@ export class Identifier {
         const jsondata: any = {
             rot: serder.ked,
             sigs: sigs,
-            smids:
-                states != undefined
-                    ? states.map((state) => state.i)
-                    : undefined,
-            rmids:
-                rstates != undefined
-                    ? rstates.map((state) => state.i)
-                    : undefined,
+            smids: states,
+            rmids: rstates,
         };
         jsondata[keeper.algo] = keeper.params();
 
         const res = await this.client.fetch(
-            '/identifiers/' + name,
-            'PUT',
+            `/identifiers/${encodeURIComponent(name)}/events`,
+            'POST',
             jsondata
         );
         return new EventResult(serder, sigs, res);
@@ -419,7 +435,7 @@ export class Identifier {
         };
 
         const res = this.client.fetch(
-            '/identifiers/' + name + '/endroles',
+            `/identifiers/${encodeURIComponent(name)}/endroles`,
             'POST',
             jsondata
         );
@@ -459,7 +475,7 @@ export class Identifier {
      */
     async members(name: string): Promise<any> {
         const res = await this.client.fetch(
-            '/identifiers/' + name + '/members',
+            `/identifiers/${encodeURIComponent(name)}/members`,
             'GET',
             undefined
         );
