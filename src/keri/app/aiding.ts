@@ -481,11 +481,11 @@ export class Identifier {
      * @param {string} name - Name or alias of the identifier
      * @returns {Promise<any>} - A promise to the last event of the KEL
      */
-    async submit_id(name: string): Promise<EventResult> {
+    async submit_id(name: string): Promise<Operation> {
         const res = await this.client.fetch(
             '/identifiers/' + name + '/submit',
             'POST',
-            {submit: "lets rock"}
+            {submit: name}
         );
         return res.json();
     }
