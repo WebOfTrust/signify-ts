@@ -62,6 +62,10 @@ test('test witness', async () => {
     assert.equal(aidRot.state.b.length, 1);
     assert.equal(aidRot.state.b[0], WITNESS_AID);
 
+    const ooobiRotRes = await client1.oobis().resolve(oobiWit1);
+    const oobiRot = await waitOperation(client1, ooobiRotRes);
+    expect(JSON.stringify(oobiRot['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+
     // Remove witness
     const rotCutRes = await client1
         .identifiers()
@@ -70,8 +74,11 @@ test('test witness', async () => {
     const aidRemWit = await client1.identifiers().get(ID1_NAME);
     assert.equal(aidRemWit.state.b.length, 0);
 
-    // Add witness again
+    const ooobiRotCutRes = await client1.oobis().resolve(oobiWit1);
+    const oobiRotCut = await waitOperation(client1, ooobiRotCutRes);
+    expect(JSON.stringify(oobiRotCut['response']["b"][0])).toEqual(undefined);
 
+    // Add witness again
     const rotAddRes = await client1
         .identifiers()
         .rotate(ID1_NAME, { adds: [WITNESS_AID] });
@@ -82,7 +89,11 @@ test('test witness', async () => {
     assert.equal(rotAddId.state.b.length, 1);
     assert.equal(rotAddId.state.b[0], WITNESS_AID);
 
-    // submit again to witnesses
+    const ooobiRotAddRes = await client1.oobis().resolve(oobiWit1);
+    const oobiRotAdd = await waitOperation(client1, ooobiRotAddRes);
+    expect(JSON.stringify(oobiRotAdd['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+
+    // force submit again to witnesses
     const subRes = await client1
         .identifiers()
         .submit_id(ID1_NAME);
@@ -93,9 +104,12 @@ test('test witness', async () => {
     assert.equal(subId.state.b.length, 1);
     assert.equal(subId.state.b[0], WITNESS_AID);
 
+    const ooobiSubRes = await client1.oobis().resolve(oobiWit1);
+    const oobiSub = await waitOperation(client1, ooobiSubRes);
+    expect(JSON.stringify(oobiSub['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+
     const registry = await step('Create registry', async () => {
         const registryName = 'vLEI-test-registry';
-        const updatedRegistryName = 'vLEI-test-registry-1';
         const regResult = await client1
             .registries()
             .create({ name: subId.name, registryName: registryName });
@@ -107,7 +121,12 @@ test('test witness', async () => {
         assert.equal(registry.name, registryName);
     })
 
-    // submit again to witnesses
+    const ooobiRegRes = await client1.oobis().resolve(oobiWit1);
+    const oobiReg = await waitOperation(client1, ooobiRegRes);
+    expect(JSON.stringify(oobiReg['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+    expect(JSON.stringify(oobiReg['response']["et"])).toEqual(`\"ixn\"`);
+
+    // force submit again to witnesses
     const subRegRes = await client1
     .identifiers()
     .submit_id(ID1_NAME);
@@ -117,4 +136,9 @@ test('test witness', async () => {
     assert.equal(subRegId.state.b.length, 1);
     assert.equal(subRegId.state.b.length, 1);
     assert.equal(subRegId.state.b[0], WITNESS_AID);
+
+    const ooobiSubRegRes = await client1.oobis().resolve(oobiWit1);
+    const oobiSubReg = await waitOperation(client1, ooobiSubRegRes);
+    expect(JSON.stringify(oobiSubReg['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+    expect(JSON.stringify(oobiSubReg['response']["et"])).toEqual(`\"ixn\"`);
 }, 600000);
