@@ -34,7 +34,17 @@ services:
             - PYTHONIOENCODING=UTF-8
         volumes:
             - ./config/keria.json:/keria/config/keri/cf/keria.json
-        entrypoint: ["keria", "start", "--config-dir", "/keria/config", "--config-file", "keria", "--name", "agent"]
+        entrypoint:
+            [
+                'keria',
+                'start',
+                '--config-dir',
+                '/keria/config',
+                '--config-file',
+                'keria',
+                '--name',
+                'agent',
+            ]
         healthcheck:
             test: ['CMD', 'wget', '--spider', 'http://keria:3902/spec.yaml']
             interval: 2s
