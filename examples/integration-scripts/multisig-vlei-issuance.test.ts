@@ -6,6 +6,7 @@ import signify, {
     CreateIdentiferArgs,
     randomNonce,
     Salter,
+    HabState,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
@@ -20,7 +21,6 @@ import {
     waitForCredential,
     admitSinglesig,
 } from './utils/test-util';
-import { HabState } from '../../src/keri/core/state';
 import {
     addEndRoleMultisig,
     admitMultisig,

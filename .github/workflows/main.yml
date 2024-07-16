@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - 'main'
+      - 'development'
   pull_request:
     branches:
       - 'main'
+      - 'development'
   workflow_dispatch:
 jobs:
   build:
@@ -55,7 +57,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        keria-version: ['latest']
+        keria-version: ['0.1.3']
         node-version: ['20']
     env:
       KERIA_IMAGE_TAG: ${{ matrix.keria-version }}
