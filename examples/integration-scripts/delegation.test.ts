@@ -6,6 +6,7 @@ import {
     resolveOobi,
     waitOperation,
 } from './utils/test-util';
+import { step } from './utils/test-step';
 
 const { url, bootUrl } = resolveEnvironment();
 
@@ -78,16 +79,16 @@ test('delegation', async () => {
     console.log('Delegate waiting for approval...');
 
     // Client 1 approves deletation
-    const anchor = {
-        i: delegatePrefix,
-        s: '0',
-        d: delegatePrefix,
-    };
-    const ixnResult1 = await client1
-        .identifiers()
-        .interact('delegator', anchor);
-    await waitOperation(client1, await ixnResult1.op());
-    console.log('Delegator approved delegation');
+    await step('delegator approves delegation', async () => {
+        const anchor = {
+            i: delegatePrefix,
+            s: '0',
+            d: delegatePrefix,
+        };
+        const result = await client1.delegations().approve('delegator', anchor);
+        await waitOperation(client1, await result.op());
+        expect(result.serder.ked.a[0]).toEqual(anchor);
+    });
 
     let op3 = await client2.keyStates().query(aid1.prefix, '1');
     await waitOperation(client2, op3);
@@ -99,4 +100,21 @@ test('delegation', async () => {
     console.log('Delegation approved for aid:', aid2.prefix);
 
     await assertOperations(client1, client2);
+    const rpyResult2 = await client2
+        .identifiers()
+        .addEndRole('delegate', 'agent', client2!.agent!.pre);
+    await waitOperation(client2, await rpyResult2.op());
+    const oobis = await client2.oobis().get('delegate');
+
+    const oobi = oobis.oobis[0]; //.split('/agent/')[0];
+    assert(typeof oobi === 'string');
+
+    const oobiOperation = await client1.oobis().resolve(oobi);
+    const oobiResult = await client1
+        .operations()
+        .wait(oobiOperation, { signal: AbortSignal.timeout(10000) });
+
+    expect(oobiResult.response).toMatchObject({
+        i: aid2.prefix,
+    });
 }, 60000);
