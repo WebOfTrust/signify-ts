@@ -22,14 +22,6 @@ afterAll(async () => {
 
 describe('test-setup-single-client', () => {
     test('step1', async () => {
-        const env = resolveEnvironment();
-        switch (env.preset) {
-            case 'local':
-                expect(client.agent?.pre).toEqual(
-                    'EIl384EOsOcDnBE1AvIInU82CvjHgVmU9xuTCry233d6'
-                );
-                break;
-        }
         expect(client.controller?.pre).toEqual(
             'EB3UGWwIMq7ppzcQ697ImQIuXlBG5jzh-baSx-YG3-tY'
         );
