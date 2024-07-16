@@ -7,6 +7,7 @@ import { MtrDex } from '../core/matter';
 import { Serder } from '../core/serder';
 import { parseRangeHeaders } from '../core/httping';
 import { KeyManager } from '../core/keeping';
+import { Operation } from './coring';
 import { HabState } from '../core/state';
 
 /** Arguments required to create an identfier */
@@ -233,8 +234,14 @@ export class Identifier {
             icp: serder.ked,
             sigs: sigs,
             proxy: proxy,
-            smids: states,
-            rmids: rstates ?? states,
+            smids:
+                states != undefined
+                    ? states.map((state) => state.i)
+                    : undefined,
+            rmids:
+                rstates != undefined
+                    ? rstates.map((state) => state.i)
+                    : undefined,
         };
         jsondata[algo] = keeper.params();
 
@@ -251,6 +258,20 @@ export class Identifier {
      * @returns {Promise<EventResult>} A promise to the interaction event result
      */
     async interact(name: string, data?: any): Promise<EventResult> {
+        let { serder, sigs, jsondata } = await this.createInteract(name, data);
+
+        const res = await this.client.fetch(
+            '/identifiers/' + name + '?type=ixn',
+            'POST',
+            jsondata
+        );
+        return new EventResult(serder, sigs, res);
+    }
+
+    async createInteract(
+        name: string,
+        data?: any
+    ): Promise<{ serder: any; sigs: any; jsondata: any }> {
         const hab = await this.get(name);
         const pre: string = hab.prefix;
 
@@ -276,13 +297,7 @@ export class Identifier {
             sigs: sigs,
         };
         jsondata[keeper.algo] = keeper.params();
-
-        const res = await this.client.fetch(
-            '/identifiers/' + name + '/events',
-            'POST',
-            jsondata
-        );
-        return new EventResult(serder, sigs, res);
+        return { serder, sigs, jsondata };
     }
 
     /**
@@ -364,8 +379,14 @@ export class Identifier {
         const jsondata: any = {
             rot: serder.ked,
             sigs: sigs,
-            smids: states,
-            rmids: rstates,
+            smids:
+                states != undefined
+                    ? states.map((state) => state.i)
+                    : undefined,
+            rmids:
+                rstates != undefined
+                    ? rstates.map((state) => state.i)
+                    : undefined,
         };
         jsondata[keeper.algo] = keeper.params();
 
