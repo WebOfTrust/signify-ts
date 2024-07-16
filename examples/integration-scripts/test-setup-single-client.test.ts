@@ -26,7 +26,7 @@ describe('test-setup-single-client', () => {
         switch (env.preset) {
             case 'local':
                 expect(client.agent?.pre).toEqual(
-                    'ECY77aSFHbqi_IrfpbktvjBHxUheWXDfJVn9U-jegkog'
+                    'EIl384EOsOcDnBE1AvIInU82CvjHgVmU9xuTCry233d6'
                 );
                 break;
         }
