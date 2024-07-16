@@ -261,7 +261,7 @@ export class Identifier {
         let { serder, sigs, jsondata } = await this.createInteract(name, data);
 
         const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
+            '/identifiers/' + name + '/events',
             'POST',
             jsondata
         );

@@ -280,7 +280,7 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
 
-        expect(lastCall.path).toEqual('/identifiers/aid1?type=ixn');
+        expect(lastCall.path).toEqual('/identifiers/aid1/events');
         expect(lastCall.method).toEqual('POST');
         expect(lastCall.body.ixn).toMatchObject({
             v: 'KERI10JSON000138_',
@@ -322,7 +322,7 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
 
-        expect(lastCall.path).toEqual('/identifiers/aid1?type=ixn');
+        expect(lastCall.path).toEqual('/identifiers/aid1/events');
         expect(lastCall.method).toEqual('POST');
         expect(lastCall.body.ixn).toMatchObject({
             s: 'b',
