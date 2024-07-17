@@ -405,7 +405,7 @@ export function incept({
     }
 
     if (cnfg.includes(TraitDex.RegistrarBackers)) {
-        ked['a'] = [ked['d']]
+        ked['a'] = { d: ked['d'] }
     }
 
     return new Serder(ked);
