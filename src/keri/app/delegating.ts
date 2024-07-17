@@ -1,6 +1,5 @@
 import { EventResult } from './aiding';
 import { SignifyClient } from './clienting';
-import { Operation } from './coring';
 
 export class Delegations {
     public client: SignifyClient;
