@@ -10,6 +10,7 @@ export class TraitCodex {
     EstOnly: string = 'EO'; // Only allow establishment events
     DoNotDelegate: string = 'DND'; // Dot not allow delegated identifiers
     NoBackers: string = 'NB'; // Do not allow backers
+    RegistrarBackers: string = 'RB'; // Registrar backers
 }
 
 export const TraitDex = new TraitCodex();

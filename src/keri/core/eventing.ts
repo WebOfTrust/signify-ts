@@ -9,6 +9,7 @@ import {
     Version,
     Versionage,
 } from './core';
+import { TraitDex } from '../app/habery';
 import { Tholder } from './tholder';
 import { CesrNumber } from './number';
 import { Prefixer } from './prefixer';
@@ -401,6 +402,10 @@ export function incept({
         ked['d'] = prefixer.qb64;
     } else {
         [, ked] = Saider.saidify(ked);
+    }
+
+    if (cnfg.includes(TraitDex.RegistrarBackers)) {
+        ked['a'] = [ked['d']]
     }
 
     return new Serder(ked);
