@@ -166,7 +166,6 @@ fetchMock.mockResponse((req) => {
 });
 
 describe('delegate', () => {
-
     it('approve delegation', async () => {
         await libsodium.ready;
         const bran = '0123456789abcdefghijk';
@@ -174,11 +173,14 @@ describe('delegate', () => {
         await client.boot();
         await client.connect();
         const delegations = client.delegations();
-        await delegations.approve('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
+        await delegations.approve(
+            'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+        );
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0]!,
-            url + '/identifiers/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao/delegation'
+            url +
+                '/identifiers/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao/delegation'
         );
         assert.equal(lastCall[1]!.method, 'POST');
     });
