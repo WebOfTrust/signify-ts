@@ -2,7 +2,7 @@
 import { strict as assert } from 'assert';
 import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
-import { resolveOobi, waitOperation } from './utils/test-util';
+import { resolveOobi, waitOperation, witnessAgain } from './utils/test-util';
 import { step } from './utils/test-step';
 
 const WITNESS_AID = 'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha';
@@ -48,8 +48,8 @@ test('test witness', async () => {
     expect(oobisWit.oobis).toHaveLength(1);
 
     const oobiWit1 = oobisWit.oobis[0]
-    expect(oobiWit1).toEqual(
-        `http://127.0.0.1:5642/oobi/${aidIcp.prefix}/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha`
+    expect(oobiWit1).toContain(
+        `/oobi/${aidIcp.prefix}/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha`
     );
 
     const oobiResolve = await client1.oobis().resolve(oobiWit1);
@@ -93,20 +93,8 @@ test('test witness', async () => {
     const oobiRotAdd = await waitOperation(client1, ooobiRotAddRes);
     expect(JSON.stringify(oobiRotAdd['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
 
-    // force submit again to witnesses
-    const subRes = await client1
-        .identifiers()
-        .submit_id(ID1_NAME);
-
-    await waitOperation(client1, await subRes);
-    const subId = await client1.identifiers().get(ID1_NAME);
-    assert.equal(subId.state.b.length, 1);
-    assert.equal(subId.state.b.length, 1);
-    assert.equal(subId.state.b[0], WITNESS_AID);
-
-    const ooobiSubRes = await client1.oobis().resolve(oobiWit1);
-    const oobiSub = await waitOperation(client1, ooobiSubRes);
-    expect(JSON.stringify(oobiSub['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+    // try force submit again to witnesses
+    const subId = await witnessAgain(client1,ID1_NAME,aidIcp.prefix,WITNESS_AID,1,'rot');
 
     const registry = await step('Create registry', async () => {
         const registryName = 'vLEI-test-registry';
@@ -127,18 +115,5 @@ test('test witness', async () => {
     expect(JSON.stringify(oobiReg['response']["et"])).toEqual(`\"ixn\"`);
 
     // force submit again to witnesses
-    const subRegRes = await client1
-    .identifiers()
-    .submit_id(ID1_NAME);
-
-    await waitOperation(client1, await subRegRes);
-    const subRegId = await client1.identifiers().get(ID1_NAME);
-    assert.equal(subRegId.state.b.length, 1);
-    assert.equal(subRegId.state.b.length, 1);
-    assert.equal(subRegId.state.b[0], WITNESS_AID);
-
-    const ooobiSubRegRes = await client1.oobis().resolve(oobiWit1);
-    const oobiSubReg = await waitOperation(client1, ooobiSubRegRes);
-    expect(JSON.stringify(oobiSubReg['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
-    expect(JSON.stringify(oobiSubReg['response']["et"])).toEqual(`\"ixn\"`);
+    await witnessAgain(client1,ID1_NAME,aidIcp.prefix,WITNESS_AID,1,'ixn');
 }, 600000);

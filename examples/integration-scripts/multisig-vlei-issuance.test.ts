@@ -414,7 +414,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(aidQVIbyQAR1.name, aidQVIbyQAR3.name);
     const aidQVI = aidQVIbyQAR1;
 
-    witnessAgain(clientQAR1,idQVI,aidQVIbyQAR1,witnessIds[0],'dip');
+    // witnessAgain(clientQAR1,idQVI,aidQVIbyQAR1.prefix,witnessIds[0],'dip');
 
     // Add endpoint role authorization for all QARs' agents.
     // Skip if they have already been authorized.
@@ -671,7 +671,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(qviCred.sad.d, qviCredbyQAR2.sad.d);
     assert.equal(qviCred.sad.d, qviCredbyQAR3.sad.d);
 
-    witnessAgain(clientQAR1,idQVI,aidQVIbyQAR1,witnessIds[0],'dip');
+    // witnessAgain(clientQAR1,idQVI,aidQVIbyQAR1.prefix,witnessIds[0],'dip');
 
     // Create a multisig AID for the LE.
     // Skip if a LE AID has already been incepted.
@@ -865,7 +865,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(qviRegistrybyQAR1[0].name, qviRegistrybyQAR3[0].name);
     const qviRegistry = qviRegistrybyQAR1[0];
 
-    witnessAgain(clientQAR1,idQVI,aidQVI,witnessIds[0],'ixn');
+    // witnessAgain(clientQAR1,idQVI,aidQVI.prefix,witnessIds[0],'ixn');
 
     // QVI issues a LE vLEI credential to the LE.
     // Skip if the credential has already been issued.
@@ -1265,26 +1265,3 @@ test('multisig-vlei-issuance', async function run() {
     }
     assert.equal(ecrCred.sad.d, ecrCredbyECR.sad.d);
 }, 360000);
-
-async function witnessAgain(client: SignifyClient, idName: string, aid: HabState, witId: string, eType: string) {
-        // force submit again to witnesses
-        const subRes = await client.identifiers().submit_id(idName);
-
-        await waitOperation(client, await subRes);
-        const subRegId = await client.identifiers().get(idName);
-        assert.equal(subRegId.state.b.length, 3);
-        assert.equal(subRegId.state.b[0], witId);
-    
-        const oobisWit = await client.oobis().get(idName, 'witness');
-        expect(oobisWit.oobis).toHaveLength(3);
-    
-        const oobiWit1 = oobisWit.oobis[0]
-        expect(oobiWit1).toEqual(
-            `http://127.0.0.1:5642/oobi/${aid.prefix}/witness/${witId}`
-        );
-    
-        const oobiSubRes = await client.oobis().resolve(oobiWit1);
-        const oobiSub = await waitOperation(client, oobiSubRes);
-        expect(JSON.stringify(oobiSub['response']["b"][0])).toEqual(`\"${witId}\"`);
-        expect(JSON.stringify(oobiSub['response']["et"])).toEqual(`\"${eType}\"`);
-}

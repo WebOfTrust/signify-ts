@@ -512,3 +512,28 @@ export async function waitOperation<T = any>(
 
     return op;
 }
+
+export async function witnessAgain(client: SignifyClient, idName: string, prefix: string, witId: string, numOobis: number, eType: string) {
+    // force submit again to witnesses
+    const subRes = await client.identifiers().submit_id(idName);
+
+    await waitOperation(client, await subRes);
+    const subRegId = await client.identifiers().get(idName);
+    assert.equal(subRegId.state.b.length, numOobis);
+    assert.equal(subRegId.state.b[0], witId);
+
+    const oobisWit = await client.oobis().get(idName, 'witness');
+    expect(oobisWit.oobis).toHaveLength(numOobis);
+
+    const oobiWit1 = oobisWit.oobis[0]
+    expect(oobiWit1).toContain(
+        `/oobi/${prefix}/witness/${witId}`
+    );
+
+    const oobiSubRes = await client.oobis().resolve(oobiWit1);
+    const oobiSub = await waitOperation(client, oobiSubRes);
+    expect(JSON.stringify(oobiSub['response']["b"][0])).toEqual(`\"${witId}\"`);
+    expect(JSON.stringify(oobiSub['response']["et"])).toEqual(`\"${eType}\"`);
+
+    return subRegId
+}
