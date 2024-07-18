@@ -1256,7 +1256,7 @@ test('multisig-vlei-issuance', async function run() {
     // Skip if ECR Person has already received the credential.
     let ecrCredbyECR = await getReceivedCredential(clientECR, ecrCred.sad.d);
     if (!ecrCredbyECR) {
-        await admitSinglesig(clientECR, aidECR, aidLE);
+        await admitSinglesig(clientECR, aidECR.name, aidLE);
         await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit');
         await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit');
         await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit');

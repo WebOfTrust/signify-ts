@@ -34,7 +34,7 @@ export function sleep(ms: number): Promise<void> {
 
 export async function admitSinglesig(
     client: SignifyClient,
-    aid: HabState,
+    aidName: string,
     recipientAid: HabState
 ) {
     const grantMsgSaid = await waitAndMarkNotification(
@@ -44,11 +44,11 @@ export async function admitSinglesig(
 
     const [admit, sigs, aend] = await client
         .ipex()
-        .admit(aid.name, '', grantMsgSaid);
+        .admit(aidName, '', grantMsgSaid);
 
     await client
         .ipex()
-        .submitAdmit(aid.name, admit, sigs, aend, [recipientAid.prefix]);
+        .submitAdmit(aidName, admit, sigs, aend, [recipientAid.prefix]);
 }
 
 /**

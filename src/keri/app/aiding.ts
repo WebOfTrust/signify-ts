@@ -234,8 +234,14 @@ export class Identifier {
             icp: serder.ked,
             sigs: sigs,
             proxy: proxy,
-            smids: states,
-            rmids: rstates,
+            smids:
+                states != undefined
+                    ? states.map((state) => state.i)
+                    : undefined,
+            rmids:
+                rstates != undefined
+                    ? rstates.map((state) => state.i)
+                    : undefined,
         };
         jsondata[algo] = keeper.params();
 
@@ -255,7 +261,7 @@ export class Identifier {
         let { serder, sigs, jsondata } = await this.createInteract(name, data);
 
         const res = await this.client.fetch(
-            '/identifiers/' + name + '?type=ixn',
+            '/identifiers/' + name + '/events',
             'POST',
             jsondata
         );
@@ -291,7 +297,6 @@ export class Identifier {
             sigs: sigs,
         };
         jsondata[keeper.algo] = keeper.params();
-
         return { serder, sigs, jsondata };
     }
 
