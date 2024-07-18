@@ -2,9 +2,11 @@
 import { strict as assert } from 'assert';
 import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
-import { resolveOobi, waitOperation } from './utils/test-util';
+import { resolveOobi, waitOperation, witnessAgain } from './utils/test-util';
+import { step } from './utils/test-step';
 
 const WITNESS_AID = 'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha';
+const ID1_NAME = 'aid1'
 const { url, bootUrl, witnessUrls } = resolveEnvironment();
 
 test('test witness', async () => {
@@ -32,39 +34,86 @@ test('test witness', async () => {
     console.log('Witness OOBI resolved');
 
     // Client 1 creates AID with 1 witness
-    let icpResult1 = await client1.identifiers().create('aid1', {
+    const  icpRes = await client1.identifiers().create(ID1_NAME, {
         toad: 1,
         wits: [WITNESS_AID],
     });
-    await waitOperation(client1, await icpResult1.op());
-    let aid1 = await client1.identifiers().get('aid1');
-    console.log('AID:', aid1.prefix);
-    assert.equal(aid1.state.b.length, 1);
-    assert.equal(aid1.state.b[0], WITNESS_AID);
+    await waitOperation(client1, await icpRes.op());
+    const aidIcp = await client1.identifiers().get(ID1_NAME);
+    console.log('AID:', aidIcp.prefix);
+    assert.equal(aidIcp.state.b.length, 1);
+    assert.equal(aidIcp.state.b[0], WITNESS_AID);
 
-    icpResult1 = await client1.identifiers().rotate('aid1');
-    await waitOperation(client1, await icpResult1.op());
-    aid1 = await client1.identifiers().get('aid1');
-    assert.equal(aid1.state.b.length, 1);
-    assert.equal(aid1.state.b[0], WITNESS_AID);
+    const oobisWit = await client1.oobis().get(ID1_NAME, 'witness');
+    expect(oobisWit.oobis).toHaveLength(1);
+
+    const oobiWit1 = oobisWit.oobis[0]
+    expect(oobiWit1).toContain(
+        `/oobi/${aidIcp.prefix}/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha`
+    );
+
+    const oobiResolve = await client1.oobis().resolve(oobiWit1);
+    const oobiResult = await waitOperation(client1, oobiResolve);
+    expect(JSON.stringify(oobiResult['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+
+    const rotRes = await client1.identifiers().rotate(ID1_NAME);
+    await waitOperation(client1, await rotRes.op());
+    const aidRot = await client1.identifiers().get(ID1_NAME);
+    assert.equal(aidRot.state.b.length, 1);
+    assert.equal(aidRot.state.b[0], WITNESS_AID);
+
+    const ooobiRotRes = await client1.oobis().resolve(oobiWit1);
+    const oobiRot = await waitOperation(client1, ooobiRotRes);
+    expect(JSON.stringify(oobiRot['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
 
     // Remove witness
-    icpResult1 = await client1
+    const rotCutRes = await client1
         .identifiers()
-        .rotate('aid1', { cuts: [WITNESS_AID] });
-    await waitOperation(client1, await icpResult1.op());
-    aid1 = await client1.identifiers().get('aid1');
-    assert.equal(aid1.state.b.length, 0);
+        .rotate(ID1_NAME, { cuts: [WITNESS_AID] });
+    await waitOperation(client1, await rotCutRes.op());
+    const aidRemWit = await client1.identifiers().get(ID1_NAME);
+    assert.equal(aidRemWit.state.b.length, 0);
+
+    const ooobiRotCutRes = await client1.oobis().resolve(oobiWit1);
+    const oobiRotCut = await waitOperation(client1, ooobiRotCutRes);
+    expect(JSON.stringify(oobiRotCut['response']["b"][0])).toEqual(undefined);
 
     // Add witness again
-
-    icpResult1 = await client1
+    const rotAddRes = await client1
         .identifiers()
-        .rotate('aid1', { adds: [WITNESS_AID] });
+        .rotate(ID1_NAME, { adds: [WITNESS_AID] });
 
-    await waitOperation(client1, await icpResult1.op());
-    aid1 = await client1.identifiers().get('aid1');
-    assert.equal(aid1.state.b.length, 1);
-    assert.equal(aid1.state.b.length, 1);
-    assert.equal(aid1.state.b[0], WITNESS_AID);
-});
+    await waitOperation(client1, await rotAddRes.op());
+    const rotAddId = await client1.identifiers().get(ID1_NAME);
+    assert.equal(rotAddId.state.b.length, 1);
+    assert.equal(rotAddId.state.b.length, 1);
+    assert.equal(rotAddId.state.b[0], WITNESS_AID);
+
+    const ooobiRotAddRes = await client1.oobis().resolve(oobiWit1);
+    const oobiRotAdd = await waitOperation(client1, ooobiRotAddRes);
+    expect(JSON.stringify(oobiRotAdd['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+
+    // try force submit again to witnesses
+    const subId = await witnessAgain(client1,ID1_NAME,aidIcp.prefix,WITNESS_AID,1,'rot');
+
+    const registry = await step('Create registry', async () => {
+        const registryName = 'vLEI-test-registry';
+        const regResult = await client1
+            .registries()
+            .create({ name: subId.name, registryName: registryName });
+
+        await waitOperation(client1, await regResult.op());
+        let registries = await client1.registries().list(subId.name);
+        const registry: { name: string; regk: string } = registries[0];
+        assert.equal(registries.length, 1);
+        assert.equal(registry.name, registryName);
+    })
+
+    const ooobiRegRes = await client1.oobis().resolve(oobiWit1);
+    const oobiReg = await waitOperation(client1, ooobiRegRes);
+    expect(JSON.stringify(oobiReg['response']["b"][0])).toEqual(`\"${WITNESS_AID}\"`);
+    expect(JSON.stringify(oobiReg['response']["et"])).toEqual(`\"ixn\"`);
+
+    // force submit again to witnesses
+    await witnessAgain(client1,ID1_NAME,aidIcp.prefix,WITNESS_AID,1,'ixn');
+}, 600000);
