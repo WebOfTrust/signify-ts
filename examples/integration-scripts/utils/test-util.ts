@@ -458,7 +458,10 @@ export async function waitForCredential(
     throw Error('Credential SAID: ' + credSAID + ' has not been received');
 }
 
-export async function waitAndMarkNotification(client: SignifyClient, route: string) {
+export async function waitAndMarkNotification(
+    client: SignifyClient,
+    route: string
+) {
     const notes = await waitForNotifications(client, route);
 
     await Promise.all(
