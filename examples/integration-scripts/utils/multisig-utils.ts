@@ -8,7 +8,7 @@ import signify, {
     d,
     messagize,
 } from 'signify-ts';
-import { getStates, waitForNotifications, waitOperation } from './test-util';
+import { getStates, waitAndMarkNotification } from './test-util';
 import { HabState } from '../../../src/keri/core/state';
 import assert from 'assert';
 
@@ -487,19 +487,4 @@ export async function startMultisigIncept(
             participants
         );
     return op1;
-}
-
-export async function waitAndMarkNotification(
-    client: SignifyClient,
-    route: string
-) {
-    const notes = await waitForNotifications(client, route);
-
-    await Promise.all(
-        notes.map(async (note) => {
-            await client.notifications().mark(note.i);
-        })
-    );
-
-    return notes[notes.length - 1]?.a.d ?? '';
 }

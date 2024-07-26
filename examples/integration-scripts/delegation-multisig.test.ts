@@ -9,6 +9,7 @@ import {
     getOrCreateContact,
     markAndRemoveNotification,
     resolveOobi,
+    waitAndMarkNotification,
     waitForNotifications,
     waitOperation,
 } from './utils/test-util';
@@ -17,7 +18,6 @@ import {
     addEndRoleMultisig,
     delegateMultisig,
     startMultisigIncept,
-    waitAndMarkNotification,
 } from './utils/multisig-utils';
 import { step } from './utils/test-step';
 

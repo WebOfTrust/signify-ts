@@ -5,8 +5,7 @@ import {
     assertOperations,
     getOrCreateClient,
     getOrCreateIdentifier,
-    markNotification,
-    waitForNotifications,
+    waitAndMarkNotification,
     waitOperation,
     warnNotifications,
 } from './utils/test-util';
@@ -434,18 +433,6 @@ test('multisig', async function run() {
     await assertOperations(client1, client2, client3);
     await warnNotifications(client1, client2, client3);
 }, 360000);
-
-async function waitAndMarkNotification(client: SignifyClient, route: string) {
-    const notes = await waitForNotifications(client, route);
-
-    await Promise.all(
-        notes.map(async (note) => {
-            await markNotification(client, note);
-        })
-    );
-
-    return notes[notes.length - 1]?.a.d ?? '';
-}
 
 async function createAID(client: SignifyClient, name: string, wits: string[]) {
     await getOrCreateIdentifier(client, name);

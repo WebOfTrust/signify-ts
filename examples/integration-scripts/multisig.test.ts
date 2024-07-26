@@ -10,6 +10,7 @@ import {
     getOrCreateClient,
     getOrCreateIdentifier,
     markNotification,
+    waitAndMarkNotification,
     waitForNotifications,
     waitOperation,
     warnNotifications,
@@ -1171,18 +1172,6 @@ test('multisig', async function run() {
     op3 = await waitOperation(client3, op3);
     console.log('Multisig credential revocation completed!');
 }, 400000);
-
-async function waitAndMarkNotification(client: SignifyClient, route: string) {
-    const notes = await waitForNotifications(client, route);
-
-    await Promise.all(
-        notes.map(async (note) => {
-            await markNotification(client, note);
-        })
-    );
-
-    return notes[notes.length - 1]?.a.d ?? '';
-}
 
 async function createAID(client: SignifyClient, name: string, wits: string[]) {
     await getOrCreateIdentifier(client, name, {
