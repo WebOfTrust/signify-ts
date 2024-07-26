@@ -92,7 +92,7 @@ test('delegation', async () => {
             const apprDelRes = await client1
                 .delegations()
                 .approve('delegator', anchor);
-            const adRes = await waitOperation(client1, await apprDelRes.op());
+            await waitOperation(client1, await apprDelRes.op());
             console.log('Delegator approve delegation submitted');
             return apprDelRes;
         });
@@ -102,7 +102,7 @@ test('delegation', async () => {
         );
     });
 
-    let op3 = await client2.keyStates().query(ator.prefix, '1');
+    const op3 = await client2.keyStates().query(ator.prefix, '1');
     await waitOperation(client2, op3);
 
     // Client 2 check approval
@@ -119,7 +119,7 @@ test('delegation', async () => {
     const oobis = await client2.oobis().get('delegate');
 
     console.log(oobis);
-    const res = await getOrCreateContact(
+    await getOrCreateContact(
         client1,
         'delegate',
         oobis.oobis[0].split('/agent/')[0]
