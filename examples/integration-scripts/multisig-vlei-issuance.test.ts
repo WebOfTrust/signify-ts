@@ -20,6 +20,7 @@ import {
     getReceivedCredential,
     waitForCredential,
     admitSinglesig,
+    waitAndMarkNotification,
 } from './utils/test-util';
 import {
     addEndRoleMultisig,
@@ -29,7 +30,6 @@ import {
     delegateMultisig,
     grantMultisig,
     issueCredentialMultisig,
-    waitAndMarkNotification,
 } from './utils/multisig-utils';
 
 const { vleiServerUrl, witnessIds } = resolveEnvironment();

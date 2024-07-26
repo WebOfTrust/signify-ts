@@ -136,7 +136,7 @@ test('multisig', async function run() {
 
     console.log(`Starting multisig end role authorization for agent ${eid1}`);
 
-    let stamp = createTimestamp();
+    const stamp = createTimestamp();
 
     let endRoleRes = await client1
         .identifiers()
