@@ -239,10 +239,10 @@ export class Credentials {
         // and avoid creating a new event if it does
         const lastEvent = events[events.length - 1];
         if (
-            lastEvent.a?.length == 1 &&
-            lastEvent.a[0]?.i == iss.i &&
-            lastEvent.a[0]?.s == iss.s &&
-            lastEvent.a[0]?.d == iss.d
+            lastEvent?.a?.length == 1 &&
+            lastEvent?.a[0]?.i == iss.i &&
+            lastEvent?.a[0]?.s == iss.s &&
+            lastEvent?.a[0]?.d == iss.d
         ) {
             sn = sn - 1; // revert sn
             dig = hab.state.p!;
@@ -354,10 +354,10 @@ export class Credentials {
         // and avoid creating a new event if it does
         const lastEvent = events[events.length - 1];
         if (
-            lastEvent.a?.length == 1 &&
-            lastEvent.a[0]?.i == rev.i &&
-            lastEvent.a[0]?.s == rev.s &&
-            lastEvent.a[0]?.d == rev.d
+            lastEvent?.a?.length == 1 &&
+            lastEvent?.a[0]?.i == rev.i &&
+            lastEvent?.a[0]?.s == rev.s &&
+            lastEvent?.a[0]?.d == rev.d
         ) {
             sn = sn - 1; // revert sn
             dig = state.p!;
@@ -651,10 +651,10 @@ export class Registries {
             // and avoid creating a new event if it does
             const lastEvent = events[events.length - 1];
             if (
-                lastEvent.a?.length == 1 &&
-                lastEvent.a[0]?.i == regser.pre &&
-                lastEvent.a[0]?.s == '0' &&
-                lastEvent.a[0]?.d == regser.pre
+                lastEvent?.a?.length == 1 &&
+                lastEvent?.a[0]?.i == regser.pre &&
+                lastEvent?.a[0]?.s == '0' &&
+                lastEvent?.a[0]?.d == regser.pre
             ) {
                 sn = sn - 1; // revert sn
                 dig = state.p!;
