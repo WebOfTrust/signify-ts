@@ -34,9 +34,7 @@ describe('registry', () => {
             instance(mockedIdentifiers)
         );
         when(mockedKeyEvents.get(hab.prefix)).thenResolve(events);
-        when(mockedClient.keyEvents()).thenReturn(
-            instance(mockedKeyEvents)
-        );
+        when(mockedClient.keyEvents()).thenReturn(instance(mockedKeyEvents));
 
         const mockedResponse = mock(Response);
         when(
@@ -79,18 +77,18 @@ describe('registry', () => {
             windexes: [],
         } as HabState;
 
-        const events = [{
-            a: []
-        }];
+        const events = [
+            {
+                a: [],
+            },
+        ];
 
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(
             instance(mockedIdentifiers)
         );
         when(mockedKeyEvents.get(hab.prefix)).thenResolve(events);
-        when(mockedClient.keyEvents()).thenReturn(
-            instance(mockedKeyEvents)
-        );
+        when(mockedClient.keyEvents()).thenReturn(instance(mockedKeyEvents));
 
         const registries = new Registries(instance(mockedClient));
 
