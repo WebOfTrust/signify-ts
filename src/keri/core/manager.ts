@@ -539,7 +539,7 @@ export class Manager {
         pp.stem = creator.stem;
         pp.tier = creator.tier;
 
-        const dt = new Date().toString();
+        const dt = new Date().toISOString().replace('Z', '000+00:00');
         const nw = new PubLot();
         nw.pubs = Array.from(verfers, (verfer: Verfer) => verfer.qb64);
         nw.ridx = ridx;
@@ -793,7 +793,7 @@ export class Manager {
             (signer: Signer) => new Diger({ code: dcode }, signer.verfer.qb64b)
         );
 
-        const dt = new Date().toString();
+        const dt = new Date().toISOString().replace('Z', '000+00:00');
         ps.nxt = new PubLot();
         ps.nxt.pubs = Array.from(
             keys.signers,
