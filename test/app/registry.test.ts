@@ -3,7 +3,7 @@ import { anyOfClass, anything, instance, mock, when } from 'ts-mockito';
 import libsodium from 'libsodium-wrappers-sumo';
 import 'whatwg-fetch';
 import { Registries } from '../../src/keri/app/credentialing';
-import { Identifier, KeyManager, SaltyKeeper } from '../../src';
+import { Identifier, KeyEvents, KeyManager, SaltyKeeper } from '../../src';
 import { strict as assert } from 'assert';
 import { HabState, State } from '../../src/keri/core/state';
 
@@ -14,11 +14,13 @@ describe('registry', () => {
         const mockedIdentifiers = mock(Identifier);
         const mockedKeyManager = mock(KeyManager);
         const mockedKeeper = mock(SaltyKeeper);
+        const mockedKeyEvents = mock(KeyEvents);
 
         const hab = {
             prefix: 'hab prefix',
             state: { s: '0', d: 'a digest' } as State,
         } as HabState;
+        const events: never[] = [];
 
         when(mockedClient.manager).thenReturn(instance(mockedKeyManager));
         when(mockedKeyManager.get(hab)).thenReturn(instance(mockedKeeper));
@@ -30,6 +32,10 @@ describe('registry', () => {
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(
             instance(mockedIdentifiers)
+        );
+        when(mockedKeyEvents.get(hab.prefix)).thenResolve(events);
+        when(mockedClient.keyEvents()).thenReturn(
+            instance(mockedKeyEvents)
         );
 
         const mockedResponse = mock(Response);
@@ -63,6 +69,7 @@ describe('registry', () => {
         await libsodium.ready;
         const mockedClient = mock(SignifyClient);
         const mockedIdentifiers = mock(Identifier);
+        const mockedKeyEvents = mock(KeyEvents);
 
         const hab = {
             prefix: 'hab prefix',
@@ -72,9 +79,17 @@ describe('registry', () => {
             windexes: [],
         } as HabState;
 
+        const events = [{
+            a: []
+        }];
+
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(
             instance(mockedIdentifiers)
+        );
+        when(mockedKeyEvents.get(hab.prefix)).thenResolve(events);
+        when(mockedClient.keyEvents()).thenReturn(
+            instance(mockedKeyEvents)
         );
 
         const registries = new Registries(instance(mockedClient));
