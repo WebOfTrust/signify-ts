@@ -191,6 +191,7 @@ export class Credentials {
         args: CredentialData
     ): Promise<IssueCredentialResult> {
         const hab = await this.client.identifiers().get(name);
+        const events = await this.client.keyEvents().get(hab.prefix);
         const estOnly = hab.state.c !== undefined && hab.state.c.includes('EO');
         if (estOnly) {
             // TODO implement rotation event
@@ -230,10 +231,24 @@ export class Credentials {
             dt: subject.dt,
         });
 
-        const sn = parseInt(hab.state.s, 16);
+        let sn = parseInt(hab.state.s, 16);
+        sn = sn + 1;
+        let dig = hab.state.d;
+
+        // check if last event already has the anchor in it
+        // and avoid creating a new event if it does
+        const lastEvent = events[events.length - 1];
+        if (lastEvent.a.length == 1 && 
+            lastEvent.a[0].i == iss.i &&
+            lastEvent.a[0].s == iss.s &&
+            lastEvent.a[0].d == iss.d) 
+        {
+            sn = sn - 1; // revert sn
+            dig  = hab.state.p!;
+        }
         const anc = interact({
             pre: hab.prefix,
-            sn: sn + 1,
+            sn: sn,
             data: [
                 {
                     i: iss.i,
@@ -241,7 +256,7 @@ export class Credentials {
                     d: iss.d,
                 },
             ],
-            dig: hab.state.d,
+            dig: dig,
             version: undefined,
             kind: undefined,
         });
@@ -287,6 +302,7 @@ export class Credentials {
         datetime?: string
     ): Promise<RevokeCredentialResult> {
         const hab = await this.client.identifiers().get(name);
+        const events = await this.client.keyEvents().get(hab.prefix);
         const pre: string = hab.prefix;
 
         const vs = versify(Ident.KERI, undefined, Serials.JSON, 0);
@@ -320,8 +336,9 @@ export class Credentials {
             var estOnly = false;
         }
 
-        const sn = parseInt(state.s, 16);
-        const dig = state.d;
+        let sn = parseInt(state.s, 16);
+        sn = sn + 1;
+        let dig = state.d;
 
         const data: any = [
             {
@@ -332,6 +349,17 @@ export class Credentials {
         ];
 
         const keeper = this.client!.manager!.get(hab);
+        // check if last event already has the anchor in it
+        // and avoid creating a new event if it does
+        const lastEvent = events[events.length - 1];
+        if (lastEvent.a.length == 1 && 
+            lastEvent.a[0].i == rev.i &&
+            lastEvent.a[0].s == rev.s &&
+            lastEvent.a[0].d == rev.d) 
+        {
+            sn = sn - 1; // revert sn
+            dig  = state.p!;
+        }
 
         if (estOnly) {
             // TODO implement rotation event
@@ -339,7 +367,7 @@ export class Credentials {
         } else {
             const serder = interact({
                 pre: pre,
-                sn: sn + 1,
+                sn: sn,
                 data: data,
                 dig: dig,
                 version: undefined,
@@ -585,6 +613,7 @@ export class Registries {
         nonce,
     }: CreateRegistryArgs): Promise<RegistryResult> {
         const hab = await this.client.identifiers().get(name);
+        const events = await this.client.keyEvents().get(hab.prefix);
         const pre: string = hab.prefix;
 
         const cnfg: string[] = [];
@@ -604,8 +633,9 @@ export class Registries {
             throw new Error('establishment only not implemented');
         } else {
             const state = hab.state;
-            const sn = parseInt(state.s, 16);
-            const dig = state.d;
+            let sn = parseInt(state.s, 16);
+            sn = sn + 1;
+            let dig = state.d;
 
             const data: any = [
                 {
@@ -615,9 +645,21 @@ export class Registries {
                 },
             ];
 
+            // check if last event already has the anchor in it
+            // and avoid creating a new event if it does
+            const lastEvent = events[events.length - 1];
+            if (lastEvent.a.length == 1 && 
+                lastEvent.a[0].i == regser.pre &&
+                lastEvent.a[0].s == '0' &&
+                lastEvent.a[0].d == regser.pre) 
+            {
+                sn = sn - 1; // revert sn
+                dig  = state.p!;
+            }
+
             const serder = interact({
                 pre: pre,
-                sn: sn + 1,
+                sn: sn,
                 data: data,
                 dig: dig,
                 version: Versionage,
