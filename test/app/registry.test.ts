@@ -117,12 +117,17 @@ describe('registry', () => {
 
         const hab = {
             prefix: 'hab prefix',
-            state: { i: 'a prefix', s: '1', d: 'a digest', p: 'old digest' } as State,
+            state: {
+                i: 'a prefix',
+                s: '1',
+                d: 'a digest',
+                p: 'old digest',
+            } as State,
         } as HabState;
         const events = [
             {
                 i: 'a prefix',
-                s: '0'
+                s: '0',
             },
             {
                 i: 'a prefix',
@@ -133,7 +138,8 @@ describe('registry', () => {
                         i: 'EMppKX_JxXBuL_xE3A_a6lOcseYwaB7jAvZ0YFdgecXX',
                         s: '0',
                         d: 'EMppKX_JxXBuL_xE3A_a6lOcseYwaB7jAvZ0YFdgecXX',
-                }],
+                    },
+                ],
             },
         ];
 
