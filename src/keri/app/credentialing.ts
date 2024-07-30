@@ -206,6 +206,29 @@ export interface IpexGrantArgs {
     ancAttachment?: string;
 }
 
+export interface IpexAdmitArgs {
+    /**
+     * Alias for the IPEX sender AID
+     */
+    senderName: string;
+
+    /**
+     * Prefix of the IPEX recipient AID
+     */
+    recipient: string;
+
+    /**
+     * Message to send
+     */
+    message?: string;
+
+    /**
+     * qb64 SAID of agree message this admit is responding to
+     */
+    grant: string,
+    datetime?: string 
+}
+
 /**
  * Credentials
  */
@@ -823,7 +846,6 @@ export class Ipex {
             m: args.message ?? '',
             s: args.schema,
             a: args.attributes ?? {},
-            i: args.recipient,
         };
         
         return this.client
@@ -833,7 +855,7 @@ export class Ipex {
                 '/ipex/apply',
                 data,
                 {},
-                undefined,
+                args.recipient,
                 args.datetime,
                 undefined,
             );
@@ -876,7 +898,7 @@ export class Ipex {
                 '/ipex/offer',
                 data,
                 { acdc: [args.acdc, undefined] },
-                undefined,
+                args.recipient,
                 args.datetime,
                 args.apply,
             )
@@ -921,7 +943,7 @@ export class Ipex {
                 '/ipex/agree',
                 data,
                 {},
-                undefined,
+                args.recipient,
                 args.datetime,
                 args.offer,
             )
@@ -947,6 +969,7 @@ export class Ipex {
 
         return response.json();
     }
+
     /**
      * Create an IPEX grant EXN message
      */
@@ -954,7 +977,6 @@ export class Ipex {
         const hab = await this.client.identifiers().get(args.senderName);
         const data = {
             m: args.message ?? '',
-            i: args.recipient,
         };
 
         let atc = args.ancAttachment;
@@ -1019,22 +1041,11 @@ export class Ipex {
 
     /**
      * Create an IPEX admit EXN message
-     * @async
-     * @param {string} name Name or alias of the identifier
-     * @param {string} message accompany human readable description of the credential being admitted
-     * @param {string} grant qb64 SAID of grant message this admit is responding to
-     * @param {string} datetime Optional datetime to set for the credential
-     * @returns {Promise<[Serder, string[], string]>} A promise to the long-running operation
      */
-    async admit(
-        name: string,
-        message: string,
-        grant: string,
-        datetime?: string
-    ): Promise<[Serder, string[], string]> {
-        const hab = await this.client.identifiers().get(name);
+    async admit(args: IpexAdmitArgs): Promise<[Serder, string[], string]> {
+        const hab = await this.client.identifiers().get(args.senderName);
         const data: any = {
-            m: message,
+            m: args.message,
         };
 
         return this.client
@@ -1044,9 +1055,9 @@ export class Ipex {
                 '/ipex/admit',
                 data,
                 {},
-                '',
-                datetime,
-                grant
+                args.recipient,
+                args.datetime,
+                args.grant
             );
     }
 

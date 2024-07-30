@@ -501,29 +501,30 @@ describe('Ipex', () => {
             'http://127.0.0.1:3901/identifiers/multisig/ipex/grant'
         );
 
-        const [admit, asigs, aend] = await ipex.admit(
-            'holder',
-            '',
-            grant.ked.d,
-            mockCredential.sad.a.dt
-        );
+        const [admit, asigs, aend] = await ipex.admit({
+            senderName: 'holder',
+            message: '',
+            grant: grant.ked.d,
+            recipient: holder,
+            datetime: mockCredential.sad.a.dt
+        });
 
         assert.deepStrictEqual(admit.ked, {
-            v: 'KERI10JSON000120_',
+            v: 'KERI10JSON000178_',
             t: 'exn',
-            d: 'EHMPkdV7QJ3a4RoDg43ffa7ytO6VbvEE4WiIbfcYvZNe',
+            d: 'EJrfQsTZhkHC6vDEwkbWISpbBk9HFLO3NuI5uByYw8tH',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
             p: 'EPVuNFwXTG56BvNtGjeyxncY-MfZMXOAgEtsmIvktkdb',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/admit',
-            rp: '',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
-            a: { m: '', i: '' },
+            a: { m: '', i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k' },
             e: {},
         });
 
         assert.deepStrictEqual(asigs, [
-            'AADpPFED69bio-P5KtvUO46hkGzN-gGr2ob83jq_AGrmRcwUWIy71iClQ0YggT75T-ORwEIN4dIvIABv7z1r6UIH',
+            'AAC4MTRQR-U8_3Hf53f2nJuh3n93lauXSHUkF1Yk2diTHwF-qkcBHn_jd-6pgRnRtBV2CInfwZyOsSL2CrRyuNEN',
         ]);
 
         await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
@@ -582,13 +583,14 @@ describe('Ipex', () => {
         });
 
         assert.deepStrictEqual(apply.ked, {
-            v: 'KERI10JSON000176_',
+            v: 'KERI10JSON0001aa_',
             t: 'exn',
-            d: 'EBbgtaWX8DYihokxDbq0k0RFjaQM7VgH3_88y3grPNsh',
+            d: 'ELjIE5cr_M2r7oUYw2pwcdNY_ZBuEgRlefaP0zSs_bXL',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
             p: '',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/apply',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
             a: {
                 m: 'Applying',
@@ -600,7 +602,7 @@ describe('Ipex', () => {
         });
 
         assert.deepStrictEqual(applySigs, [
-            'AAADMrTKGghic8ye_BSoo1I3G5oit5GXvo3RXXTerZQCYtA4tYbji0bURgQII_ACT8louPDUgpWPQ_WscIa4v64I',
+            'AADJYSkOTxd8KfH4YUKWWjkNynAH4fm3wcKOPmepLiI_iuNPV9TL-sIRxLeCBG5rQmqXtnSP0Wi6jgI7sHC9PBgF',
         ]);
 
         assert.equal(
@@ -625,16 +627,18 @@ describe('Ipex', () => {
         });
        
         assert.deepStrictEqual(offer.ked, {
-            v: 'KERI10JSON0002f0_',
+            v: 'KERI10JSON000357_',
             t: 'exn',
-            d: 'EIOCPiCWlfxq4XnqZDaLjx4IOT4AIYqut3dKKIw5xnIa',
+            d: 'EBkyi_fhfnDWJXi4FW6t_o4F7Oep3PvSZ6E-qT716kfU',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-            p: 'EBbgtaWX8DYihokxDbq0k0RFjaQM7VgH3_88y3grPNsh',
+            p: 'ELjIE5cr_M2r7oUYw2pwcdNY_ZBuEgRlefaP0zSs_bXL',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/offer',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
             a: {
                 m: 'How about this',
+                i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             },
             e: {
                 acdc: {
@@ -655,7 +659,7 @@ describe('Ipex', () => {
         });
         
         assert.deepStrictEqual(offerSigs, [
-            'AADWWHG9LHz5sLeE98HnsbYWyVl7zO4z4FOyWVyjOyWT5-VTa1ZTYRddScEmyOcG-E9XK0XSWe-cM5L3GJqpn5cN',
+            'AADUeKpUxTKVS1DYRuHC3YDM8T4YMREnQLi00QiJH2Q_WjtMZTd7rBLH12xAJkt8h4KEOn4U_c-jpHdj9S9qKXsO',
         ]);
         assert.equal(offerEnd, '');
         
@@ -675,22 +679,24 @@ describe('Ipex', () => {
         });
        
         assert.deepStrictEqual(agree.ked, {
-            v: 'KERI10JSON000114_',
+            v: 'KERI10JSON00017b_',
             t: 'exn',
-            d: 'ECVqeKGCclO-u0DEbJQoRwepE9RKGZRo_zArRgGpdZbI',
+            d: 'EDLk56nlLrPHzhy3-5BHkhBNi-7tWUseWL_83I5QRmZ8',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-            p: 'EIOCPiCWlfxq4XnqZDaLjx4IOT4AIYqut3dKKIw5xnIa',
+            p: 'EBkyi_fhfnDWJXi4FW6t_o4F7Oep3PvSZ6E-qT716kfU',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/agree',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
             a: {
                 m: 'OK!',
+                i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             },
             e: {},
         });
         
         assert.deepStrictEqual(agreeSigs, [
-            'AADPaleEvvzOop-8iBDh3LWcjVzl0QzLL6UWYd0xTO02hWEIGVYGalKk1DYJFzwarMf6bAmDA1Betp_dyRNmT38N',
+            'AADgFlQVwRU7PF_gi4_o-wEgh3lZxzDtiwnIr9XFBrLOxhR6nBJNhrHZ_MkagCQcFHMpFkD9Vhxgq8HkV2gssPcO',
         ]);
         assert.equal(agreeEnd, '');
         
@@ -713,13 +719,14 @@ describe('Ipex', () => {
         });
 
         assert.deepStrictEqual(grant.ked, {
-            v: 'KERI10JSON0004dd_',
+            v: 'KERI10JSON000511_',
             t: 'exn',
-            d: 'EDQ6lmaSIJxFPv7McRa69ljVtSrcY3cS8YYJgpn8DdhX',
+            d: 'ENwwMpAuZ3NaZqqeydm3G18EDZFWuHzeJMfzfwNkb99N',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-            p: 'ECVqeKGCclO-u0DEbJQoRwepE9RKGZRo_zArRgGpdZbI',
+            p: 'EDLk56nlLrPHzhy3-5BHkhBNi-7tWUseWL_83I5QRmZ8',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/grant',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
             a: { m: '', i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k' },
             e: {
@@ -759,7 +766,7 @@ describe('Ipex', () => {
         });
 
         assert.deepStrictEqual(gsigs, [
-            'AAC1EXfIqOP25RQYZocaXyTDDMykxNxV5a926DC74jhEqDkWseHCWaW5BZb-vNMfcR2n0zdaptQ-QbWxKKf3QqsB',
+            'AAB61_g8jLGO1vx8Fadd6UrDItNACwFAiuAvWGrm_szxWWNZwT21V0N79Q7bRHNdVzZudgAKVUhNUHhnwrUW6jsK',
         ]);
         assert.equal(
             end,
@@ -795,28 +802,30 @@ describe('Ipex', () => {
             'http://127.0.0.1:3901/identifiers/multisig/ipex/grant'
         );
 
-        const [admit, asigs, aend] = await ipex.admit(
-            'holder',
-            '',
-            grant.ked.d,
-            mockCredential.sad.a.dt
-        );
+        const [admit, asigs, aend] = await ipex.admit({
+            senderName: 'holder',
+            message: '',
+            recipient: holder,
+            grant: grant.ked.d,
+            datetime: mockCredential.sad.a.dt
+        });
 
         assert.deepStrictEqual(admit.ked, {
-            v: 'KERI10JSON000111_',
+            v: 'KERI10JSON000178_',
             t: 'exn',
-            d: 'ELMGqQV8nYJnrgjbJAKW3wmuhqzq5WL9gSvSP_d8wlYH',
+            d: 'EPcEK9tPuLOHbLiPm_FETkIVLjHhwuUiZDRDKW6Hh0JF',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-            p: 'EDQ6lmaSIJxFPv7McRa69ljVtSrcY3cS8YYJgpn8DdhX',
+            p: 'ENwwMpAuZ3NaZqqeydm3G18EDZFWuHzeJMfzfwNkb99N',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/admit',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
-            a: { m: '' },
+            a: { m: '', i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k' },
             e: {},
         });
 
         assert.deepStrictEqual(asigs, [
-            'AADLGgf7zJ_Cxn86LOw9UWj_2YEXzRObJMssrdhH772ZOZU2D5PBDwV4-4-DLH24foLuT_dQmkwj70WlOWgL284F',
+            'AABqIUE6czxB5BotjxFUZT9Gu8tkFkAx7bOYQzWD422r-HS8z_6gaNuIlpnABHjxlX7PEXFDTj8WnoGVW197XlQP',
         ]);
 
         await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
@@ -851,16 +860,18 @@ describe('Ipex', () => {
         });
 
         assert.deepStrictEqual(offer.ked, {
-            v: 'KERI10JSON0002c3_',
+            v: 'KERI10JSON00032a_',
             t: 'exn',
-            d: 'EPRsOfUsy_Wlrv49K1IvoaW2KYa701dRAqFsjP11HfnH',
+            d: 'EFmPdhVnJIrMZ0b6Nyk-4s2NP1InR3wgvBGcbxl2Cd8i',
             i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
             p: '',
             dt: '2023-08-23T15:16:07.553000+00:00',
             r: '/ipex/offer',
+            rp: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             q: {},
             a: {
                 m: 'Offering this',
+                i: 'ELjSFdrTdCebJlmvbFNX9-TLhR2PO0_60al1kQp5_e6k',
             },
             e: {
                 acdc: {
@@ -881,7 +892,7 @@ describe('Ipex', () => {
         });
 
         assert.deepStrictEqual(offerSigs, [
-            'AAAnd2tFMyrr0O91ilWCr6ae1UCK69k5_B4L6rrLTEzYF-Nw7rTVeveRaR-i4VL3An3yOsLaAupD0uHyyXkQWmIN',
+            'AACeQZ8RAcD2qFbkGXiUAQRJpZL4qanNH50a0LnkrflOC9JB2UJo3vvy3buiOSLoo0z9uMNhqa79ToXwVCAxg9MK',
         ]);
         assert.equal(offerEnd, '');
         

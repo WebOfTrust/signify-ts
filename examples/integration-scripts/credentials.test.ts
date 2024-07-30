@@ -257,12 +257,13 @@ test('single signature credentials', async () => {
 
         const [admit, sigs, aend] = await holderClient
             .ipex()
-            .admit(
-                holderAid.name,
-                '',
-                grantNotification.a.d!,
-                createTimestamp()
-            );
+            .admit({
+                senderName: holderAid.name,
+                message: '',
+                grant: grantNotification.a.d!,
+                recipient: issuerAid.prefix,
+                datetime: createTimestamp()
+            });
         const op = await holderClient
             .ipex()
             .submitAdmit(holderAid.name, admit, sigs, aend, [issuerAid.prefix]);
@@ -425,12 +426,13 @@ test('single signature credentials', async () => {
 
         const [admit3, sigs3, aend3] = await verifierClient
             .ipex()
-            .admit(
-                verifierAid.name,
-                '',
-                verifierGrantNote.a.d!,
-                createTimestamp()
-            );
+            .admit({
+                senderName: verifierAid.name,
+                message: '',
+                grant: verifierGrantNote.a.d!,
+                recipient: holderAid.prefix,
+                datetime: createTimestamp()
+            });
 
         const op = await verifierClient
             .ipex()
@@ -549,12 +551,13 @@ test('single signature credentials', async () => {
 
         const [admit, sigs, aend] = await legalEntityClient
             .ipex()
-            .admit(
-                legalEntityAid.name,
-                '',
-                grantNotification.a.d!,
-                createTimestamp()
-            );
+            .admit({
+                senderName: legalEntityAid.name,
+                message: '',
+                grant: grantNotification.a.d!,
+                recipient: holderAid.prefix,
+                datetime: createTimestamp()
+            });
 
         const op = await legalEntityClient
             .ipex()
