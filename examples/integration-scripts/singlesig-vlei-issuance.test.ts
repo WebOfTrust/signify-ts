@@ -527,15 +527,13 @@ async function sendAdmitMessage(
     assert.equal(notifications.length, 1);
     const grantNotification = notifications[0];
 
-    const [admit, sigs, aend] = await senderClient
-        .ipex()
-        .admit({
-            senderName: senderAid.name,
-            message: '',
-            grant: grantNotification.a.d!,
-            recipient: recipientAid.prefix,
-            datetime: createTimestamp()
-        });
+    const [admit, sigs, aend] = await senderClient.ipex().admit({
+        senderName: senderAid.name,
+        message: '',
+        grant: grantNotification.a.d!,
+        recipient: recipientAid.prefix,
+        datetime: createTimestamp(),
+    });
 
     let op = await senderClient
         .ipex()

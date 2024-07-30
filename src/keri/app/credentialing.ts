@@ -225,8 +225,8 @@ export interface IpexAdmitArgs {
     /**
      * qb64 SAID of agree message this admit is responding to
      */
-    grant: string,
-    datetime?: string 
+    grant: string;
+    datetime?: string;
 }
 
 /**
@@ -847,7 +847,7 @@ export class Ipex {
             s: args.schema,
             a: args.attributes ?? {},
         };
-        
+
         return this.client
             .exchanges()
             .createExchangeMessage(
@@ -857,7 +857,7 @@ export class Ipex {
                 {},
                 args.recipient,
                 args.datetime,
-                undefined,
+                undefined
             );
     }
 
@@ -900,10 +900,10 @@ export class Ipex {
                 { acdc: [args.acdc, undefined] },
                 args.recipient,
                 args.datetime,
-                args.apply,
-            )
+                args.apply
+            );
     }
-    
+
     async submitOffer(
         name: string,
         exn: Serder,
@@ -921,7 +921,7 @@ export class Ipex {
         const response = await this.client.fetch(
             `/identifiers/${name}/ipex/offer`,
             'POST',
-            body,
+            body
         );
 
         return response.json();
@@ -945,10 +945,10 @@ export class Ipex {
                 {},
                 args.recipient,
                 args.datetime,
-                args.offer,
-            )
+                args.offer
+            );
     }
-    
+
     async submitAgree(
         name: string,
         exn: Serder,
@@ -964,7 +964,7 @@ export class Ipex {
         const response = await this.client.fetch(
             `/identifiers/${name}/ipex/agree`,
             'POST',
-            body,
+            body
         );
 
         return response.json();
