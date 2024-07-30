@@ -42,14 +42,12 @@ export async function admitSinglesig(
         '/exn/ipex/grant'
     );
 
-    const [admit, sigs, aend] = await client
-        .ipex()
-        .admit({
-            senderName: aidName,
-            message: '',
-            grant: grantMsgSaid,
-            recipient: recipientAid.prefix,
-        });
+    const [admit, sigs, aend] = await client.ipex().admit({
+        senderName: aidName,
+        message: '',
+        grant: grantMsgSaid,
+        recipient: recipientAid.prefix,
+    });
 
     await client
         .ipex()
