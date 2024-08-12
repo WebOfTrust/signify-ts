@@ -1,5 +1,4 @@
 import signify, { Serder, SignifyClient } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
 import { getOrCreateClient, getOrCreateIdentifier } from './utils/test-setup';
 import {
     markNotification,
@@ -7,8 +6,6 @@ import {
     waitOperation,
 } from './utils/test-util';
 import assert from 'assert';
-
-const { vleiServerUrl, url } = resolveEnvironment();
 
 describe('multisig-join', () => {
     const nameMember1 = 'member1';
@@ -332,7 +329,7 @@ describe('multisig-join', () => {
         const exn3 = response[0].exn;
         const serder3 = new Serder(exn3.e.rot);
         const keeper3 = await client3.manager!.get(aid3);
-        const sigs3 = keeper3.sign(serder3.raw);
+        const sigs3 = keeper3.sign(signify.b(serder3.raw));
 
         const joinOperation = await client3
             .groups()
