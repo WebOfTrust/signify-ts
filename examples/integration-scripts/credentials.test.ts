@@ -258,7 +258,7 @@ test('single signature credentials', async () => {
         const [admit, sigs, aend] = await holderClient.ipex().admit({
             senderName: holderAid.name,
             message: '',
-            grant: grantNotification.a.d!,
+            grantSaid: grantNotification.a.d!,
             recipient: issuerAid.prefix,
             datetime: createTimestamp(),
         });
@@ -295,7 +295,7 @@ test('single signature credentials', async () => {
     await step('verifier IPEX apply', async () => {
         const [apply, sigs, _] = await verifierClient.ipex().apply({
             senderName: verifierAid.name,
-            schema: QVI_SCHEMA_SAID,
+            schemaSaid: QVI_SCHEMA_SAID,
             attributes: { LEI: '5493001KJTIIGC8Y1R17' },
             recipient: holderAid.prefix,
             datetime: createTimestamp(),
@@ -333,7 +333,7 @@ test('single signature credentials', async () => {
             senderName: holderAid.name,
             recipient: verifierAid.prefix,
             acdc: new Serder(matchingCreds[0].sad),
-            apply: applySaid,
+            applySaid: applySaid,
             datetime: createTimestamp(),
         });
 
@@ -367,7 +367,7 @@ test('single signature credentials', async () => {
         const [agree, sigs, _] = await verifierClient.ipex().agree({
             senderName: verifierAid.name,
             recipient: holderAid.prefix,
-            offer: offerSaid,
+            offerSaid: offerSaid,
             datetime: createTimestamp(),
         });
 
@@ -406,7 +406,7 @@ test('single signature credentials', async () => {
             acdcAttachment: holderCredential.atc,
             ancAttachment: holderCredential.ancatc,
             issAttachment: holderCredential.issAtc,
-            agree: agreeSaid,
+            agreeSaid: agreeSaid,
             datetime: createTimestamp(),
         });
 
@@ -433,7 +433,7 @@ test('single signature credentials', async () => {
         const [admit3, sigs3, aend3] = await verifierClient.ipex().admit({
             senderName: verifierAid.name,
             message: '',
-            grant: verifierGrantNote.a.d!,
+            grantSaid: verifierGrantNote.a.d!,
             recipient: holderAid.prefix,
             datetime: createTimestamp(),
         });
@@ -556,7 +556,7 @@ test('single signature credentials', async () => {
         const [admit, sigs, aend] = await legalEntityClient.ipex().admit({
             senderName: legalEntityAid.name,
             message: '',
-            grant: grantNotification.a.d!,
+            grantSaid: grantNotification.a.d!,
             recipient: holderAid.prefix,
             datetime: createTimestamp(),
         });

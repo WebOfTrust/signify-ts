@@ -1082,7 +1082,7 @@ test('multisig', async function run() {
     const [admit, asigs, aend] = await client4.ipex().admit({
         senderName: 'holder',
         message: '',
-        grant: res.exn.d,
+        grantSaid: res.exn.d,
         recipient: m['prefix'],
     });
 

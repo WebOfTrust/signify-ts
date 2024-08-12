@@ -504,7 +504,7 @@ describe('Ipex', () => {
         const [admit, asigs, aend] = await ipex.admit({
             senderName: 'holder',
             message: '',
-            grant: grant.ked.d,
+            grantSaid: grant.ked.d,
             recipient: holder,
             datetime: mockCredential.sad.a.dt,
         });
@@ -577,7 +577,7 @@ describe('Ipex', () => {
             senderName: 'multisig',
             recipient: holder,
             message: 'Applying',
-            schema: mockCredential.sad.s,
+            schemaSaid: mockCredential.sad.s,
             attributes: { LEI: mockCredential.sad.a.LEI },
             datetime: mockCredential.sad.a.dt,
         });
@@ -620,7 +620,7 @@ describe('Ipex', () => {
             message: 'How about this',
             acdc: new Serder(acdc),
             datetime: mockCredential.sad.a.dt,
-            apply: apply.ked.d,
+            applySaid: apply.ked.d,
         });
 
         assert.deepStrictEqual(offer.ked, {
@@ -674,7 +674,7 @@ describe('Ipex', () => {
             recipient: holder,
             message: 'OK!',
             datetime: mockCredential.sad.a.dt,
-            offer: offer.ked.d,
+            offerSaid: offer.ked.d,
         });
 
         assert.deepStrictEqual(agree.ked, {
@@ -714,7 +714,7 @@ describe('Ipex', () => {
             iss: iserder,
             anc,
             datetime: mockCredential.sad.a.dt,
-            agree: agree.ked.d,
+            agreeSaid: agree.ked.d,
         });
 
         assert.deepStrictEqual(grant.ked, {
@@ -787,7 +787,7 @@ describe('Ipex', () => {
             ancAttachment:
                 '-AABAADMtDfNihvCSXJNp1VronVojcPGo--0YZ4Kh6CAnowRnn4Or4FgZQqaqCEv6XVS413qfZoVp8j2uxTTPkItO7ED',
             datetime: mockCredential.sad.a.dt,
-            agree: agree.ked.d,
+            agreeSaid: agree.ked.d,
         });
 
         assert.deepStrictEqual(ng.ked, grant.ked);
@@ -805,7 +805,7 @@ describe('Ipex', () => {
             senderName: 'holder',
             message: '',
             recipient: holder,
-            grant: grant.ked.d,
+            grantSaid: grant.ked.d,
             datetime: mockCredential.sad.a.dt,
         });
 

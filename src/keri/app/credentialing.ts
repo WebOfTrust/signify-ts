@@ -117,7 +117,7 @@ export interface IpexApplyArgs {
     /**
      * SAID of schema to apply for
      */
-    schema: string;
+    schemaSaid: string;
 
     /**
      * Optional attributes for selective disclosure
@@ -150,7 +150,7 @@ export interface IpexOfferArgs {
     /**
      * Optional qb64 SAID of apply message this offer is responding to
      */
-    apply?: string;
+    applySaid?: string;
     datetime?: string;
 }
 
@@ -173,7 +173,7 @@ export interface IpexAgreeArgs {
     /**
      * qb64 SAID of offer message this agree is responding to
      */
-    offer: string;
+    offerSaid: string;
     datetime?: string;
 }
 
@@ -196,7 +196,7 @@ export interface IpexGrantArgs {
     /**
      * qb64 SAID of agree message this grant is responding to
      */
-    agree?: string;
+    agreeSaid?: string;
     datetime?: string;
     acdc: Serder;
     acdcAttachment?: string;
@@ -225,7 +225,7 @@ export interface IpexAdmitArgs {
     /**
      * qb64 SAID of agree message this admit is responding to
      */
-    grant: string;
+    grantSaid: string;
     datetime?: string;
 }
 
@@ -844,7 +844,7 @@ export class Ipex {
         const hab = await this.client.identifiers().get(args.senderName);
         const data = {
             m: args.message ?? '',
-            s: args.schema,
+            s: args.schemaSaid,
             a: args.attributes ?? {},
         };
 
@@ -900,7 +900,7 @@ export class Ipex {
                 { acdc: [args.acdc, undefined] },
                 args.recipient,
                 args.datetime,
-                args.apply
+                args.applySaid
             );
     }
 
@@ -945,7 +945,7 @@ export class Ipex {
                 {},
                 args.recipient,
                 args.datetime,
-                args.offer
+                args.offerSaid
             );
     }
 
@@ -1012,7 +1012,7 @@ export class Ipex {
                 embeds,
                 args.recipient,
                 args.datetime,
-                args.agree
+                args.agreeSaid
             );
     }
 
@@ -1057,7 +1057,7 @@ export class Ipex {
                 {},
                 args.recipient,
                 args.datetime,
-                args.grant
+                args.grantSaid
             );
     }
 

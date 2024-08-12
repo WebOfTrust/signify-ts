@@ -513,7 +513,7 @@ async function multisigAdmitCredential(
     const [admit, sigs, end] = await client.ipex().admit({
         senderName: groupName,
         message: '',
-        grant: grantSaid,
+        grantSaid: grantSaid,
         recipient: issuerPrefix,
         datetime: TIME,
     });

@@ -45,7 +45,7 @@ export async function admitSinglesig(
     const [admit, sigs, aend] = await client.ipex().admit({
         senderName: aidName,
         message: '',
-        grant: grantMsgSaid,
+        grantSaid: grantMsgSaid,
         recipient: recipientAid.prefix,
     });
 
