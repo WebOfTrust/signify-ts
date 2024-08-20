@@ -7,6 +7,7 @@ import signify, {
     randomNonce,
     Salter,
     HabState,
+    SignifyClient,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env';
 import {
@@ -79,6 +80,8 @@ const ECR_RULES = Saider.saidify({
         l: 'It is the sole responsibility of Holders as Issuees of an ECR vLEI Credential to present that Credential in a privacy-preserving manner using the mechanisms provided in the Issuance and Presentation Exchange (IPEX) protocol specification and the Authentic Chained Data Container (ACDC) specification. https://github.com/WebOfTrust/IETF-IPEX and https://github.com/trustoverip/tswg-acdc-specification.',
     },
 })[1];
+
+const idQVI = 'QVI';
 
 test('multisig-vlei-issuance', async function run() {
     /**
@@ -303,9 +306,9 @@ test('multisig-vlei-issuance', async function run() {
     // Skip if a QVI AID has already been incepted.
     let aidQVIbyQAR1, aidQVIbyQAR2, aidQVIbyQAR3: HabState;
     try {
-        aidQVIbyQAR1 = await clientQAR1.identifiers().get('QVI');
-        aidQVIbyQAR2 = await clientQAR2.identifiers().get('QVI');
-        aidQVIbyQAR3 = await clientQAR3.identifiers().get('QVI');
+        aidQVIbyQAR1 = await clientQAR1.identifiers().get(idQVI);
+        aidQVIbyQAR2 = await clientQAR2.identifiers().get(idQVI);
+        aidQVIbyQAR3 = await clientQAR3.identifiers().get(idQVI);
     } catch {
         const rstates = [aidQAR1.state, aidQAR2.state, aidQAR3.state];
         const states = rstates;
@@ -326,7 +329,7 @@ test('multisig-vlei-issuance', async function run() {
             clientQAR1,
             aidQAR1,
             [aidQAR2, aidQAR3],
-            'QVI',
+            idQVI,
             kargsMultisigAID,
             true
         );
@@ -335,7 +338,7 @@ test('multisig-vlei-issuance', async function run() {
             clientQAR2,
             aidQAR2,
             [aidQAR1, aidQAR3],
-            'QVI',
+            idQVI,
             kargsMultisigAID
         );
         kargsMultisigAID.mhab = aidQAR3;
@@ -343,7 +346,7 @@ test('multisig-vlei-issuance', async function run() {
             clientQAR3,
             aidQAR3,
             [aidQAR1, aidQAR2],
-            'QVI',
+            idQVI,
             kargsMultisigAID
         );
 
@@ -401,15 +404,17 @@ test('multisig-vlei-issuance', async function run() {
 
         await waitAndMarkNotification(clientQAR1, '/multisig/icp');
 
-        aidQVIbyQAR1 = await clientQAR1.identifiers().get('QVI');
-        aidQVIbyQAR2 = await clientQAR2.identifiers().get('QVI');
-        aidQVIbyQAR3 = await clientQAR3.identifiers().get('QVI');
+        aidQVIbyQAR1 = await clientQAR1.identifiers().get(idQVI);
+        aidQVIbyQAR2 = await clientQAR2.identifiers().get(idQVI);
+        aidQVIbyQAR3 = await clientQAR3.identifiers().get(idQVI);
     }
     assert.equal(aidQVIbyQAR1.prefix, aidQVIbyQAR2.prefix);
     assert.equal(aidQVIbyQAR1.prefix, aidQVIbyQAR3.prefix);
     assert.equal(aidQVIbyQAR1.name, aidQVIbyQAR2.name);
     assert.equal(aidQVIbyQAR1.name, aidQVIbyQAR3.name);
     const aidQVI = aidQVIbyQAR1;
+
+    // witnessAgain(clientQAR1,idQVI,aidQVIbyQAR1.prefix,witnessIds[0],'dip');
 
     // Add endpoint role authorization for all QARs' agents.
     // Skip if they have already been authorized.
@@ -666,6 +671,8 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(qviCred.sad.d, qviCredbyQAR2.sad.d);
     assert.equal(qviCred.sad.d, qviCredbyQAR3.sad.d);
 
+    // witnessAgain(clientQAR1,idQVI,aidQVIbyQAR1.prefix,witnessIds[0],'dip');
+
     // Create a multisig AID for the LE.
     // Skip if a LE AID has already been incepted.
     let aidLEbyLAR1, aidLEbyLAR2, aidLEbyLAR3: HabState;
@@ -857,6 +864,8 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(qviRegistrybyQAR1[0].name, qviRegistrybyQAR2[0].name);
     assert.equal(qviRegistrybyQAR1[0].name, qviRegistrybyQAR3[0].name);
     const qviRegistry = qviRegistrybyQAR1[0];
+
+    // witnessAgain(clientQAR1,idQVI,aidQVI.prefix,witnessIds[0],'ixn');
 
     // QVI issues a LE vLEI credential to the LE.
     // Skip if the credential has already been issued.

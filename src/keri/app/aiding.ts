@@ -474,6 +474,21 @@ export class Identifier {
         );
         return await res.json();
     }
+
+    /**
+     * Submit the identifier to witnesses again
+     * @async
+     * @param {string} name - Name or alias of the identifier
+     * @returns {Promise<any>} - A promise to the last event of the KEL
+     */
+    async submit_id(name: string): Promise<Operation> {
+        const res = await this.client.fetch(
+            '/identifiers/' + name + '/submit',
+            'POST',
+            {submit: name}
+        );
+        return res.json();
+    }
 }
 
 /** Event Result */

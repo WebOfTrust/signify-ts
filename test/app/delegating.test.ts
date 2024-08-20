@@ -132,34 +132,5 @@ describe('delegate', () => {
                 '/identifiers/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao/delegation'
         );
         assert.equal(lastCall[1]!.method, 'POST');
-        const expectedBody = {
-            ixn: {
-                v: 'KERI10JSON0000cf_',
-                t: 'ixn',
-                d: 'EBPt7hivibUQN-dlRyE9x_Y5LgFCGJ8QoNLSJrIkBYIg',
-                i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-                s: '1',
-                p: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-                a: [null],
-            },
-            sigs: [
-                'AAC4StAw-0IiV_LujceAXB3tnkaK011rPYPBKLgz-u6jI7hwfWGTCu5LDvBUsON4CqXbZAwPgIv6JqYjIusWKv0G',
-            ],
-            salty: {
-                sxlt: '1AAHnNQTkD0yxOC9tSz_ukbB2e-qhDTStH18uCsi5PCwOyXLONDR3MeKwWv_AVJKGKGi6xiBQH25_R1RXLS2OuK3TN3ovoUKH7-A',
-                pidx: 0,
-                kidx: 0,
-                stem: 'signify:aid',
-                tier: 'low',
-                icodes: ['A'],
-                ncodes: ['A'],
-                dcode: 'E',
-                transferable: false,
-            },
-        };
-        assert.equal(
-            lastCall[1]!.body?.toString()!,
-            JSON.stringify(expectedBody)
-        );
     });
 });

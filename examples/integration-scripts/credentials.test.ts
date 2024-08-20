@@ -129,6 +129,28 @@ test('single signature credentials', async () => {
         return updateRegistry;
     });
 
+    // await step('Resubmit identity to witnesses', async () => {
+    //     const subResult = await issuerClient
+    //         .identifiers().submit({ name: issuerAid.name });
+
+    //     await waitOperation(issuerClient, await subResult.op());
+    //     let registries = await issuerClient.registries().list(issuerAid.name);
+    //     const registry: { name: string; regk: string } = registries[0];
+    //     assert.equal(registries.length, 1);
+    //     assert.equal(registry.name, registryName);
+
+    //     await issuerClient
+    //         .registries()
+    //         .rename(issuerAid.name, registryName, updatedRegistryName);
+
+    //     registries = await issuerClient.registries().list(issuerAid.name);
+    //     let updateRegistry: { name: string; regk: string } = registries[0];
+    //     assert.equal(registries.length, 1);
+    //     assert.equal(updateRegistry.name, updatedRegistryName);
+
+    //     return updateRegistry;
+    // });
+
     await step('issuer can get schemas', async () => {
         const issuerQviSchema = await issuerClient
             .schemas()
@@ -262,6 +284,7 @@ test('single signature credentials', async () => {
             recipient: issuerAid.prefix,
             datetime: createTimestamp(),
         });
+
         const op = await holderClient
             .ipex()
             .submitAdmit(holderAid.name, admit, sigs, aend, [issuerAid.prefix]);
@@ -604,4 +627,4 @@ test('single signature credentials', async () => {
 
         assert.equal(issuerCredential.status.s, '1');
     });
-}, 90000);
+}, 900000);

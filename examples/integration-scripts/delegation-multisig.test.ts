@@ -18,6 +18,7 @@ import {
     addEndRoleMultisig,
     delegateMultisig,
     startMultisigIncept,
+    waitAndMarkNotification,
 } from './utils/multisig-utils';
 import { step } from './utils/test-step';
 
