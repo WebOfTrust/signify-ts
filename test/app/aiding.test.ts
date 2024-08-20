@@ -210,8 +210,6 @@ describe('Aiding', () => {
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.path, '/identifiers/aid1/events');
         assert.equal(lastCall.method, 'POST');
-        assert.equal(lastCall.path, '/identifiers/aid1/events');
-        assert.equal(lastCall.method, 'POST');
         assert.deepEqual(lastCall.body.rot, {
             v: 'KERI10JSON000160_',
             t: 'rot',
@@ -256,8 +254,6 @@ describe('Aiding', () => {
 
         await client.identifiers().rotate('aid1');
         const lastCall = client.getLastMockRequest();
-        assert.equal(lastCall.path, '/identifiers/aid1/events');
-        assert.equal(lastCall.method, 'POST');
         assert.equal(lastCall.path, '/identifiers/aid1/events');
         assert.equal(lastCall.method, 'POST');
         expect(lastCall.body.rot).toMatchObject({

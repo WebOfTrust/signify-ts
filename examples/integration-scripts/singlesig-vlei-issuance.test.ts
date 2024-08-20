@@ -109,7 +109,7 @@ const OOR_RULES = LE_RULES;
 const OOR_AUTH_RULES = LE_RULES;
 
 const CRED_RETRY_DEFAULTS = {
-    maxSleep: 30000,
+    maxSleep: 10000,
     minSleep: 1000,
     maxRetries: undefined,
     timeout: 60000,
@@ -527,9 +527,13 @@ async function sendAdmitMessage(
     assert.equal(notifications.length, 1);
     const grantNotification = notifications[0];
 
-    const [admit, sigs, aend] = await senderClient
-        .ipex()
-        .admit(senderAid.name, '', grantNotification.a.d!, createTimestamp());
+    const [admit, sigs, aend] = await senderClient.ipex().admit({
+        senderName: senderAid.name,
+        message: '',
+        grantSaid: grantNotification.a.d!,
+        recipient: recipientAid.prefix,
+        datetime: createTimestamp(),
+    });
 
     let op = await senderClient
         .ipex()

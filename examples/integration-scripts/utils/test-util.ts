@@ -42,9 +42,12 @@ export async function admitSinglesig(
         '/exn/ipex/grant'
     );
 
-    const [admit, sigs, aend] = await client
-        .ipex()
-        .admit(aidName, '', grantMsgSaid);
+    const [admit, sigs, aend] = await client.ipex().admit({
+        senderName: aidName,
+        message: '',
+        grantSaid: grantMsgSaid,
+        recipient: recipientAid.prefix,
+    });
 
     await client
         .ipex()
@@ -458,12 +461,15 @@ export async function waitForCredential(
     throw Error('Credential SAID: ' + credSAID + ' has not been received');
 }
 
-async function waitAndMarkNotification(client: SignifyClient, route: string) {
+export async function waitAndMarkNotification(
+    client: SignifyClient,
+    route: string
+) {
     const notes = await waitForNotifications(client, route);
 
     await Promise.all(
         notes.map(async (note) => {
-            await client.notifications().mark(note.i);
+            await markNotification(client, note);
         })
     );
 

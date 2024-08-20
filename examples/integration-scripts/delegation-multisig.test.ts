@@ -9,6 +9,7 @@ import {
     getOrCreateContact,
     markAndRemoveNotification,
     resolveOobi,
+    waitAndMarkNotification,
     waitForNotifications,
     waitOperation,
 } from './utils/test-util';
@@ -156,8 +157,6 @@ test('delegation-multisig', async () => {
     const delegatorGroupNameOobi = await step(
         `Add and resolve delegator OOBI ${delegatorGroupName}(${adelegatorGroupName.prefix})`,
         async () => {
-            // const odelegatorGroupName1 = await ctor1.oobis().get(delegatorGroupName, 'agent');
-            // return await resolveOobi(ctor1, odelegatorGroupName1.oobis[0], delegatorGroupName);
             const timestamp = createTimestamp();
             const opList1 = await addEndRoleMultisig(
                 delegator1Client,

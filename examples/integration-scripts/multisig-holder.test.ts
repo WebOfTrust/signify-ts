@@ -5,8 +5,7 @@ import {
     assertOperations,
     getOrCreateClient,
     getOrCreateIdentifier,
-    markNotification,
-    waitForNotifications,
+    waitAndMarkNotification,
     waitOperation,
     warnNotifications,
 } from './utils/test-util';
@@ -137,7 +136,7 @@ test('multisig', async function run() {
 
     console.log(`Starting multisig end role authorization for agent ${eid1}`);
 
-    let stamp = createTimestamp();
+    const stamp = createTimestamp();
 
     let endRoleRes = await client1
         .identifiers()
@@ -435,18 +434,6 @@ test('multisig', async function run() {
     await warnNotifications(client1, client2, client3);
 }, 360000);
 
-async function waitAndMarkNotification(client: SignifyClient, route: string) {
-    const notes = await waitForNotifications(client, route);
-
-    await Promise.all(
-        notes.map(async (note) => {
-            await markNotification(client, note);
-        })
-    );
-
-    return notes[notes.length - 1]?.a.d ?? '';
-}
-
 async function createAID(client: SignifyClient, name: string, wits: string[]) {
     await getOrCreateIdentifier(client, name);
     const aid = await client.identifiers().get(name);
@@ -523,9 +510,13 @@ async function multisigAdmitCredential(
     let mHab = await client.identifiers().get(memberAlias);
     let gHab = await client.identifiers().get(groupName);
 
-    const [admit, sigs, end] = await client
-        .ipex()
-        .admit(groupName, '', grantSaid, TIME);
+    const [admit, sigs, end] = await client.ipex().admit({
+        senderName: groupName,
+        message: '',
+        grantSaid: grantSaid,
+        recipient: issuerPrefix,
+        datetime: TIME,
+    });
 
     let op = await client
         .ipex()

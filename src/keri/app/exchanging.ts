@@ -149,7 +149,7 @@ export function exchange(
     route: string,
     payload: Dict<any>,
     sender: string,
-    recipient: string="",
+    recipient: string,
     date?: string,
     dig?: string,
     modifiers?: Dict<any>,
