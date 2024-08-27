@@ -87,14 +87,9 @@ export class Exchanges {
                 embeds,
                 recipient
             );
-            return await this.sendFromEvents(
-                name,
-                topic,
-                exn,
-                sigs,
-                atc,
-                [recipient]
-            );
+            return await this.sendFromEvents(name, topic, exn, sigs, atc, [
+                recipient,
+            ]);
         }
     }
 
