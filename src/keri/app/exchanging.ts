@@ -88,10 +88,12 @@ export class Exchanges {
                 embeds,
                 recipient
             );
-            responses.push(await this.sendFromEvents(name, topic, exn, sigs, atc, [
-                recipient,
-            ]));
-        };
+            responses.push(
+                await this.sendFromEvents(name, topic, exn, sigs, atc, [
+                    recipient,
+                ])
+            );
+        }
         return responses;
     }
 
