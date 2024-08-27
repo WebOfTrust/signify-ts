@@ -79,7 +79,8 @@ export class Exchanges {
         embeds: Dict<any>,
         recipients: string[]
     ): Promise<any[]> {
-        return recipients.map(async (recipient) => {
+        const responses: any[] = [];
+        for (const recipient of recipients) {
             const [exn, sigs, atc] = await this.createExchangeMessage(
                 sender,
                 route,
@@ -87,10 +88,11 @@ export class Exchanges {
                 embeds,
                 recipient
             );
-            return this.sendFromEvents(name, topic, exn, sigs, atc, [
+            responses.push(await this.sendFromEvents(name, topic, exn, sigs, atc, [
                 recipient,
-            ]);
-        });
+            ]));
+        };
+        return responses;
     }
 
     /**
