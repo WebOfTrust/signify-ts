@@ -162,7 +162,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     let recp = [aid2['state']].map((state) => state['i']);
-    let res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -182,7 +182,7 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
+    let res = await client2.groups().getRequest(msgSaid);
     let exn = res[0].exn;
     // stamp, eid and role are provided in the exn message
     let rpystamp = exn.e.rpy.dt;
@@ -215,7 +215,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state']].map((state) => state['i']);
-    res = await client2
+    await client2
         .exchanges()
         .send(
             'member2',
@@ -262,7 +262,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid2['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -316,7 +316,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state']].map((state) => state['i']);
-    res = await client2
+    await client2
         .exchanges()
         .send(
             'member2',

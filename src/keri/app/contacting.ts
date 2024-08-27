@@ -149,7 +149,7 @@ export class Challenges {
             {},
             [recipient]
         );
-        return resp;
+        return resp[0];  // Only one recipient
     }
 
     /**

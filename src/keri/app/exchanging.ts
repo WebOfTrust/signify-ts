@@ -78,8 +78,8 @@ export class Exchanges {
         payload: Dict<any>,
         embeds: Dict<any>,
         recipients: string[]
-    ): Promise<any> {
-        for (const recipient of recipients) {
+    ): Promise<any[]> {
+        return recipients.map(async (recipient) => {
             const [exn, sigs, atc] = await this.createExchangeMessage(
                 sender,
                 route,
@@ -87,10 +87,10 @@ export class Exchanges {
                 embeds,
                 recipient
             );
-            return await this.sendFromEvents(name, topic, exn, sigs, atc, [
+            return this.sendFromEvents(name, topic, exn, sigs, atc, [
                 recipient,
             ]);
-        }
+        });
     }
 
     /**
