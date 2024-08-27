@@ -93,7 +93,7 @@ export class Exchanges {
                 exn,
                 sigs,
                 atc,
-                recipients
+                [recipient]
             );
         }
     }
