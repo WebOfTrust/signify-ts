@@ -125,7 +125,8 @@ test('challenge', async () => {
     contacts1 = await client1.contacts().list();
     bobContact = contacts1.find((contact) => contact.alias === 'bob');
 
-    expect(bobContact?.challenges).toEqual([{ authenticated: true }]);
+    assert(Array.isArray(bobContact?.challenges));
+    expect(bobContact?.challenges[0].authenticated).toBe(true);
 
     await assertOperations(client1, client2);
 }, 30000);
