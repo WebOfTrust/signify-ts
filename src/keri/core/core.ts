@@ -33,7 +33,7 @@ export const Ilks = {
     iss: 'iss',
     rev: 'rev',
     bis: 'bis',
-    brv: 'brv'
+    brv: 'brv',
 };
 
 export const IcpLabels = [

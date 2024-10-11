@@ -248,14 +248,17 @@ test('single signature credentials', async () => {
         await waitOperation(issuerClient, op);
     });
 
-    await step('holder can get the credential status before or without holding', async () => {
-        const state = await retry(async () =>
-            holderClient.credentials().state(registry.regk, qviCredentialId)
-        );
-        assert.equal(state.i, qviCredentialId);
-        assert.equal(state.ri, registry.regk);
-        assert.equal(state.et, Ilks.iss);
-    });
+    await step(
+        'holder can get the credential status before or without holding',
+        async () => {
+            const state = await retry(async () =>
+                holderClient.credentials().state(registry.regk, qviCredentialId)
+            );
+            assert.equal(state.i, qviCredentialId);
+            assert.equal(state.ri, registry.regk);
+            assert.equal(state.et, Ilks.iss);
+        }
+    );
 
     await step('holder IPEX admit', async () => {
         const holderNotifications = await waitForNotifications(

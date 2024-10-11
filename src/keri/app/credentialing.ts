@@ -230,21 +230,24 @@ export interface IpexAdmitArgs {
 }
 
 export type CredentialState = {
-    vn: [number, number],
-    i: string,
-    s: string,
-    d: string,
-    ri: string,
-    a: { s: number, d: string },
-    dt: string,
-    et: string
-} & ({
-    et: "iss" | "rev",
-    ra: Record<string, never>
-} | {
-    et: "bis" | "brv",
-    ra: { i: string, s: string, d: string }
-});
+    vn: [number, number];
+    i: string;
+    s: string;
+    d: string;
+    ri: string;
+    a: { s: number; d: string };
+    dt: string;
+    et: string;
+} & (
+    | {
+          et: 'iss' | 'rev';
+          ra: Record<string, never>;
+      }
+    | {
+          et: 'bis' | 'brv';
+          ra: { i: string; s: string; d: string };
+      }
+);
 
 /**
  * Credentials
@@ -311,7 +314,7 @@ export class Credentials {
      */
     async state(ri: string, said: string): Promise<CredentialState> {
         const path = `/registries/${ri}/${said}`;
-        const method = "GET";
+        const method = 'GET';
         const res = await this.client.fetch(path, method, null);
         return res.json();
     }
