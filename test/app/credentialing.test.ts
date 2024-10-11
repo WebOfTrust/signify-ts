@@ -368,6 +368,14 @@ describe('Credentialing', () => {
             lastBody.recipient,
             'EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX'
         );
+
+        await credentials.state("EACehJRd0wfteUAJgaTTJjMSaQqWvzeeHqAMMqxuqxU4", "EBVaw6pCqfMIiZGkA6qevzRUGsxTRuZXxl6YG1neeCGF");
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.equal(
+            lastCall[0]!,
+            url + "/registries/EACehJRd0wfteUAJgaTTJjMSaQqWvzeeHqAMMqxuqxU4/EBVaw6pCqfMIiZGkA6qevzRUGsxTRuZXxl6YG1neeCGF"
+        );
+        assert.equal(lastCall[1]!.method, "GET");
     });
 });
 
