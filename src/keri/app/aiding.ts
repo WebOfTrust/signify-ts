@@ -7,7 +7,6 @@ import { MtrDex } from '../core/matter';
 import { Serder } from '../core/serder';
 import { parseRangeHeaders } from '../core/httping';
 import { KeyManager } from '../core/keeping';
-import { Operation } from './coring';
 import { HabState } from '../core/state';
 
 /** Arguments required to create an identfier */
@@ -111,14 +110,31 @@ export class Identifier {
      * Get information for a managed identifier
      * @async
      * @param {string} name Name or alias of the identifier
-     * @returns {Promise<any>} A promise to the identifier information
+     * @returns {Promise<HabState>} A promise to the identifier information
      */
     async get(name: string): Promise<HabState> {
         const path = `/identifiers/${encodeURIComponent(name)}`;
         const data = null;
         const method = 'GET';
         const res = await this.client.fetch(path, method, data);
-        return await res.json();
+        return res.json();
+    }
+
+    /**
+     * Rename managed identifier
+     * @async
+     * @param {string} name Name or alias of the identifier
+     * @param {string} newName New name for the identifier
+     * @returns {Promise<HabState>} A promise to the identifier information after updating
+     */
+    async rename(name: string, newName: string): Promise<HabState> {
+        const path = `/identifiers/${name}`;
+        const method = 'PUT';
+        const data = {
+            name: newName,
+        };
+        const res = await this.client.fetch(path, method, data);
+        return res.json();
     }
 
     /**
@@ -472,7 +488,7 @@ export class Identifier {
             'GET',
             undefined
         );
-        return await res.json();
+        return res.json();
     }
 }
 
@@ -502,6 +518,6 @@ export class EventResult {
 
     async op(): Promise<any> {
         const res = await this.promise;
-        return await res.json();
+        return res.json();
     }
 }
