@@ -70,7 +70,7 @@ export interface IdentifierDeps {
  * Updatable information for a managed identifier
  */
 export interface IdentifierInfo {
-    name: string
+    name: string;
 }
 
 /** Identifier */
