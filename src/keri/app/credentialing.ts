@@ -21,6 +21,7 @@ import {
 } from '../core/utils';
 import { Operation } from './coring';
 import { HabState } from '../core/state';
+import { CesrNumber } from '../core/number';
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -83,6 +84,29 @@ export interface CredentialData {
      * Credential rules section
      */
     r?: { [key: string]: unknown };
+}
+
+export interface IssueCredentialArgs {
+    /**
+     * The credential data.
+     */
+    acdc: CredentialData;
+
+    /**
+     * The issuance event to be anchored to the credential registry. If not provided, the issuance event will be derived
+     * from the credential data.
+     *
+     * If a credential is created as part of a multisig exchanged, the anchoring event can be found in the exchange message.
+     */
+    iss?: Record<string, unknown>;
+
+    /**
+     * The anchoring event for the credential issuance. If not provided, the anchor event will be calculated from
+     * from the credential data and the issuance event.
+     *
+     * If a credential is created as part of a multisig exchanged, the anchoring event can be found in the exchange message.
+     */
+    anc?: Record<string, unknown>;
 }
 
 export interface IssueCredentialResult {
@@ -290,7 +314,7 @@ export class Credentials {
      */
     async issue(
         name: string,
-        args: CredentialData
+        args: IssueCredentialArgs
     ): Promise<IssueCredentialResult> {
         const hab = await this.client.identifiers().get(name);
         const estOnly = hab.state.c !== undefined && hab.state.c.includes('EO');
@@ -306,55 +330,65 @@ export class Credentials {
 
         const [, subject] = Saider.saidify({
             d: '',
-            ...args.a,
-            dt: args.a.dt ?? new Date().toISOString().replace('Z', '000+00:00'),
+            ...args.acdc.a,
+            dt:
+                args.acdc.a.dt ??
+                new Date().toISOString().replace('Z', '000+00:00'),
         });
 
-        const [, acdc] = Saider.saidify({
-            v: versify(Ident.ACDC, undefined, Serials.JSON, 0),
-            d: '',
-            u: args.u,
-            i: args.i ?? hab.prefix,
-            ri: args.ri,
-            s: args.s,
-            a: subject,
-            e: args.e,
-            r: args.r,
-        });
+        const acdc = new Serder(
+            Saider.saidify({
+                v: versify(Ident.ACDC, undefined, Serials.JSON, 0),
+                d: '',
+                u: args.acdc.u,
+                i: args.acdc.i ?? hab.prefix,
+                ri: args.acdc.ri,
+                s: args.acdc.s,
+                a: subject,
+                e: args.acdc.e,
+                r: args.acdc.r,
+            })[1]
+        );
 
-        const [, iss] = Saider.saidify({
-            v: versify(Ident.KERI, undefined, Serials.JSON, 0),
-            t: Ilks.iss,
-            d: '',
-            i: acdc.d,
-            s: '0',
-            ri: args.ri,
-            dt: subject.dt,
-        });
+        const iss = new Serder(
+            args.iss ??
+                Saider.saidify({
+                    v: versify(Ident.KERI, undefined, Serials.JSON, 0),
+                    t: Ilks.iss,
+                    d: '',
+                    i: acdc.ked.d,
+                    s: '0',
+                    ri: args.acdc.ri,
+                    dt: subject.dt,
+                })[1]
+        );
 
-        const sn = parseInt(hab.state.s, 16);
-        const anc = interact({
-            pre: hab.prefix,
-            sn: sn + 1,
-            data: [
-                {
-                    i: iss.i,
-                    s: iss.s,
-                    d: iss.d,
-                },
-            ],
-            dig: hab.state.d,
-            version: undefined,
-            kind: undefined,
-        });
+        const sn = new CesrNumber({}, parseInt(hab.state.s, 16) + 1);
+        const anc = new Serder(
+            args.anc ??
+                Saider.saidify({
+                    v: versify(Ident.KERI, undefined, Serials.JSON, 0),
+                    t: Ilks.ixn,
+                    d: '',
+                    i: hab.prefix,
+                    s: sn.numh,
+                    p: hab.state.d,
+                    a: [
+                        {
+                            i: iss.ked.i,
+                            s: iss.ked.s,
+                            d: iss.ked.d,
+                        },
+                    ],
+                })[1]
+        );
 
         const sigs = await keeper.sign(b(anc.raw));
-
         const path = `/identifiers/${hab.name}/credentials`;
         const method = 'POST';
         const body = {
-            acdc: acdc,
-            iss: iss,
+            acdc: acdc.ked,
+            iss: iss.ked,
             ixn: anc.ked,
             sigs,
             [keeper.algo]: keeper.params(),
@@ -368,8 +402,8 @@ export class Credentials {
         const op = await res.json();
 
         return {
-            acdc: new Serder(acdc),
-            iss: new Serder(iss),
+            acdc,
+            iss,
             anc,
             op,
         };
