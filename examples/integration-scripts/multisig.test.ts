@@ -334,7 +334,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -382,7 +382,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
-    res = await client2
+    await client2
         .exchanges()
         .send(
             'member2',
@@ -429,7 +429,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
-    res = await client3
+    await client3
         .exchanges()
         .send(
             'member3',
@@ -770,7 +770,7 @@ test('multisig', async function run() {
     };
 
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
