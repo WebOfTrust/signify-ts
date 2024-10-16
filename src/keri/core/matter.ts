@@ -41,6 +41,12 @@ export class MatterCodex extends Codex {
     StrB64_Big_L0: string = '7AAA'; // String Base64 Only Big Lead Size 0
     StrB64_Big_L1: string = '8AAA'; // String Base64 Only Big Lead Size 1
     StrB64_Big_L2: string = '9AAA'; // String Base64 Only Big Lead Size 2
+    Bytes_L0: string = '4B'; // Byte String Lead Size 0
+    Bytes_L1: string = '5B'; // Byte String Lead Size 1
+    Bytes_L2: string = '6B'; // Byte String Lead Size 2
+    Bytes_Big_L0: string = '7AAB'; // Byte String Big Lead Size 0
+    Bytes_Big_L1: string = '8AAB'; // Byte String Big Lead Size 1
+    Bytes_Big_L2: string = '9AAB'; // Byte String Big Lead Size 2
 }
 
 export const MtrDex = new MatterCodex();
