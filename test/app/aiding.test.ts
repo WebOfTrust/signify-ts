@@ -371,7 +371,7 @@ describe('Aiding', () => {
 
     it('Can rename identifier', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
-        await client.identifiers().rename('aid1', 'aid2');
+        await client.identifiers().update('aid1', { name: 'aid2' });
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.path, '/identifiers/aid1');
         assert.equal(lastCall.method, 'PUT');
