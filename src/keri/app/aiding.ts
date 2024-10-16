@@ -66,6 +66,13 @@ export interface IdentifierDeps {
     manager: KeyManager | null;
 }
 
+/**
+ * Updatable information for a managed identifier
+ */
+export interface IdentifierInfo {
+    name: string
+}
+
 /** Identifier */
 export class Identifier {
     public client: IdentifierDeps;
@@ -109,7 +116,7 @@ export class Identifier {
     /**
      * Get information for a managed identifier
      * @async
-     * @param {string} name Name or alias of the identifier
+     * @param {string} name Prefix or alias of the identifier
      * @returns {Promise<HabState>} A promise to the identifier information
      */
     async get(name: string): Promise<HabState> {
@@ -117,24 +124,21 @@ export class Identifier {
         const data = null;
         const method = 'GET';
         const res = await this.client.fetch(path, method, data);
-        return res.json();
+        return await res.json();
     }
 
     /**
-     * Rename managed identifier
+     * Update managed identifier
      * @async
-     * @param {string} name Name or alias of the identifier
-     * @param {string} newName New name for the identifier
+     * @param {string} name Prefix or alias of the identifier
+     * @param {IdentifierInfo} info Information to update for the given identifier
      * @returns {Promise<HabState>} A promise to the identifier information after updating
      */
-    async rename(name: string, newName: string): Promise<HabState> {
+    async update(name: string, info: IdentifierInfo): Promise<HabState> {
         const path = `/identifiers/${name}`;
         const method = 'PUT';
-        const data = {
-            name: newName,
-        };
-        const res = await this.client.fetch(path, method, data);
-        return res.json();
+        const res = await this.client.fetch(path, method, info);
+        return await res.json();
     }
 
     /**
@@ -269,7 +273,7 @@ export class Identifier {
     /**
      * Generate an interaction event in a managed identifier
      * @async
-     * @param {string} name Name or alias of the identifier
+     * @param {string} name Prefix or alias of the identifier
      * @param {any} [data] Option data to be anchored in the interaction event
      * @returns {Promise<EventResult>} A promise to the interaction event result
      */
@@ -488,7 +492,7 @@ export class Identifier {
             'GET',
             undefined
         );
-        return res.json();
+        return await res.json();
     }
 }
 
@@ -518,6 +522,6 @@ export class EventResult {
 
     async op(): Promise<any> {
         const res = await this.promise;
-        return res.json();
+        return await res.json();
     }
 }

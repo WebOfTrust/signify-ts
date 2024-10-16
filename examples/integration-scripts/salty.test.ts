@@ -168,7 +168,7 @@ test('salty', async () => {
 
     await assertOperations(client1);
 
-    aid = await client1.identifiers().rename('aid3', 'aid4');
+    aid = await client1.identifiers().update('aid3', { name: 'aid4' });
     assert.equal(aid.name, 'aid4');
     aid = await client1.identifiers().get('aid4');
     assert.equal(aid.name, 'aid4');
