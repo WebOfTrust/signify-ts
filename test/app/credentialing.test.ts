@@ -263,9 +263,11 @@ describe('Credentialing', () => {
         const schema = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
         const isuee = 'EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p';
         await credentials.issue('aid1', {
-            ri: registry,
-            s: schema,
-            a: { i: isuee, LEI: '1234' },
+            acdc: {
+                ri: registry,
+                s: schema,
+                a: { i: isuee, LEI: '1234' },
+            },
         });
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         lastBody = JSON.parse(lastCall[1]!.body!.toString());
