@@ -47,6 +47,24 @@ export class MatterCodex extends Codex {
     Bytes_Big_L0: string = '7AAB'; // Byte String Big Lead Size 0
     Bytes_Big_L1: string = '8AAB'; // Byte String Big Lead Size 1
     Bytes_Big_L2: string = '9AAB'; // Byte String Big Lead Size 2
+    X25519_Cipher_L0:     string = '4C'  // X25519 sealed box cipher bytes of sniffable stream plaintext lead size 0
+    X25519_Cipher_L1:     string = '5C'  // X25519 sealed box cipher bytes of sniffable stream plaintext lead size 1
+    X25519_Cipher_L2:     string = '6C'  // X25519 sealed box cipher bytes of sniffable stream plaintext lead size 2
+    X25519_Cipher_Big_L0: string = '7AAC'  // X25519 sealed box cipher bytes of sniffable stream plaintext big lead size 0
+    X25519_Cipher_Big_L1: string = '8AAC'  // X25519 sealed box cipher bytes of sniffable stream plaintext big lead size 1
+    X25519_Cipher_Big_L2: string = '9AAC'  // X25519 sealed box cipher bytes of sniffable stream plaintext big lead size 2
+    X25519_Cipher_QB64_L0:     string = '4D'  // X25519 sealed box cipher bytes of QB64 plaintext lead size 0
+    X25519_Cipher_QB64_L1:     string = '5D'  // X25519 sealed box cipher bytes of QB64 plaintext lead size 1
+    X25519_Cipher_QB64_L2:     string = '6D'  // X25519 sealed box cipher bytes of QB64 plaintext lead size 2
+    X25519_Cipher_QB64_Big_L0: string = '7AAD'  // X25519 sealed box cipher bytes of QB64 plaintext big lead size 0
+    X25519_Cipher_QB64_Big_L1: string = '8AAD'  // X25519 sealed box cipher bytes of QB64 plaintext big lead size 1
+    X25519_Cipher_QB64_Big_L2: string = '9AAD'  // X25519 sealed box cipher bytes of QB64 plaintext big lead size 2
+    X25519_Cipher_QB2_L0:     string = '4E'  // X25519 sealed box cipher bytes of QB2 plaintext lead size 0
+    X25519_Cipher_QB2_L1:     string = '5E'  // X25519 sealed box cipher bytes of QB2 plaintext lead size 1
+    X25519_Cipher_QB2_L2:     string = '6E'  // X25519 sealed box cipher bytes of QB2 plaintext lead size 2
+    X25519_Cipher_QB2_Big_L0: string = '7AAE'  // X25519 sealed box cipher bytes of QB2 plaintext big lead size 0
+    X25519_Cipher_QB2_Big_L1: string = '8AAE'  // X25519 sealed box cipher bytes of QB2 plaintext big lead size 1
+    X25519_Cipher_QB2_Big_L2: string = '9AAE'  // X25519 sealed box cipher bytes of QB2 plaintext big lead size 2
 }
 
 export const MtrDex = new MatterCodex();
@@ -186,6 +204,24 @@ export class Matter {
             '7AAB': new Sizage(4, 4, undefined, 0),
             '8AAB': new Sizage(4, 4, undefined, 1),
             '9AAB': new Sizage(4, 4, undefined, 2),
+            '4C': new Sizage(2, 2, undefined, 0),
+            '5C': new Sizage(2, 2, undefined, 1),
+            '6C': new Sizage(2, 2, undefined, 2),
+            '7AAC': new Sizage(4, 4, undefined, 0),
+            '8AAC': new Sizage(4, 4, undefined, 1),
+            '9AAC': new Sizage(4, 4, undefined, 2),
+            '4D': new Sizage(2, 2, undefined, 0),
+            '5D': new Sizage(2, 2, undefined, 1),
+            '6D': new Sizage(2, 2, undefined, 2),
+            '7AAD': new Sizage(4, 4, undefined, 0),
+            '8AAD': new Sizage(4, 4, undefined, 1),
+            '9AAD': new Sizage(4, 4, undefined, 2),
+            '4E': new Sizage(2, 2, undefined, 0),
+            '5E': new Sizage(2, 2, undefined, 1),
+            '6E': new Sizage(2, 2, undefined, 2),
+            '7AAE': new Sizage(4, 4, undefined, 0),
+            '8AAE': new Sizage(4, 4, undefined, 1),
+            '9AAE': new Sizage(4, 4, undefined, 2)
         })
     );
 
@@ -254,18 +290,18 @@ export class Matter {
         ['9', 4],
     ]);
 
-    private _code: string = '';
+    protected _code: string = '';
     private _size: number = -1;
     private _raw: Uint8Array = new Uint8Array(0);
 
     constructor({
-        raw,
-        code = MtrDex.Ed25519N,
-        qb64b,
-        qb64,
-        qb2,
-        rize,
-    }: MatterArgs) {
+                    raw,
+                    code = MtrDex.Ed25519N,
+                    qb64b,
+                    qb64,
+                    qb2,
+                    rize,
+                }: MatterArgs) {
         let size = -1;
         if (raw != undefined) {
             if (code.length == 0) {
