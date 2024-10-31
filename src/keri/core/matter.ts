@@ -560,4 +560,33 @@ export class Matter {
     private _bexfil(qb2: Uint8Array) {
         throw new Error(`qb2 not yet supported: ${qb2}`);
     }
+
+    static determineMatterCode(length: number, format: string): string {
+        const isQB64 = format === 'qb64';
+        const isQB2 = format === 'qb2';
+
+        if (length <= Matter._rawSize(MtrDex.X25519_Cipher_L2)) {
+            if (isQB64) {
+                return (length % 3 === 0) ? MtrDex.X25519_Cipher_QB64_L0 :
+                    (length % 3 === 1) ? MtrDex.X25519_Cipher_QB64_L1 : MtrDex.X25519_Cipher_QB64_L2;
+            } else if (isQB2) {
+                return (length % 3 === 0) ? MtrDex.X25519_Cipher_QB2_L0 :
+                    (length % 3 === 1) ? MtrDex.X25519_Cipher_QB2_L1 : MtrDex.X25519_Cipher_QB2_L2;
+            } else {
+                return (length % 3 === 0) ? MtrDex.X25519_Cipher_L0 :
+                    (length % 3 === 1) ? MtrDex.X25519_Cipher_L1 : MtrDex.X25519_Cipher_L2;
+            }
+        } else {
+            if (isQB64) {
+                return (length % 3 === 0) ? MtrDex.X25519_Cipher_QB64_Big_L0 :
+                    (length % 3 === 1) ? MtrDex.X25519_Cipher_QB64_Big_L1 : MtrDex.X25519_Cipher_QB64_Big_L2;
+            } else if (isQB2) {
+                return (length % 3 === 0) ? MtrDex.X25519_Cipher_QB2_Big_L0 :
+                    (length % 3 === 1) ? MtrDex.X25519_Cipher_QB2_Big_L1 : MtrDex.X25519_Cipher_QB2_Big_L2;
+            } else {
+                return (length % 3 === 0) ? MtrDex.X25519_Cipher_Big_L0 :
+                    (length % 3 === 1) ? MtrDex.X25519_Cipher_Big_L1 : MtrDex.X25519_Cipher_Big_L2;
+            }
+        }
+    }
 }

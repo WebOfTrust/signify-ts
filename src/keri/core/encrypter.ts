@@ -1,10 +1,41 @@
 import libsodium from 'libsodium-wrappers-sumo';
 
-import { Matter, MatterArgs, MtrDex } from './matter';
+import {Matter, MatterArgs, MtrDex} from './matter';
 import { Verfer } from './verfer';
 import { Signer } from './signer';
 import { Cipher } from './cipher';
 import { arrayEquals } from './utils';
+
+// TODO: move to Matter
+const ciXAllQB64Dex = [
+    MtrDex.X25519_Cipher_Seed,
+    MtrDex.X25519_Cipher_Salt,
+    MtrDex.X25519_Cipher_QB64_L0,
+    MtrDex.X25519_Cipher_QB64_L1,
+    MtrDex.X25519_Cipher_QB64_L2,
+    MtrDex.X25519_Cipher_QB64_Big_L0,
+    MtrDex.X25519_Cipher_QB64_Big_L1,
+    MtrDex.X25519_Cipher_QB64_Big_L2
+]
+
+// TODO: move to Matter
+const ciXVarQB2Dex = [
+    MtrDex.X25519_Cipher_QB2_L0,
+    MtrDex.X25519_Cipher_QB2_L1,
+    MtrDex.X25519_Cipher_QB2_L2,
+    MtrDex.X25519_Cipher_QB2_Big_L0,
+    MtrDex.X25519_Cipher_QB2_Big_L1,
+    MtrDex.X25519_Cipher_QB2_Big_L2
+]
+
+const ciXVarStrmDex = [
+    MtrDex.X25519_Cipher_L0,
+    MtrDex.X25519_Cipher_L1,
+    MtrDex.X25519_Cipher_L2,
+    MtrDex.X25519_Cipher_Big_L0,
+    MtrDex.X25519_Cipher_Big_L1,
+    MtrDex.X25519_Cipher_Big_L2
+]
 
 export class Encrypter extends Matter {
     private _encrypt: any;
@@ -49,15 +80,36 @@ export class Encrypter extends Matter {
             throw new Error('Neither ser nor matter are provided.');
         }
 
-        if (ser != null) {
-            matter = new Matter({ qb64b: ser });
+        let code;
+        if (!ser) {
+
+            if (!matter) {
+                throw new Error('primitive is not provided');
+            }
+
+            if (matter!.code == MtrDex.Salt_128) {
+                code = MtrDex.X25519_Cipher_Salt;
+            } else if ( matter!.raw.length == Matter._rawSize(MtrDex.X25519_Cipher_Seed)){
+                code = MtrDex.X25519_Cipher_Seed;
+            } else {
+                code = Matter.determineMatterCode(matter!.raw.length, matter!.qb64b ? 'qb64' : 'qb2');
+            }
+
+            if (ciXAllQB64Dex.includes(code)) {
+                ser = matter.qb64b;
+            } else if (ciXVarQB2Dex.includes(code)){
+                // TODO
+            } else if (ciXVarStrmDex.includes(code)){
+                // TODO
+            }
         }
 
-        let code;
-        if (matter!.code == MtrDex.Salt_128) {
-            code = MtrDex.X25519_Cipher_Salt;
-        } else {
-            code = MtrDex.X25519_Cipher_Seed;
+        if (!code) {
+            code = MtrDex.X25519_Cipher_L0;
+        }
+
+        if (ser != null) {
+            matter = new Matter({ qb64b: ser });
         }
 
         return this._encrypt(matter!.qb64, this.raw, code);
@@ -65,6 +117,6 @@ export class Encrypter extends Matter {
 
     _x25519(ser: Uint8Array, pubkey: Uint8Array, code: string) {
         const raw = libsodium.crypto_box_seal(ser, pubkey);
-        return new Cipher({ raw: raw, code: code });
+        return new Cipher({ raw, code: code });
     }
 }
