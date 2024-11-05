@@ -325,7 +325,6 @@ describe('Credentialing', () => {
         );
         assert.equal(lastCall[1]!.method, 'GET');
         assert.equal(lastCall[1]!.body, null);
-        console.log(JSON.stringify(lastCall, null, 2));
     });
 });
 
