@@ -7,7 +7,7 @@ import { Cipher } from './cipher';
 import { arrayEquals } from './utils';
 
 // TODO: move to Matter
-const ciXAllQB64Dex = [
+export const ciXAllQB64Dex = [
     MtrDex.X25519_Cipher_Seed,
     MtrDex.X25519_Cipher_Salt,
     MtrDex.X25519_Cipher_QB64_L0,
@@ -19,7 +19,7 @@ const ciXAllQB64Dex = [
 ]
 
 // TODO: move to Matter
-const ciXVarQB2Dex = [
+export const ciXVarQB2Dex = [
     MtrDex.X25519_Cipher_QB2_L0,
     MtrDex.X25519_Cipher_QB2_L1,
     MtrDex.X25519_Cipher_QB2_L2,
@@ -29,7 +29,7 @@ const ciXVarQB2Dex = [
 ]
 
 // TODO: move to Matter
-const ciXVarStrmDex = [
+export const ciXVarStrmDex = [
     MtrDex.X25519_Cipher_L0,
     MtrDex.X25519_Cipher_L1,
     MtrDex.X25519_Cipher_L2,
@@ -99,7 +99,7 @@ export class Encrypter extends Matter {
             if (ciXAllQB64Dex.includes(code)) {
                 ser = matter.qb64b;
             } else if (ciXVarQB2Dex.includes(code)){
-                // TODO
+                // TODO: QB2 not supported in Signify
             } else if (ciXVarStrmDex.includes(code)){
                 // TODO
             }
