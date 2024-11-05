@@ -28,6 +28,7 @@ const ciXVarQB2Dex = [
     MtrDex.X25519_Cipher_QB2_Big_L2
 ]
 
+// TODO: move to Matter
 const ciXVarStrmDex = [
     MtrDex.X25519_Cipher_L0,
     MtrDex.X25519_Cipher_L1,
