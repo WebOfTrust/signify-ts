@@ -1,4 +1,4 @@
-import signify, {SignifyClient} from "signify-ts";
+import signify, {exchange, SignifyClient} from "signify-ts";
 import {getOrCreateClient, getOrCreateIdentifier, waitOperation} from "./utils/test-util";
 import {resolveEnvironment} from "./utils/resolve-env";
 
@@ -18,12 +18,6 @@ test('ESSR exchanging', async function run() {
     const [client1, client2] = await Promise.all([
         getOrCreateClient(),
         getOrCreateClient()
-    ]);
-
-    // Create two identifiers, one for each client
-    let [aid1, aid2, aid3, aid4] = await Promise.all([
-        createAID(client1, 'client1', WITNESS_AIDS),
-        createAID(client2, 'client2', WITNESS_AIDS),
     ]);
 
     // Exchange OOBIs
@@ -46,6 +40,9 @@ test('ESSR exchanging', async function run() {
     op2 = await waitOperation(client2, op2);
     console.log('Client2 resolved client1 OOBI');
 
+
+    // Create ESSR payload
+    let [exn, end] = exchange('/essr/req', {}, 'test', '', undefined);
 });
 
 async function createAID(client: SignifyClient, name: string, wits: string[]) {
