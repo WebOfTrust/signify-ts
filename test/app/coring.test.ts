@@ -280,7 +280,7 @@ describe('Coring', () => {
         const config = client.config();
 
         await config.get();
-        let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(lastCall[0]!, url + '/config');
         assert.equal(lastCall[1]!.method, 'GET');
     });
