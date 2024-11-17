@@ -40,22 +40,29 @@ The code is built using Typescript and running code locally requires a Mac or Li
 Typescript source files needs to be transpiled before running scripts or integration tests
 
 -   Build:
+
     ```bash
     npm run build
     ```
 
--   ready() must be called before library is useable.  Example minimum viable client code.
+-   ready() must be called before library is useable. Example minimum viable client code.
+
     ```javascript
     import { ready, SignifyClient, Tier } from 'signify-ts';
 
     await ready();
-    
+
     const bran = '0'.repeat(21);
     const url = 'http://127.0.0.1:3901';
     const boot_url = 'http://127.0.0.1:3903';
-    const actualSignifyClient = new SignifyClient(url, bran, Tier.low, boot_url);
-    
-    console.log(actualSignifyClient)
+    const actualSignifyClient = new SignifyClient(
+        url,
+        bran,
+        Tier.low,
+        boot_url
+    );
+
+    console.log(actualSignifyClient);
     ```
 
 ### Unit testing
