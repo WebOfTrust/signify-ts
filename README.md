@@ -52,7 +52,7 @@ Typescript source files needs to be transpiled before running scripts or integra
 
     await ready();
 
-    const bran = randomPasscode(); // Shared secret with keria
+    const bran = randomPasscode();
     const url = 'http://127.0.0.1:3901';
     const boot_url = 'http://127.0.0.1:3903';
     const actualSignifyClient = new SignifyClient(
