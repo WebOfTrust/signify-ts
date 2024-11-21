@@ -135,6 +135,67 @@ const mockGetAID = {
     windexes: [],
 };
 
+const mockGetAID2 = {
+    name: 'aid2',
+    prefix: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
+    salty: {
+        sxlt: '1AAHnNQTkD0yxOC9tSz_ukbB2e-qhDTStH18uCsi5PCwOyXLONDR3MeKwWv_AVJKGKGi6xiBQH25_R1RXLS2OuK3TN3ovoUKH7-A',
+        pidx: 0,
+        kidx: 0,
+        stem: 'signify:aid',
+        tier: 'low',
+        dcode: 'E',
+        icodes: ['A'],
+        ncodes: ['A'],
+        transferable: true,
+    },
+    transferable: true,
+    state: {
+        vn: [1, 0],
+        i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
+        s: '1',
+        p: '',
+        d: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
+        f: '0',
+        dt: '2023-08-21T22:30:46.473545+00:00',
+        et: 'ixn',
+        kt: '1',
+        k: ['DPmhSfdhCPxr3EqjxzEtF8TVy0YX7ATo0Uc8oo2cnmY9'],
+        nt: '1',
+        n: ['EAORnRtObOgNiOlMolji-KijC_isa3lRDpHCsol79cOc'],
+        bt: '0',
+        b: [],
+        c: [],
+        ee: {
+            s: '0',
+            d: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
+            br: [],
+            ba: [],
+        },
+        di: '',
+    },
+    windexes: [],
+};
+
+const mockEvents = [
+    {
+        i: 'a prefix',
+        s: '0',
+    },
+    {
+        i: 'a prefix',
+        s: '1',
+        d: 'a 2nd digest',
+        a: [
+            {
+                d: 'EGB8Q3UgcsLftRsffimiRS0pqpVgRNr4Di8qorKm0u1_',
+                i: 'EK_6Rlxmdl6Ieyd5oz81HF3Kvv2E8nCG1rYRHA7CZPRF',
+                s: '0',
+            },
+        ],
+    },
+];
+
 const mockCredential = {
     sad: {
         v: 'ACDC10JSON000197_',
@@ -210,9 +271,19 @@ fetchMock.mockResponse((req) => {
             req.method,
             requrl.pathname.split('?')[0]
         );
-        const body = req.url.startsWith(url + '/credentials')
-            ? mockCredential
-            : mockGetAID;
+
+        let body = {};
+        if (req.url.startsWith(url + '/credentials')) {
+            body = mockCredential;
+        } else if (req.url === url + '/identifiers/aid1') {
+            body = mockGetAID;
+        } else if (req.url === url + '/identifiers/aid2') {
+            body = mockGetAID2;
+        } else if (req.url.startsWith(url + '/events')) {
+            body = mockEvents;
+        } else if (req.url.startsWith(url + '/identifiers')) {
+            body = mockGetAID;
+        }
 
         return Promise.resolve({
             body: JSON.stringify(body),
@@ -325,6 +396,40 @@ describe('Credentialing', () => {
         );
         assert.equal(lastCall[1]!.method, 'GET');
         assert.equal(lastCall[1]!.body, null);
+    });
+    it('Issue credentials when anchor is already in the KEL', async () => {
+        await libsodium.ready;
+        const bran = '0123456789abcdefghijk';
+
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+
+        await client.boot();
+        await client.connect();
+
+        const credentials = client.credentials();
+
+        const registry = 'EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX';
+        const schema = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
+        const isuee = 'EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p';
+        await credentials.issue('aid2', {
+            ri: registry,
+            s: schema,
+            a: {
+                i: isuee,
+                LEI: '1234',
+                dt: '2023-08-23T15:16:07.553000+00:00',
+            },
+        });
+        const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        const lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.equal(lastCall[0]!, url + '/identifiers/aid2/credentials');
+        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastBody.iss.s, '0');
+        assert.equal(lastBody.iss.t, 'iss');
+        assert.equal(lastBody.iss.ri, registry);
+        assert.equal(lastBody.iss.i, lastBody.acdc.d);
+        assert.equal(lastBody.ixn.t, 'ixn');
+        assert.equal(lastBody.ixn.s, '1');
     });
 });
 
