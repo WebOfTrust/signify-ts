@@ -460,23 +460,23 @@ async function createRegistry(
 async function issueCredential(
     client: SignifyClient,
     name: string,
-    data: CredentialData
+    acdc: CredentialData
 ) {
-    const result = await client.credentials().issue(name, data);
+    const result = await client.credentials().issue(name, { acdc });
 
     await waitOperation(client, result.op);
 
     const creds = await client.credentials().list();
     assert.equal(creds.length, 1);
-    assert.equal(creds[0].sad.s, data.s);
+    assert.equal(creds[0].sad.s, acdc.s);
     assert.equal(creds[0].status.s, '0');
 
     const dt = createTimestamp();
 
-    if (data.a.i) {
+    if (acdc.a.i) {
         const [grant, gsigs, end] = await client.ipex().grant({
             senderName: name,
-            recipient: data.a.i,
+            recipient: acdc.a.i,
             datetime: dt,
             acdc: result.acdc,
             anc: result.anc,
@@ -485,7 +485,7 @@ async function issueCredential(
 
         let op = await client
             .ipex()
-            .submitGrant(name, grant, gsigs, end, [data.a.i]);
+            .submitGrant(name, grant, gsigs, end, [acdc.a.i]);
         op = await waitOperation(client, op);
     }
 
