@@ -80,7 +80,7 @@ describe('registry', () => {
 
         const registries = new Registries(instance(mockedClient));
 
-        assert.rejects(
+        await assert.rejects(
             async () => {
                 await registries.create({
                     name: 'a name',
