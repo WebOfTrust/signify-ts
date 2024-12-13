@@ -619,7 +619,7 @@ test('single signature credentials', async () => {
 
     await step('Holder deletes LE credential', async () => {
         await holderClient.credentials().delete(leCredentialId);
-        assert.rejects(
+        await assert.rejects(
             async () => {
                 await holderClient.credentials().get(leCredentialId);
             },
