@@ -27,7 +27,7 @@ services:
             <<: *python-env
         volumes:
             - ./config/keria.json:/keria/config/keri/cf/keria.json
-        command: --config-dir /keria/config --config-file keria --name agent
+        command: start --config-dir /keria/config --config-file keria --name agent
         healthcheck:
             test: wget --spider http://keria:3902/spec.yaml
             <<: *healthcheck
