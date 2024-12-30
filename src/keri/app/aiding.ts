@@ -502,11 +502,7 @@ export class EventResult {
     private readonly _sigs: string[];
     private readonly response: Response;
 
-    constructor(
-        serder: Serder,
-        sigs: string[],
-        response: Response
-    ) {
+    constructor(serder: Serder, sigs: string[], response: Response) {
         this._serder = serder;
         this._sigs = sigs;
         this.response = response;
