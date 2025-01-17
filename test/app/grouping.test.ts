@@ -1,12 +1,11 @@
 import { strict as assert } from 'assert';
 import { SignifyClient } from '../../src/keri/app/clienting';
-import { Authenticater } from '../../src/keri/core/authing';
-import { Salter, Tier } from '../../src/keri/core/salter';
-import fetchMock from 'jest-fetch-mock';
+import { Tier } from '../../src/keri/core/salter';
+import jsFetchMock from 'jest-fetch-mock';
 import libsodium from 'libsodium-wrappers-sumo';
 import 'whatwg-fetch';
 
-fetchMock.enableMocks();
+jsFetchMock.enableMocks();
 
 const url = 'http://127.0.0.1:3901';
 const boot_url = 'http://127.0.0.1:3903';
@@ -109,48 +108,26 @@ const mockCredential = {
     },
 };
 
-fetchMock.mockResponse((req) => {
+const fetchMock = jest
+    .spyOn(SignifyClient.prototype, 'fetch')
+    .mockImplementation(async (rurl) => {
+        const body = rurl.startsWith('/identifiers/aid1/credentials')
+            ? mockCredential
+            : mockGetAID;
+
+        return Promise.resolve(
+            new Response(JSON.stringify(body), {
+                status: 202,
+            })
+        );
+    });
+jsFetchMock.mockResponse((req) => {
     if (req.url.startsWith(url + '/agent')) {
         return Promise.resolve({ body: mockConnect, init: { status: 202 } });
     } else if (req.url == boot_url + '/boot') {
         return Promise.resolve({ body: '', init: { status: 202 } });
     } else {
-        const headers = new Headers();
-        let signed_headers = new Headers();
-
-        headers.set(
-            'Signify-Resource',
-            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
-        );
-        headers.set(
-            'Signify-Timestamp',
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-        headers.set('Content-Type', 'application/json');
-
-        const requrl = new URL(req.url);
-        const salter = new Salter({ qb64: '0AAwMTIzNDU2Nzg5YWJjZGVm' });
-        const signer = salter.signer(
-            'A',
-            true,
-            'agentagent-ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
-            Tier.low
-        );
-
-        const authn = new Authenticater(signer!, signer!.verfer);
-        signed_headers = authn.sign(
-            headers,
-            req.method,
-            requrl.pathname.split('?')[0]
-        );
-        const body = req.url.startsWith(url + '/identifiers/aid1/credentials')
-            ? mockCredential
-            : mockGetAID;
-
-        return Promise.resolve({
-            body: JSON.stringify(body),
-            init: { status: 202, headers: signed_headers },
-        });
+        throw new Error('Wrong fetch used');
     }
 });
 
@@ -168,19 +145,18 @@ describe('Grouping', () => {
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         await groups.sendRequest('aid1', {}, [], '');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/multisig/request');
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastCall[0], '/identifiers/aid1/multisig/request');
+        assert.equal(lastCall[1], 'POST');
 
         await groups.getRequest(
             'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00'
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url +
-                '/multisig/request/ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00'
+            lastCall[0],
+            '/multisig/request/ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[1], 'GET');
 
         await groups.join(
             'aid1',
@@ -191,7 +167,7 @@ describe('Grouping', () => {
             ['a', 'b', 'c']
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/multisig/join');
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastCall[0], '/identifiers/aid1/multisig/join');
+        assert.equal(lastCall[1], 'POST');
     });
 });

@@ -1,12 +1,11 @@
 import { strict as assert } from 'assert';
 import { SignifyClient } from '../../src/keri/app/clienting';
-import { Authenticater } from '../../src/keri/core/authing';
-import { Salter, Tier } from '../../src/keri/core/salter';
+import { Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
-import fetchMock from 'jest-fetch-mock';
+import jsFetchMock from 'jest-fetch-mock';
 import 'whatwg-fetch';
 
-fetchMock.enableMocks();
+jsFetchMock.enableMocks();
 
 const url = 'http://127.0.0.1:3901';
 const boot_url = 'http://127.0.0.1:3903';
@@ -71,46 +70,24 @@ const mockGetAID = {
     windexes: [],
 };
 
-fetchMock.mockResponse((req) => {
+const fetchMock = jest
+    .spyOn(SignifyClient.prototype, 'fetch')
+    .mockImplementation(async () => {
+        const body = mockGetAID;
+
+        return Promise.resolve(
+            new Response(JSON.stringify(body), {
+                status: 202,
+            })
+        );
+    });
+jsFetchMock.mockResponse((req) => {
     if (req.url.startsWith(url + '/agent')) {
         return Promise.resolve({ body: mockConnect, init: { status: 202 } });
     } else if (req.url == boot_url + '/boot') {
         return Promise.resolve({ body: '', init: { status: 202 } });
     } else {
-        const headers = new Headers();
-        let signed_headers = new Headers();
-
-        headers.set(
-            'Signify-Resource',
-            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
-        );
-        headers.set(
-            'Signify-Timestamp',
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-        headers.set('Content-Type', 'application/json');
-
-        const requrl = new URL(req.url);
-        const salter = new Salter({ qb64: '0AAwMTIzNDU2Nzg5YWJjZGVm' });
-        const signer = salter.signer(
-            'A',
-            true,
-            'agentagent-ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
-            Tier.low
-        );
-
-        const authn = new Authenticater(signer!, signer!.verfer);
-        signed_headers = authn.sign(
-            headers,
-            req.method,
-            requrl.pathname.split('?')[0]
-        );
-        const body = mockGetAID;
-
-        return Promise.resolve({
-            body: JSON.stringify(body),
-            init: { status: 202, headers: signed_headers },
-        });
+        throw new Error('Wrong fetch used');
     }
 });
 
@@ -129,19 +106,18 @@ describe('Contacting', () => {
         await contacts.list('mygroup', 'company', 'mycompany');
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url +
-                '/contacts?group=mygroup&filter_field=company&filter_value=mycompany'
+            lastCall[0],
+            '/contacts?group=mygroup&filter_field=company&filter_value=mycompany'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[1], 'GET');
 
         await contacts.get('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+            lastCall[0],
+            '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[1], 'GET');
 
         const info = {
             name: 'John Doe',
@@ -152,12 +128,12 @@ describe('Contacting', () => {
             info
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        let lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        let lastBody = lastCall[2];
         assert.equal(
-            lastCall[0]!,
-            url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+            lastCall[0],
+            '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastCall[1], 'POST');
         assert.deepEqual(lastBody, info);
 
         await contacts.update(
@@ -165,22 +141,22 @@ describe('Contacting', () => {
             info
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        lastBody = lastCall[2];
         assert.equal(
-            lastCall[0]!,
-            url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+            lastCall[0],
+            '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'PUT');
+        assert.equal(lastCall[1], 'PUT');
         assert.deepEqual(lastBody, info);
 
         await contacts.delete('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+            lastCall[0],
+            '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'DELETE');
-        assert.equal(lastCall[1]!.body, undefined);
+        assert.equal(lastCall[1], 'DELETE');
+        assert.equal(lastCall[2], undefined);
     });
 
     it('Challenges', async () => {
@@ -196,8 +172,8 @@ describe('Contacting', () => {
 
         await challenges.generate(128);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/challenges?strength=128');
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[0], '/challenges?strength=128');
+        assert.equal(lastCall[1], 'GET');
 
         const words = [
             'shell',
@@ -219,9 +195,9 @@ describe('Contacting', () => {
             words
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/exchanges');
-        assert.equal(lastCall[1]!.method, 'POST');
-        let lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        let lastBody = lastCall[2];
+        assert.equal(lastCall[0], '/identifiers/aid1/exchanges');
+        assert.equal(lastCall[1], 'POST');
         assert.equal(lastBody.tpc, 'challenge');
         assert.equal(lastBody.exn.r, '/challenge/response');
         assert.equal(
@@ -237,12 +213,11 @@ describe('Contacting', () => {
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url +
-                '/challenges_verify/EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p'
+            lastCall[0],
+            '/challenges_verify/EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p'
         );
-        assert.equal(lastCall[1]!.method, 'POST');
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.equal(lastCall[1], 'POST');
+        lastBody = lastCall[2];
         assert.deepEqual(lastBody.words, words);
 
         await challenges.responded(
@@ -251,12 +226,11 @@ describe('Contacting', () => {
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url +
-                '/challenges_verify/EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p'
+            lastCall[0],
+            '/challenges_verify/EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p'
         );
-        assert.equal(lastCall[1]!.method, 'PUT');
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.equal(lastCall[1], 'PUT');
+        lastBody = lastCall[2];
         assert.equal(
             lastBody.said,
             'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'

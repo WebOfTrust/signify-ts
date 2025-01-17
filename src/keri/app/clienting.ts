@@ -1,4 +1,4 @@
-import { Authenticater } from '../core/authing';
+import { Authenticator } from '../core/authing';
 import { HEADER_SIG_TIME } from '../core/httping';
 import { ExternalModule, KeyManager } from '../core/keeping';
 import { Tier } from '../core/salter';
@@ -37,7 +37,7 @@ export class SignifyClient {
     public bran: string;
     public pidx: number;
     public agent: Agent | null;
-    public authn: Authenticater | null;
+    public authn: Authenticator | null;
     public manager: KeyManager | null;
     public tier: Tier;
     public bootUrl: string;
@@ -151,7 +151,7 @@ export class SignifyClient {
             this.controller.salter,
             this.exteralModules
         );
-        this.authn = new Authenticater(
+        this.authn = new Authenticator(
             this.controller.signer,
             this.agent.verfer!
         );
@@ -172,63 +172,60 @@ export class SignifyClient {
         data: any,
         extraHeaders?: Headers
     ): Promise<Response> {
-        const headers = new Headers();
-        let signed_headers = new Headers();
-        const final_headers = new Headers();
-
-        headers.set('Signify-Resource', this.controller.pre);
-        headers.set(
-            HEADER_SIG_TIME,
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-        headers.set('Content-Type', 'application/json');
-
-        const _body = method == 'GET' ? null : JSON.stringify(data);
-
-        if (this.authn) {
-            signed_headers = this.authn.sign(
-                headers,
-                method,
-                path.split('?')[0]
-            );
-        } else {
-            throw new Error('client need to call connect first');
+        if (!this.authn) {
+            throw new Error('Client needs to call connect first');
         }
 
-        signed_headers.forEach((value, key) => {
-            final_headers.set(key, value);
-        });
-        if (extraHeaders !== undefined) {
+        const headers = new Headers();
+        headers.set('Signify-Resource', this.controller.pre);
+
+        if (extraHeaders) {
             extraHeaders.forEach((value, key) => {
-                final_headers.append(key, value);
+                headers.append(key, value);
             });
         }
-        const res = await fetch(this.url + path, {
-            method: method,
-            body: _body,
-            headers: final_headers,
-        });
-        if (!res.ok) {
-            const error = await res.text();
-            const message = `HTTP ${method} ${path} - ${res.status} ${res.statusText} - ${error}`;
-            throw new Error(message);
-        }
-        const isSameAgent =
-            this.agent?.pre === res.headers.get('signify-resource');
-        if (!isSameAgent) {
-            throw new Error('message from a different remote agent');
+
+        const body = method == 'GET' ? null : JSON.stringify(data);
+        if (body) {
+            headers.set('Content-Type', 'application/json');
+            headers.set('Content-Length', body.length.toString());
         }
 
-        const verification = this.authn.verify(
-            res.headers,
+        const request = new Request(this.url + path, {
             method,
-            path.split('?')[0]
+            body,
+            headers,
+        });
+
+        const wrappedRequest = await this.authn.wrap(
+            request,
+            this.url,
+            this.controller.pre,
+            this.agent!.pre
         );
-        if (verification) {
-            return res;
-        } else {
-            throw new Error('response verification failed');
+        const wrappedResponse = await fetch(wrappedRequest);
+
+        // Any other error will be wrapped in an ESSR response
+        if (wrappedResponse.status === 401) {
+            throw new Error(
+                `HTTP ${method} ${path} - ${wrappedResponse.status} ${wrappedResponse.statusText}`
+            );
         }
+
+        const response = await this.authn.unwrap(
+            wrappedResponse,
+            this.agent!.pre,
+            this.controller.pre
+        );
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(
+                `HTTP ${method} ${path} - ${response.status} ${response.statusText} - ${error}`
+            );
+        }
+
+        return response;
     }
 
     /**
@@ -253,7 +250,7 @@ export class SignifyClient {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
 
-        const authenticator = new Authenticater(
+        const authenticator = new Authenticator(
             keeper.signers[0],
             keeper.signers[0].verfer
         );

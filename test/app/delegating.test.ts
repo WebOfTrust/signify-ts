@@ -1,12 +1,11 @@
 import { strict as assert } from 'assert';
-import { Salter, Tier } from '../../src';
+import { Tier } from '../../src';
 import libsodium from 'libsodium-wrappers-sumo';
 import { SignifyClient } from '../../src/keri/app/clienting';
-import { Authenticater } from '../../src/keri/core/authing';
-import fetchMock from 'jest-fetch-mock';
+import jsFetchMock from 'jest-fetch-mock';
 import 'whatwg-fetch';
 
-fetchMock.enableMocks();
+jsFetchMock.enableMocks();
 
 const url = 'http://127.0.0.1:3901';
 const boot_url = 'http://127.0.0.1:3903';
@@ -71,46 +70,24 @@ const mockGetAID = {
     windexes: [],
 };
 
-fetchMock.mockResponse((req) => {
+const fetchMock = jest
+    .spyOn(SignifyClient.prototype, 'fetch')
+    .mockImplementation(async () => {
+        const body = mockGetAID;
+
+        return Promise.resolve(
+            new Response(JSON.stringify(body), {
+                status: 202,
+            })
+        );
+    });
+jsFetchMock.mockResponse((req) => {
     if (req.url.startsWith(url + '/agent')) {
         return Promise.resolve({ body: mockConnect, init: { status: 202 } });
     } else if (req.url == boot_url + '/boot') {
         return Promise.resolve({ body: '', init: { status: 202 } });
     } else {
-        const headers = new Headers();
-        let signed_headers = new Headers();
-
-        headers.set(
-            'Signify-Resource',
-            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
-        );
-        headers.set(
-            'Signify-Timestamp',
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-        headers.set('Content-Type', 'application/json');
-
-        const requrl = new URL(req.url);
-        const salter = new Salter({ qb64: '0AAwMTIzNDU2Nzg5YWJjZGVm' });
-        const signer = salter.signer(
-            'A',
-            true,
-            'agentagent-ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
-            Tier.low
-        );
-
-        const authn = new Authenticater(signer!, signer!.verfer);
-        signed_headers = authn.sign(
-            headers,
-            req.method,
-            requrl.pathname.split('?')[0]
-        );
-        const body = mockGetAID;
-
-        return Promise.resolve({
-            body: JSON.stringify(body),
-            init: { status: 202, headers: signed_headers },
-        });
+        throw new Error('Wrong fetch used');
     }
 });
 
@@ -127,11 +104,10 @@ describe('delegate', () => {
         );
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url +
-                '/identifiers/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao/delegation'
+            lastCall[0],
+            '/identifiers/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao/delegation'
         );
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastCall[1], 'POST');
         const expectedBody = {
             ixn: {
                 v: 'KERI10JSON0000cf_',
@@ -157,9 +133,6 @@ describe('delegate', () => {
                 transferable: true,
             },
         };
-        assert.equal(
-            lastCall[1]?.body?.toString(),
-            JSON.stringify(expectedBody)
-        );
+        assert.equal(JSON.stringify(lastCall[2]), JSON.stringify(expectedBody));
     });
 });

@@ -1,10 +1,8 @@
 import { strict as assert } from 'assert';
 import { SignifyClient } from '../../src/keri/app/clienting';
-
-import { Authenticater } from '../../src/keri/core/authing';
-import { Salter, Tier } from '../../src/keri/core/salter';
+import { Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
-import fetchMock from 'jest-fetch-mock';
+import jsFetchMock from 'jest-fetch-mock';
 import 'whatwg-fetch';
 import {
     d,
@@ -19,7 +17,7 @@ import {
     versify,
 } from '../../src';
 
-fetchMock.enableMocks();
+jsFetchMock.enableMocks();
 
 const url = 'http://127.0.0.1:3901';
 const boot_url = 'http://127.0.0.1:3903';
@@ -173,7 +171,20 @@ const mockCredential = {
     },
 };
 
-fetchMock.mockResponse((req) => {
+const fetchMock = jest
+    .spyOn(SignifyClient.prototype, 'fetch')
+    .mockImplementation(async (rurl) => {
+        const body = rurl.startsWith('/credentials')
+            ? mockCredential
+            : mockGetAID;
+
+        return Promise.resolve(
+            new Response(JSON.stringify(body), {
+                status: 202,
+            })
+        );
+    });
+jsFetchMock.mockResponse((req) => {
     if (req.url.startsWith(url + '/agent')) {
         return Promise.resolve({
             body: JSON.stringify(mockConnect),
@@ -182,42 +193,7 @@ fetchMock.mockResponse((req) => {
     } else if (req.url == boot_url + '/boot') {
         return Promise.resolve({ body: '', init: { status: 202 } });
     } else {
-        const headers = new Headers();
-        let signed_headers = new Headers();
-
-        headers.set(
-            'Signify-Resource',
-            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
-        );
-        headers.set(
-            'Signify-Timestamp',
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-        headers.set('Content-Type', 'application/json');
-
-        const requrl = new URL(req.url);
-        const salter = new Salter({ qb64: '0AAwMTIzNDU2Nzg5YWJjZGVm' });
-        const signer = salter.signer(
-            'A',
-            true,
-            'agentagent-ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
-            Tier.low
-        );
-
-        const authn = new Authenticater(signer!, signer!.verfer);
-        signed_headers = authn.sign(
-            headers,
-            req.method,
-            requrl.pathname.split('?')[0]
-        );
-        const body = req.url.startsWith(url + '/credentials')
-            ? mockCredential
-            : mockGetAID;
-
-        return Promise.resolve({
-            body: JSON.stringify(body),
-            init: { status: 202, headers: signed_headers },
-        });
+        throw new Error('Wrong fetch used');
     }
 });
 
@@ -243,9 +219,9 @@ describe('Credentialing', () => {
         };
         await credentials.list(kargs);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        let lastBody = JSON.parse(lastCall[1]!.body!.toString());
-        assert.equal(lastCall[0]!, url + '/credentials/query');
-        assert.equal(lastCall[1]!.method, 'POST');
+        let lastBody = lastCall[2];
+        assert.equal(lastCall[0], '/credentials/query');
+        assert.equal(lastCall[1], 'POST');
         assert.deepEqual(lastBody, kargs);
 
         await credentials.get(
@@ -254,10 +230,10 @@ describe('Credentialing', () => {
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url + '/credentials/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+            lastCall[0],
+            '/credentials/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[1], 'GET');
 
         const registry = 'EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX';
         const schema = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
@@ -268,9 +244,9 @@ describe('Credentialing', () => {
             a: { i: isuee, LEI: '1234' },
         });
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/credentials');
-        assert.equal(lastCall[1]!.method, 'POST');
+        lastBody = lastCall[2];
+        assert.equal(lastCall[0], '/identifiers/aid1/credentials');
+        assert.equal(lastCall[1], 'POST');
         assert.equal(lastBody.acdc.ri, registry);
         assert.equal(lastBody.acdc.s, schema);
         assert.equal(lastBody.acdc.a.i, isuee);
@@ -285,15 +261,16 @@ describe('Credentialing', () => {
         assert.equal(lastBody.sigs[0].substring(0, 2), 'AA');
         assert.equal(lastBody.sigs[0].length, 88);
 
+        console.log(`lastbbody is ${JSON.stringify(lastBody, null, 2)}`);
         const credential = lastBody.acdc.i;
         await credentials.revoke('aid1', credential);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        lastBody = lastCall[2];
         assert.equal(
-            lastCall[0]!,
-            url + '/identifiers/aid1/credentials/' + credential
+            lastCall[0],
+            '/identifiers/aid1/credentials/' + credential
         );
-        assert.equal(lastCall[1]!.method, 'DELETE');
+        assert.equal(lastCall[1], 'DELETE');
         assert.equal(lastBody.rev.s, '1');
         assert.equal(lastBody.rev.t, 'rev');
         assert.equal(
@@ -320,20 +297,19 @@ describe('Credentialing', () => {
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
             lastCall[0]!,
-            url +
-                '/registries/EGK216v1yguLfex4YRFnG7k1sXRjh3OKY7QqzdKsx7df/EMwcsEMUEruPXVwPCW7zmqmN8m0I3CihxolBm-RDrsJo'
+            '/registries/EGK216v1yguLfex4YRFnG7k1sXRjh3OKY7QqzdKsx7df/EMwcsEMUEruPXVwPCW7zmqmN8m0I3CihxolBm-RDrsJo'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
-        assert.equal(lastCall[1]!.body, null);
+        assert.equal(lastCall[1], 'GET');
+        assert.equal(lastCall[2], null);
 
         await credentials.delete(mockCredential.sad.d);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
-            lastCall[0]!,
-            url + '/credentials/EMwcsEMUEruPXVwPCW7zmqmN8m0I3CihxolBm-RDrsJo'
+            lastCall[0],
+            '/credentials/EMwcsEMUEruPXVwPCW7zmqmN8m0I3CihxolBm-RDrsJo'
         );
-        assert.equal(lastCall[1]!.method, 'DELETE');
-        assert.equal(lastCall[1]!.body, undefined);
+        assert.equal(lastCall[1], 'DELETE');
+        assert.equal(lastCall[2], undefined);
     });
 });
 
@@ -462,10 +438,7 @@ describe('Ipex', () => {
 
         await ipex.submitGrant('multisig', ng, ngsigs, ngend, [holder]);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/grant'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/grant');
 
         const [admit, asigs, aend] = await ipex.admit({
             senderName: 'holder',
@@ -495,10 +468,7 @@ describe('Ipex', () => {
 
         await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/admit'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/admit');
 
         assert.equal(aend, '');
     });
@@ -575,10 +545,7 @@ describe('Ipex', () => {
 
         await ipex.submitApply('multisig', apply, applySigs, [holder]);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/apply'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/apply');
 
         const [offer, offerSigs, offerEnd] = await ipex.offer({
             senderName: 'multisig',
@@ -630,10 +597,7 @@ describe('Ipex', () => {
             holder,
         ]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/offer'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/offer');
 
         const [agree, agreeSigs, agreeEnd] = await ipex.agree({
             senderName: 'multisig',
@@ -667,10 +631,7 @@ describe('Ipex', () => {
 
         await ipex.submitAgree('multisig', agree, agreeSigs, [holder]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/agree'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/agree');
 
         const [grant, gsigs, end] = await ipex.grant({
             senderName: 'multisig',
@@ -762,10 +723,7 @@ describe('Ipex', () => {
 
         await ipex.submitGrant('multisig', ng, ngsigs, ngend, [holder]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/grant'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/grant');
 
         const [admit, asigs, aend] = await ipex.admit({
             senderName: 'holder',
@@ -795,10 +753,7 @@ describe('Ipex', () => {
 
         await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/admit'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/admit');
 
         assert.equal(aend, '');
     });
@@ -865,9 +820,6 @@ describe('Ipex', () => {
             holder,
         ]);
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(
-            lastCall[0],
-            'http://127.0.0.1:3901/identifiers/multisig/ipex/offer'
-        );
+        assert.equal(lastCall[0], '/identifiers/multisig/ipex/offer');
     });
 });
