@@ -13,8 +13,11 @@ import { Siger } from './siger';
 import { Buffer } from 'buffer';
 import { encodeBase64Url } from './base64';
 
+export const HEADER_SIG = normalize('Signature');
 export const HEADER_SIG_INPUT = normalize('Signature-Input');
 export const HEADER_SIG_TIME = normalize('Signify-Timestamp');
+export const HEADER_SIG_SENDER = normalize('Signify-Resource');
+export const HEADER_SIG_DESTINATION = normalize('Signify-Receiver');
 
 export function normalize(header: string) {
     return header.trim();

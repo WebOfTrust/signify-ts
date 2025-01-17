@@ -1,12 +1,11 @@
 import { strict as assert } from 'assert';
-import { Authenticater } from '../../src/keri/core/authing';
-import { Salter, Tier } from '../../src/keri/core/salter';
+import { Tier } from '../../src/keri/core/salter';
 import { SignifyClient } from '../../src/keri/app/clienting';
 import libsodium from 'libsodium-wrappers-sumo';
-import fetchMock from 'jest-fetch-mock';
+import jsFetchMock from 'jest-fetch-mock';
 import 'whatwg-fetch';
 
-fetchMock.enableMocks();
+jsFetchMock.enableMocks();
 
 const url = 'http://127.0.0.1:3901';
 const boot_url = 'http://127.0.0.1:3903';
@@ -109,48 +108,26 @@ const mockCredential = {
     },
 };
 
-fetchMock.mockResponse((req) => {
+const fetchMock = jest
+    .spyOn(SignifyClient.prototype, 'fetch')
+    .mockImplementation(async (rurl) => {
+        const body = rurl.startsWith('/identifiers/aid1/credentials')
+            ? mockCredential
+            : mockGetAID;
+
+        return Promise.resolve(
+            new Response(JSON.stringify(body), {
+                status: 202,
+            })
+        );
+    });
+jsFetchMock.mockResponse((req) => {
     if (req.url.startsWith(url + '/agent')) {
         return Promise.resolve({ body: mockConnect, init: { status: 202 } });
     } else if (req.url == boot_url + '/boot') {
         return Promise.resolve({ body: '', init: { status: 202 } });
     } else {
-        const headers = new Headers();
-        let signed_headers = new Headers();
-
-        headers.set(
-            'Signify-Resource',
-            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
-        );
-        headers.set(
-            'Signify-Timestamp',
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
-        headers.set('Content-Type', 'application/json');
-
-        const requrl = new URL(req.url);
-        const salter = new Salter({ qb64: '0AAwMTIzNDU2Nzg5YWJjZGVm' });
-        const signer = salter.signer(
-            'A',
-            true,
-            'agentagent-ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
-            Tier.low
-        );
-
-        const authn = new Authenticater(signer!, signer!.verfer);
-        signed_headers = authn.sign(
-            headers,
-            req.method,
-            requrl.pathname.split('?')[0]
-        );
-        const body = req.url.startsWith(url + '/identifiers/aid1/credentials')
-            ? mockCredential
-            : mockGetAID;
-
-        return Promise.resolve({
-            body: JSON.stringify(body),
-            init: { status: 202, headers: signed_headers },
-        });
+        throw new Error('Wrong fetch used');
     }
 });
 
@@ -168,19 +145,19 @@ describe('SignifyClient', () => {
 
         await notifications.list(20, 40);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/notifications');
-        assert.equal(lastCall[1]!.method, 'GET');
-        const lastHeaders = new Headers(lastCall[1]!.headers!);
+        assert.equal(lastCall[0], '/notifications');
+        assert.equal(lastCall[1], 'GET');
+        const lastHeaders = new Headers(lastCall[3]);
         assert.equal(lastHeaders.get('Range'), 'notes=20-40');
 
         await notifications.mark('notificationSAID');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/notifications/notificationSAID');
-        assert.equal(lastCall[1]!.method, 'PUT');
+        assert.equal(lastCall[0], '/notifications/notificationSAID');
+        assert.equal(lastCall[1], 'PUT');
 
         await notifications.delete('notificationSAID');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/notifications/notificationSAID');
-        assert.equal(lastCall[1]!.method, 'DELETE');
+        assert.equal(lastCall[0], '/notifications/notificationSAID');
+        assert.equal(lastCall[1], 'DELETE');
     });
 });

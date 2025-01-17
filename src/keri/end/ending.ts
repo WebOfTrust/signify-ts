@@ -1,5 +1,6 @@
 import { Siger } from '../core/siger';
 import { Cigar } from '../core/cigar';
+import { HEADER_SIG } from '../core/httping';
 
 export const FALSY = [false, 0, '?0', 'no', 'false', 'False', 'off'];
 export const TRUTHY = [true, 1, '?1', 'yes', 'true', 'True', 'on'];
@@ -98,7 +99,7 @@ export function signature(signages: Signage[]): Headers {
         values.push(items.join(';'));
     }
 
-    return new Headers([['Signature', values.join(',')]]);
+    return new Headers([[HEADER_SIG, values.join(',')]]);
 }
 
 export function designature(value: string) {
