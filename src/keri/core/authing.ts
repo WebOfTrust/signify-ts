@@ -273,7 +273,7 @@ export class Authenticator {
             Buffer.from(JSON.stringify(payload))
         );
         if (!verified) {
-            throw new Error("Invalid signature");
+            throw new Error('Invalid signature');
         }
 
         const plaintext = d(

@@ -17,7 +17,13 @@ import { Escrows } from '../../src/keri/app/escrowing';
 import { Exchanges } from '../../src/keri/app/exchanging';
 import { Groups } from '../../src/keri/app/grouping';
 import { Notifications } from '../../src/keri/app/notifying';
-import { HEADER_SIG, HEADER_SIG_DESTINATION, HEADER_SIG_INPUT, HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../../src/keri/core/httping';
+import {
+    HEADER_SIG,
+    HEADER_SIG_DESTINATION,
+    HEADER_SIG_INPUT,
+    HEADER_SIG_SENDER,
+    HEADER_SIG_TIME,
+} from '../../src/keri/core/httping';
 import { Salter, Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
 import fetchMock from 'jest-fetch-mock';
@@ -362,10 +368,7 @@ describe('SignifyClient', () => {
             const sig = signer.sign(raw);
             assert.equal(
                 sig.qb64,
-                lastHeaders
-                    .get(HEADER_SIG)
-                    ?.split('signify="')[1]
-                    .split('"')[0]
+                lastHeaders.get(HEADER_SIG)?.split('signify="')[1].split('"')[0]
             );
         } else {
             fail(`${HEADER_SIG_INPUT} is empty`);
@@ -522,16 +525,18 @@ describe('SignifyClient', () => {
             })
         ).rejects.toThrow('Invalid signature');
 
-        let signed = signWithAgent(new Uint8Array(
-            Buffer.from(
-                JSON.stringify({
-                    src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-                    dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
-                    d: 'ECgtcE3D9hvXYqvsMKLxIfj8-nmOM6XOy4mArqxDWIR8',
-                    dt: '2025-01-16T16:37:10.345000+00:00',
-                })
+        let signed = signWithAgent(
+            new Uint8Array(
+                Buffer.from(
+                    JSON.stringify({
+                        src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+                        dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+                        d: 'ECgtcE3D9hvXYqvsMKLxIfj8-nmOM6XOy4mArqxDWIR8',
+                        dt: '2025-01-16T16:37:10.345000+00:00',
+                    })
+                )
             )
-        ));
+        );
         signed.forEach((value, key) => {
             headers.set(key, value);
         });
@@ -550,16 +555,18 @@ describe('SignifyClient', () => {
             'Invalid ESSR payload, missing or incorrect encrypted sender'
         );
 
-        signed = signWithAgent(new Uint8Array(
-            Buffer.from(
-                JSON.stringify({
-                    src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-                    dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
-                    d: 'EKVuGrO8K7Yi5uV03HMn5Q_LqfbCJvvLzFixClN_QVLN',
-                    dt: '2025-01-16T16:37:10.345000+00:00',
-                })
+        signed = signWithAgent(
+            new Uint8Array(
+                Buffer.from(
+                    JSON.stringify({
+                        src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+                        dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+                        d: 'EKVuGrO8K7Yi5uV03HMn5Q_LqfbCJvvLzFixClN_QVLN',
+                        dt: '2025-01-16T16:37:10.345000+00:00',
+                    })
+                )
             )
-        ));
+        );
         signed.forEach((value, key) => {
             headers.set(key, value);
         });
@@ -578,16 +585,18 @@ describe('SignifyClient', () => {
             'Invalid ESSR payload, missing or incorrect encrypted sender'
         );
 
-        signed = signWithAgent(new Uint8Array(
-            Buffer.from(
-                JSON.stringify({
-                    src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-                    dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
-                    d: 'EABLUXFJKkV9ey8_-yNnQDhuDkiJ_s5tPZNwYg2g21C5',
-                    dt: '2025-01-16T16:37:10.345000+00:00',
-                })
+        signed = signWithAgent(
+            new Uint8Array(
+                Buffer.from(
+                    JSON.stringify({
+                        src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+                        dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+                        d: 'EABLUXFJKkV9ey8_-yNnQDhuDkiJ_s5tPZNwYg2g21C5',
+                        dt: '2025-01-16T16:37:10.345000+00:00',
+                    })
+                )
             )
-        ));
+        );
         signed.forEach((value, key) => {
             headers.set(key, value);
         });
@@ -603,9 +612,12 @@ describe('SignifyClient', () => {
             alias: 'wit',
         });
         assert.equal(response.status, 202);
-        assert.equal(response.headers.get(HEADER_SIG_SENDER), "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei");
         assert.equal(
-            (await response.text()).replace(/ /g, ""),
+            response.headers.get(HEADER_SIG_SENDER),
+            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+        );
+        assert.equal(
+            (await response.text()).replace(/ /g, ''),
             JSON.stringify({
                 name: 'oobi.0ABZPhjVcllT3Sa2u61PRpqd',
                 metadata: {
@@ -661,20 +673,23 @@ describe('SignifyClient', () => {
 
         const headers = new Headers({
             [HEADER_SIG_SENDER]: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-            [HEADER_SIG_DESTINATION]: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+            [HEADER_SIG_DESTINATION]:
+                'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
             [HEADER_SIG_TIME]: '2025-01-16T16:37:10.345000+00:00',
         });
 
-        const signed = signWithAgent(new Uint8Array(
-            Buffer.from(
-                JSON.stringify({
-                    src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-                    dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
-                    d: 'EM5HKVnEIAzAXdasQ85zSgN5i2ZQEBVI-GoejNUwk0cy',
-                    dt: '2025-01-16T16:37:10.345000+00:00',
-                })
+        const signed = signWithAgent(
+            new Uint8Array(
+                Buffer.from(
+                    JSON.stringify({
+                        src: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+                        dest: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+                        d: 'EM5HKVnEIAzAXdasQ85zSgN5i2ZQEBVI-GoejNUwk0cy',
+                        dt: '2025-01-16T16:37:10.345000+00:00',
+                    })
+                )
             )
-        ));
+        );
         signed.forEach((value, key) => {
             headers.set(key, value);
         });
@@ -686,10 +701,14 @@ describe('SignifyClient', () => {
             })
         );
 
-        await expect(client.fetch('/oobis', 'POST', {
-            url: 'http://localhost:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-            alias: 'wit',
-        })).rejects.toThrow('HTTP POST /oobis - 400 Bad Request - {"title": "400 Bad Request", "description": "invalid OOBI request body, either \'rpy\' or \'url\' is required"}');
+        await expect(
+            client.fetch('/oobis', 'POST', {
+                url: 'http://localhost:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+                alias: 'wit',
+            })
+        ).rejects.toThrow(
+            'HTTP POST /oobis - 400 Bad Request - {"title": "400 Bad Request", "description": "invalid OOBI request body, either \'rpy\' or \'url\' is required"}'
+        );
     });
 });
 
