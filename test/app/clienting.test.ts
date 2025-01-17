@@ -17,7 +17,7 @@ import { Escrows } from '../../src/keri/app/escrowing';
 import { Exchanges } from '../../src/keri/app/exchanging';
 import { Groups } from '../../src/keri/app/grouping';
 import { Notifications } from '../../src/keri/app/notifying';
-import { HEADER_SIG_INPUT, HEADER_SIG_TIME } from '../../src/keri/core/httping';
+import { HEADER_SIG, HEADER_SIG_DESTINATION, HEADER_SIG_INPUT, HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../../src/keri/core/httping';
 import { Salter, Tier } from '../../src/keri/core/salter';
 import libsodium from 'libsodium-wrappers-sumo';
 import fetchMock from 'jest-fetch-mock';
@@ -326,7 +326,7 @@ describe('SignifyClient', () => {
         assert.deepEqual(lastBody.foo, true);
         const lastHeaders = new Headers(resReq.headers);
         assert.equal(
-            lastHeaders.get('signify-resource'),
+            lastHeaders.get(HEADER_SIG_SENDER),
             'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK'
         );
         assert.equal(
@@ -363,7 +363,7 @@ describe('SignifyClient', () => {
             assert.equal(
                 sig.qb64,
                 lastHeaders
-                    .get('signature')
+                    .get(HEADER_SIG)
                     ?.split('signify="')[1]
                     .split('"')[0]
             );
@@ -403,7 +403,7 @@ describe('SignifyClient', () => {
         ).rejects.toThrow('Signature is missing from ESSR payload');
 
         headers.set(
-            'Signature',
+            HEADER_SIG,
             'indexed="?0";signify="0BB50Boq4s2xcFNjskRLziD-dmw443Y3ObeKfd1xjmNTLBQEXkT3Vj67xVD9Fv7OKZysD7xN6sQ_SxWLM8DaCyXX"'
         );
         fetchMock.mockResolvedValueOnce(
@@ -420,7 +420,7 @@ describe('SignifyClient', () => {
         ).rejects.toThrow('Message from a different remote agent');
 
         headers.set(
-            'Signature',
+            HEADER_SIG,
             'indexed="?0";signify="0BB50Boq4s2xcFNjskRLziD-dmw443Y3ObeKfd1xjmNTLBQEXkT3Vj67xVD9Fv7OKZysD7xN6sQ_SxWLM8DaCyXX"'
         );
         fetchMock.mockResolvedValueOnce(
@@ -437,7 +437,7 @@ describe('SignifyClient', () => {
         ).rejects.toThrow('Message from a different remote agent');
 
         headers.set(
-            'Signify-Resource',
+            HEADER_SIG_SENDER,
             'EPHceqLKZg1o95PuA-_47ffBOkpTjVWGQ9LsYf9M8Cs6'
         ); // Wrong
         fetchMock.mockResolvedValueOnce(
@@ -454,7 +454,7 @@ describe('SignifyClient', () => {
         ).rejects.toThrow('Message from a different remote agent');
 
         headers.set(
-            'Signify-Resource',
+            HEADER_SIG_SENDER,
             'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
         ); // Right
         fetchMock.mockResolvedValueOnce(
@@ -473,7 +473,7 @@ describe('SignifyClient', () => {
         );
 
         headers.set(
-            'Signify-Receiver',
+            HEADER_SIG_DESTINATION,
             'EPHceqLKZg1o95PuA-_47ffBOkpTjVWGQ9LsYf9M8Cs6'
         ); // Wrong
         fetchMock.mockResolvedValueOnce(
@@ -492,7 +492,7 @@ describe('SignifyClient', () => {
         );
 
         headers.set(
-            'Signify-Receiver',
+            HEADER_SIG_DESTINATION,
             'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
         ); // Right
         fetchMock.mockResolvedValueOnce(
@@ -508,7 +508,7 @@ describe('SignifyClient', () => {
             })
         ).rejects.toThrow('Timestamp is missing from ESSR payload');
 
-        headers.set('Signify-Timestamp', '2025-01-16T16:37:10.345000+00:00');
+        headers.set(HEADER_SIG_TIME, '2025-01-16T16:37:10.345000+00:00');
         fetchMock.mockResolvedValueOnce(
             new Response(null, {
                 status: 200,
@@ -603,7 +603,7 @@ describe('SignifyClient', () => {
             alias: 'wit',
         });
         assert.equal(response.status, 202);
-        assert.equal(response.headers.get("Signify-Resource"), "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei");
+        assert.equal(response.headers.get(HEADER_SIG_SENDER), "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei");
         assert.equal(
             (await response.text()).replace(/ /g, ""),
             JSON.stringify({
@@ -660,9 +660,9 @@ describe('SignifyClient', () => {
         ).rejects.toThrow('HTTP GET /somepath - 401 Unauthorized');
 
         const headers = new Headers({
-            'Signify-Resource': 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-            'Signify-Receiver': 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
-            'Signify-Timestamp': '2025-01-16T16:37:10.345000+00:00',
+            [HEADER_SIG_SENDER]: 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
+            [HEADER_SIG_DESTINATION]: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+            [HEADER_SIG_TIME]: '2025-01-16T16:37:10.345000+00:00',
         });
 
         const signed = signWithAgent(new Uint8Array(

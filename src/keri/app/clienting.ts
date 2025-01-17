@@ -1,5 +1,5 @@
 import { Authenticator } from '../core/authing';
-import { HEADER_SIG_TIME } from '../core/httping';
+import { HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../core/httping';
 import { ExternalModule, KeyManager } from '../core/keeping';
 import { Tier } from '../core/salter';
 
@@ -177,7 +177,7 @@ export class SignifyClient {
         }
 
         const headers = new Headers();
-        headers.set('Signify-Resource', this.controller.pre);
+        headers.set(HEADER_SIG_SENDER, this.controller.pre);
 
         if (extraHeaders) {
             extraHeaders.forEach((value, key) => {
@@ -256,7 +256,7 @@ export class SignifyClient {
         );
 
         const headers = new Headers(req.headers);
-        headers.set('Signify-Resource', hab['prefix']);
+        headers.set(HEADER_SIG_SENDER, hab['prefix']);
         headers.set(
             HEADER_SIG_TIME,
             new Date().toISOString().replace('Z', '000+00:00')

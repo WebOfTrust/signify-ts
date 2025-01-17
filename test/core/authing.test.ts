@@ -5,7 +5,7 @@ import { b } from '../../src/keri/core/core';
 import { Authenticator } from '../../src/keri/core/authing';
 import * as utilApi from '../../src/keri/core/utils';
 import { Verfer } from '../../src/keri/core/verfer';
-import { Cigar, Diger, MtrDex, Siger, Tier, d, designature } from '../../src';
+import { Cigar, Diger, HEADER_SIG_TIME, HEADER_SIG, HEADER_SIG_DESTINATION, HEADER_SIG_SENDER, MtrDex, Siger, Tier, d, designature, HEADER_SIG_INPUT } from '../../src';
 
 // prettier-ignore
 const essrPayload = new Uint8Array([134,89,250,128,50,135,60,33,214,52,216,194,200,42,118,33,91,130,129,141,158,102,96,66,95,163,32,235,6,239,150,82,59,67,100,70,116,25,10,180,189,26,104,114,166,121,247,185,12,105,147,232,68,248,238,58,53,200,129,173,34,216,228,153,190,240,53,53,134,194,69,152,21,209,3,225,5,221,57,220,159,249,90,85,73,197,64,155,168,217,24,111,211,100,129,18,21,57,70,152,77,65,156,71,84,186,222,81,82,204,120,176,67,173,207,149,39,180,129,192,22,194,84,57,226,15,4,48,240,133,54,170,34,211,204,141,15,204,78]);
@@ -85,8 +85,8 @@ describe('Authenticator.sign', () => {
         const authn = new Authenticator(signer, verfer);
         const result = authn.sign(headers, 'POST', '/boot');
 
-        assert.equal(result.has('Signature-Input'), true);
-        assert.equal(result.has('Signature'), true);
+        assert.equal(result.has(HEADER_SIG_INPUT), true);
+        assert.equal(result.has(HEADER_SIG), true);
 
         const expectedSignatureInput = [
             'signify=("@method" "@path" "signify-resource" "signify-timestamp")',
@@ -100,7 +100,7 @@ describe('Authenticator.sign', () => {
             'indexed="?0"',
             'signify="0BChvN_BWAf-mgEuTnWfNnktgHdWOuOh9cWc4o0GFWuZOwra3DyJT5dJ_6BX7AANDOTnIlAKh5Sg_9qGQXHjj5oJ"',
         ].join(';');
-        assert.equal(result.get('Signature'), expectedSignature);
+        assert.equal(result.get(HEADER_SIG), expectedSignature);
     });
 });
 
@@ -136,10 +136,10 @@ describe('ESSR', () => {
         const wrapperGet = await authn.wrap(getReq, 'http://127.0.0.1:3901', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose', 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
         assert.equal(wrapperGet.url, 'http://127.0.0.1:3901/');
         assert.equal(wrapperGet.method, 'POST');
-        assert.equal(wrapperGet.headers.get('Signify-Resource'), 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
-        assert.equal(wrapperGet.headers.get('Signify-Receiver'), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
+        assert.equal(wrapperGet.headers.get(HEADER_SIG_SENDER), 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
+        assert.equal(wrapperGet.headers.get(HEADER_SIG_DESTINATION), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
 
-        const dt = wrapperGet.headers.get('Signify-Timestamp');
+        const dt = wrapperGet.headers.get(HEADER_SIG_TIME);
         assert.notEqual(dt, null);
         assert.equal(wrapperGet.headers.get('Content-Type'), 'application/octet-stream');
         
@@ -204,37 +204,37 @@ content-type: text/plain;charset=UTF-8\r
         const headers = new Headers();
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Signature is missing from ESSR payload');
 
-        headers.set('Signature', 'indexed="?0";signify="0BB50Boq4s2xcFNjskRLziD-dmw443Y3ObeKfd1xjmNTLBQEXkT3Vj67xVD9Fv7OKZysD7xN6sQ_SxWLM8DaCyXX');
+        headers.set(HEADER_SIG, 'indexed="?0";signify="0BB50Boq4s2xcFNjskRLziD-dmw443Y3ObeKfd1xjmNTLBQEXkT3Vj67xVD9Fv7OKZysD7xN6sQ_SxWLM8DaCyXX');
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Message from a different remote agent');
 
         // Wrong
-        headers.set('Signify-Resource', 'EMQQpnSkgfUOgWdzQTWfrgiVHKIDAhvAZIPQ6z3EAfz1');
+        headers.set(HEADER_SIG_SENDER, 'EMQQpnSkgfUOgWdzQTWfrgiVHKIDAhvAZIPQ6z3EAfz1');
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Message from a different remote agent');
 
         // Right
-        headers.set('Signify-Resource', 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
+        headers.set(HEADER_SIG_SENDER, 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Invalid ESSR payload, missing or incorrect destination prefix');
         
         // Wrong
-        headers.set('Signify-Receiver', 'EMQQpnSkgfUOgWdzQTWfrgiVHKIDAhvAZIPQ6z3EAfz1');
+        headers.set(HEADER_SIG_DESTINATION, 'EMQQpnSkgfUOgWdzQTWfrgiVHKIDAhvAZIPQ6z3EAfz1');
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Invalid ESSR payload, missing or incorrect destination prefix');
 
         // Right
-        headers.set('Signify-Receiver', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
+        headers.set(HEADER_SIG_DESTINATION, 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Timestamp is missing from ESSR payload');
 
-        headers.set('Signify-Timestamp', '2025-01-17T11:57:56.415000+00:00');
+        headers.set(HEADER_SIG_TIME, '2025-01-17T11:57:56.415000+00:00');
         await expect(authn.unwrap(new Response(null, { headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Invalid signature');
 
         headers.set('Signature', 'indexed="?0";signify="0BBLnK_-YI-sV4pZYe2kUkyPsuEvrnwKID__0t-kHD9p7pVxJEosxsClFUok4qgt1ULjl_irj13zUd-JqQQQx3MN');
         await expect(authn.unwrap(new Response(essrPayloadNoSender, { status: 200, headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Invalid ESSR payload, missing or incorrect encrypted sender');
 
-        headers.set('Signify-Timestamp', '2025-01-17T12:00:18.260000+00:00');
-        headers.set('Signature', 'indexed="?0";signify="0BC4LCV6ZqPOzAVpyjPpi2v0AJOVwE7o3qnL2PAJ56ReMizfgzbo3DQK3HiKHkIJ2N5G5R0fno6Nhs6QTrB8CMII');
+        headers.set(HEADER_SIG_TIME, '2025-01-17T12:00:18.260000+00:00');
+        headers.set(HEADER_SIG, 'indexed="?0";signify="0BC4LCV6ZqPOzAVpyjPpi2v0AJOVwE7o3qnL2PAJ56ReMizfgzbo3DQK3HiKHkIJ2N5G5R0fno6Nhs6QTrB8CMII');
         await expect(authn.unwrap(new Response(essrPayloadWrongSender, { status: 200, headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose')).rejects.toThrow('Invalid ESSR payload, missing or incorrect encrypted sender');
 
-        headers.set('Signify-Timestamp', '2025-01-17T12:04:16.254000+00:00');
-        headers.set('Signature', 'indexed="?0";signify="0BBQZQrG5mhWU2w9nSC45Dd-PIOYKjtD3KFY-arNKj0whNrUhdlmW0_m_Y487uOdDBR6_XbR0Ey2TqXNt9gAvEMB');
+        headers.set(HEADER_SIG_TIME, '2025-01-17T12:04:16.254000+00:00');
+        headers.set(HEADER_SIG, 'indexed="?0";signify="0BBQZQrG5mhWU2w9nSC45Dd-PIOYKjtD3KFY-arNKj0whNrUhdlmW0_m_Y487uOdDBR6_XbR0Ey2TqXNt9gAvEMB');
         const unwrapped = await authn.unwrap(new Response(essrPayload, { status: 200, headers }), 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei', 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
         assert.equal(await unwrapped.text(), JSON.stringify({'a':1}));
         assert.equal(unwrapped.status, 200);
@@ -246,7 +246,7 @@ describe('Authenticator.serializeRequest', () => {
         const request = new Request("http://127.0.0.1:3901/oobis", {
             method: 'GET',
             headers: {
-                'Signify-Resource': 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+                [HEADER_SIG_SENDER]: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
             }
         });
         assert.equal(await Authenticator.serializeRequest(request), `GET http://127.0.0.1:3901/oobis HTTP/1.1\r
@@ -262,7 +262,7 @@ signify-resource: ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose\r
                 a: 1
             }),
             headers: {
-                'Signify-Resource': 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+                [HEADER_SIG_SENDER]: 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
             }
         });
         assert.equal(await Authenticator.serializeRequest(request), `POST http://127.0.0.1:3901/oobis HTTP/1.1\r

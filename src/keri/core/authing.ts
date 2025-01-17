@@ -3,7 +3,10 @@ import { Signer } from './signer';
 import { Verfer } from './verfer';
 import {
     desiginput,
+    HEADER_SIG,
+    HEADER_SIG_DESTINATION,
     HEADER_SIG_INPUT,
+    HEADER_SIG_SENDER,
     HEADER_SIG_TIME,
     normalize,
     siginput,
@@ -51,7 +54,7 @@ export class Authenticator {
         if (siginput == null) {
             return false;
         }
-        const signature = headers.get('Signature');
+        const signature = headers.get(HEADER_SIG);
         if (signature == null) {
             return false;
         }
@@ -152,9 +155,9 @@ export class Authenticator {
         const dt = new Date().toISOString().replace('Z', '000+00:00');
 
         const headers = new Headers();
-        headers.set('Signify-Resource', sender);
-        headers.set('Signify-Receiver', receiver);
-        headers.set('Signify-Timestamp', dt);
+        headers.set(HEADER_SIG_SENDER, sender);
+        headers.set(HEADER_SIG_DESTINATION, receiver);
+        headers.set(HEADER_SIG_TIME, dt);
         headers.set('Content-Type', 'application/octet-stream');
 
         const requestStr = await Authenticator.serializeRequest(request);
@@ -231,22 +234,22 @@ export class Authenticator {
         sender: string,
         receiver: string
     ): Promise<Response> {
-        const signature = wrapper.headers.get('Signature');
+        const signature = wrapper.headers.get(HEADER_SIG);
         if (!signature) {
             throw new Error('Signature is missing from ESSR payload');
         }
 
-        if (wrapper.headers.get('Signify-Resource') !== sender) {
+        if (wrapper.headers.get(HEADER_SIG_SENDER) !== sender) {
             throw new Error('Message from a different remote agent');
         }
 
-        if (wrapper.headers.get('Signify-Receiver') !== receiver) {
+        if (wrapper.headers.get(HEADER_SIG_DESTINATION) !== receiver) {
             throw new Error(
                 'Invalid ESSR payload, missing or incorrect destination prefix'
             );
         }
 
-        const dt = wrapper.headers.get('Signify-Timestamp');
+        const dt = wrapper.headers.get(HEADER_SIG_TIME);
         if (!dt) {
             throw new Error('Timestamp is missing from ESSR payload');
         }
@@ -282,7 +285,7 @@ export class Authenticator {
         );
         const response = this.deserializeResponse(plaintext);
 
-        if (response.headers.get('Signify-Resource') !== sender) {
+        if (response.headers.get(HEADER_SIG_SENDER) !== sender) {
             throw new Error(
                 'Invalid ESSR payload, missing or incorrect encrypted sender'
             );
