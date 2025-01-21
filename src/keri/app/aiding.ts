@@ -492,7 +492,7 @@ export class Identifier {
      * @param {LocSchemeArgs} args
      * @param name Name or alias of the identifier to sign reply message
      * @param args Arguments to create authorising reply message from
-     * @returns
+     * @returns A promise to the result of the authorization
      */
     async addLocScheme(
         name: string,
