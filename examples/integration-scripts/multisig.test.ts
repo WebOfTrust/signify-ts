@@ -9,9 +9,7 @@ import {
     assertOperations,
     getOrCreateClient,
     getOrCreateIdentifier,
-    markNotification,
     waitAndMarkNotification,
-    waitForNotifications,
     waitOperation,
     warnNotifications,
 } from './utils/test-util';
@@ -882,12 +880,14 @@ test('multisig', async function run() {
 
     const TIME = new Date().toISOString().replace('Z', '000+00:00');
     const credRes = await client1.credentials().issue('multisig', {
-        ri: regk,
-        s: SCHEMA_SAID,
-        a: {
-            i: holder,
-            dt: TIME,
-            ...vcdata,
+        acdc: {
+            ri: regk,
+            s: SCHEMA_SAID,
+            a: {
+                i: holder,
+                dt: TIME,
+                ...vcdata,
+            },
         },
     });
     op1 = credRes.op;
@@ -906,7 +906,7 @@ test('multisig', async function run() {
     exn = res[0].exn;
 
     const credentialSaid = exn.e.acdc.d;
-    const credRes2 = await client2.credentials().issue('multisig', exn.e.acdc);
+    const credRes2 = await client2.credentials().issue('multisig', exn.e);
 
     op2 = credRes2.op;
     await multisigIssue(client2, 'member2', 'multisig', credRes2);
@@ -920,7 +920,7 @@ test('multisig', async function run() {
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
 
-    const credRes3 = await client3.credentials().issue('multisig', exn.e.acdc);
+    const credRes3 = await client3.credentials().issue('multisig', exn.e);
 
     op3 = credRes3.op;
     await multisigIssue(client3, 'member3', 'multisig', credRes3);

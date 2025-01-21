@@ -413,7 +413,7 @@ export async function issueCredentialMultisig(
 
     const credResult = await client
         .credentials()
-        .issue(multisigAIDName, kargsIss);
+        .issue(multisigAIDName, { acdc: kargsIss });
     const op = credResult.op;
 
     const multisigAID = await client.identifiers().get(multisigAIDName);
