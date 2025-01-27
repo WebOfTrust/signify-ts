@@ -5,7 +5,7 @@ import { Diger } from '../core/diger';
 import { incept, rotate, interact } from '../core/eventing';
 import { Serder } from '../core/serder';
 import { Tholder } from '../core/tholder';
-import { Ilks, b, Serials, Versionage } from '../core/core';
+import { Ilks, b, Serials, Vrsn_1_0 } from '../core/core';
 import { Verfer } from '../core/verfer';
 import { Encrypter } from '../core/encrypter';
 import { Decrypter } from '../core/decrypter';
@@ -173,7 +173,7 @@ export class Controller {
             dig: this.serder.ked['d'],
             sn: sn,
             data: [anchor],
-            version: Versionage,
+            version: Vrsn_1_0,
             kind: Serials.JSON,
         });
         return [this.signer.sign(this.serder.raw, 0).qb64];

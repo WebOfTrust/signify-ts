@@ -9,6 +9,13 @@ import { Cigar } from './cigar';
 import { Siger } from './siger';
 import { b } from './core';
 
+/**
+ * Kinds of key pair generation algorithms.
+ * Salty is deterministic based on a salt and stem.
+ * Randy is random.
+ * Group is a multi-signature group algorithm indicating keys are retrieved from a group member which will be either Salty or Randy.
+ * Extern is an external key pair algorithm indicating keys are provided by an external source such as an HSM.
+ */
 export enum Algos {
     randy = 'randy',
     salty = 'salty',
@@ -16,31 +23,93 @@ export enum Algos {
     extern = 'extern',
 }
 
+/**
+ * Lot (set) of public keys as an ordered list with indexes and the time created.
+ * Indexes refer to the index of the ordered sequence of keys in an establishment event (inception or rotation).
+ * Assumes the same length for each set of keys across all PubLot instances used for a given identifier.
+ */
 class PubLot {
-    public pubs: Array<string> = new Array<string>(); // list qb64 public keys.
-    public ridx: number = 0; //  index of rotation (est event) that uses public key set
-    public kidx: number = 0; //  index of key in sequence of public keys
-    public dt: string = ''; // datetime ISO8601 when key set created
+    /**
+     * List of fully qualified, Base64 encoded public keys. Defaults to empty.
+     */
+    public pubs: Array<string> = new Array<string>();
+    /**
+     * Rotation index; index of rotation (est event) that uses this public key set.
+     * The index of the key set for an inception event is 0.
+     */
+    public ridx: number = 0;
+    /**
+     * Key index; index of the starting key in the key set for this lot in sequence
+     * with reference to all public keys for the identifier.
+     * For example, if each set (PubLot.pubs) has 3 keys then ridx 2 has kidx of 2*3 = 6.
+     * Defaults to 0.
+     */
+    public kidx: number = 0;
+    /**
+     * Datetime of when key set created formatted as an ISO 8601 compliant string.
+     */
+    public dt: string = '';
 }
 
+/**
+ * Prefix's public key situation (set of public keys).
+ */
 class PreSit {
-    public old: PubLot = new PubLot(); //previous publot
-    public new: PubLot = new PubLot(); //newly current publot
-    public nxt: PubLot = new PubLot(); //next public publot
+    /**
+     * Previous publot; previous public key set.
+     */
+    public old: PubLot = new PubLot();
+    /**
+     * New, current publot; current public key set.
+     */
+    public new: PubLot = new PubLot();
+    /**
+     * Next public publot
+     */
+    public nxt: PubLot = new PubLot();
 }
 
+/**
+ * Identifier prefix parameters for creating new key pairs.
+ */
 class PrePrm {
-    public pidx: number = 0; // prefix index for this keypair sequence
-    public algo: Algos = Algos.salty; // salty default uses indices and salt to create new key pairs
-    public salt: string = ''; // empty salt  used for salty algo.
-    public stem: string = ''; // default unique path stem for salty algo
-    public tier: string = ''; // security tier for stretch index salty algo
+    /**
+     * Prefix index for this keypair sequence.
+     */
+    public pidx: number = 0;
+    /**
+     * Key generation algorithm type.
+     * Defaults to Salty.
+     * Salty default uses indices and salt to create new key pairs.
+     */
+    public algo: Algos = Algos.salty;
+    /**
+     * Used for salty algo. Defaults to empty. Unused for randy algo.
+     */
+    public salt: string = '';
+    /**
+     * Default unique path prefix used by the salty algo during key generation.
+     */
+    public stem: string = '';
+    /**
+     * Security tier for stretch index; used by the salty algo.
+     */
+    public tier: string = '';
 }
 
+/**
+ * An identifier prefix's public key set (list) at a given rotation index ridx.
+ */
 class PubSet {
-    pubs: Array<string> = new Array<string>(); // list qb64 public keys.
+    /**
+     * List of fully qualified, Base64 encoded public keys.
+     */
+    pubs: Array<string> = new Array<string>();
 }
 
+/**
+ *
+ */
 class PubPath {
     path: string = '';
     code: string = '';
@@ -73,7 +142,21 @@ class Keys {
     }
 }
 
+/**
+ * Interface for creating a key pair based on an algorithm.
+ */
 export interface Creator {
+    /**
+     * Creates a key pair
+     * @param codes list of derivation codes one per key pair to create
+     * @param count count of key pairs to create if codes not provided
+     * @param code derivation code to use for count key pairs if codes not provided
+     * @param transferable true means use transferable derivation code. Otherwise, non-transferable derivation code.
+     * @param pidx prefix index for this keypair sequence
+     * @param ridx rotation index for this key pair set
+     * @param kidx starting key index for this key pair set
+     * @param temp true means use temp stretch otherwise use time set by tier for streching
+     */
     create(
         codes: Array<string> | undefined,
         count: number,
@@ -84,8 +167,20 @@ export interface Creator {
         kidx: number,
         temp: boolean
     ): Keys;
+
+    /**
+     * Salt used for key pair generation.
+     * Used only for Salty key creation.
+     */
     salt: string;
+    /**
+     * String prefix used to stretch the prefix, salt, and seed into the key pair.
+     * Used only for Salty key creation.
+     */
     stem: string;
+    /**
+     * Security tier used during stretching.
+     */
     tier: Tier;
 }
 
@@ -123,8 +218,19 @@ export class RandyCreator implements Creator {
     }
 }
 
+/**
+ * Deterministically creates a key pair based on combining a salt with a path stretch algorithm.
+ * The salt is randomized if not provided.
+ */
 export class SaltyCreator implements Creator {
+    /**
+     * The salter used to create the key pair. Contains the private key.
+     */
     public salter: Salter;
+    /**
+     * Key material prefix used during key stretching.
+     * @private
+     */
     private readonly _stem: string;
     constructor(
         salt: string | undefined = undefined,
@@ -165,7 +271,7 @@ export class SaltyCreator implements Creator {
         }
 
         codes.forEach((code, idx) => {
-            // Previuos definition of path
+            // Previous definition of path
             // let path = this.stem + pidx.toString(16) + ridx.toString(16) + (kidx+idx).toString(16)
             const path =
                 this.stem == ''
@@ -282,6 +388,9 @@ interface SignArgs {
     ondices?: Array<number> | undefined;
 }
 
+/**
+ * Manages key pair creation, retrieval, and message signing.
+ */
 export class Manager {
     private _seed?: string;
     private _salt?: string;
@@ -340,6 +449,9 @@ export class Manager {
         return this._seed;
     }
 
+    /**
+     * qb64 auth encrypt id prefix
+     */
     get aeid(): string | undefined {
         return this.ks.getGbls('aeid');
     }
@@ -450,22 +562,23 @@ export class Manager {
             seed != undefined ? new Decrypter({}, b(seed)) : undefined;
     }
 
-    incept({
-        icodes = undefined,
-        icount = 1,
-        icode = MtrDex.Ed25519_Seed,
-        ncodes = undefined,
-        ncount = 1,
-        ncode = MtrDex.Ed25519_Seed,
-        dcode = MtrDex.Blake3_256,
-        algo = undefined,
-        salt = undefined,
-        stem = undefined,
-        tier = undefined,
-        rooted = true,
-        transferable = true,
-        temp = false,
-    }: ManagerInceptArgs): [Array<Verfer>, Array<Diger>] {
+    incept(mgrIcpArgs: ManagerInceptArgs): [Array<Verfer>, Array<Diger>] {
+        let {
+            icodes = undefined,
+            icount = 1,
+            icode = MtrDex.Ed25519_Seed,
+            ncodes = undefined,
+            ncount = 1,
+            ncode = MtrDex.Ed25519_Seed,
+            dcode = MtrDex.Blake3_256,
+            algo = undefined,
+            salt = undefined,
+            stem = undefined,
+            tier = undefined,
+            rooted = true,
+            transferable = true,
+            temp = false,
+        } = mgrIcpArgs;
         if (rooted && algo == undefined) {
             algo = this.algo;
         }
@@ -704,16 +817,17 @@ export class Manager {
         }
     }
 
-    rotate({
-        pre,
-        ncodes = undefined,
-        ncount = 1,
-        ncode = MtrDex.Ed25519_Seed,
-        dcode = MtrDex.Blake3_256,
-        transferable = true,
-        temp = false,
-        erase = true,
-    }: RotateArgs): [Array<Verfer>, Array<Diger>] {
+    rotate(rotateArgs: RotateArgs): [Array<Verfer>, Array<Diger>] {
+        let {
+            pre,
+            ncodes = undefined,
+            ncount = 1,
+            ncode = MtrDex.Ed25519_Seed,
+            dcode = MtrDex.Blake3_256,
+            transferable = true,
+            temp = false,
+            erase = true,
+        } = rotateArgs;
         const pp = this.ks.getPrms(pre);
         if (pp == undefined) {
             throw new Error(`Attempt to rotate nonexistent pre=${pre}.`);
@@ -840,14 +954,15 @@ export class Manager {
         return [verfers, digers];
     }
 
-    sign({
-        ser,
-        pubs = undefined,
-        verfers = undefined,
-        indexed = true,
-        indices = undefined,
-        ondices = undefined,
-    }: SignArgs) {
+    sign(signArgs: SignArgs) {
+        let {
+            ser,
+            pubs = undefined,
+            verfers = undefined,
+            indexed = true,
+            indices = undefined,
+            ondices = undefined,
+        } = signArgs;
         const signers = new Array<Signer>();
 
         if (pubs == undefined && verfers == undefined) {
@@ -980,6 +1095,9 @@ export function riKey(pre: string, ridx: number) {
     return pre + '.' + ridx.toString(16).padStart(32, '0');
 }
 
+/**
+ * Sub interface for key store specific functions.
+ */
 export interface KeyStore {
     getGbls(key: string): string | undefined;
     pinGbls(key: string, val: string): void;
@@ -1013,10 +1131,11 @@ export interface KeyStore {
     putPubs(keys: string, data: PubSet): boolean;
 }
 
-/*
-     In memory test implementation of Keeper key store
-*/
-
+/**
+ * Keeper sets up named sub databases for key pair storage (KS).
+ * Methods provide key pair creation, storage, and data signing.
+ * In-memory test implementation of Keeper key store
+ */
 class Keeper implements KeyStore {
     private readonly _gbls: Map<string, string>;
     private readonly _pris: Map<string, Uint8Array>;

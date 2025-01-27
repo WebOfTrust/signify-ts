@@ -4,6 +4,9 @@ import { Matter, MtrDex } from './matter';
 import { EmptyMaterialError } from './kering';
 import libsodium from 'libsodium-wrappers-sumo';
 
+/**
+ * Secret derivation security tier.
+ */
 export enum Tier {
     low = 'low',
     med = 'med',
@@ -18,9 +21,24 @@ interface SalterArgs {
     qb64?: string;
     qb2?: Uint8Array | undefined;
 }
+
+/**
+ * Maintains a random salt for secrets (private keys).
+ * Its .raw is random salt, .code as cipher suite for salt
+ */
 export class Salter extends Matter {
     private readonly _tier: Tier | null;
 
+    /**
+     * Creates a Salter from the provided raw salt bytes or generates a random salt if raw is not provided.
+     * Defaults to low security tier. Only supports Salt_128 salt type.
+     * @param raw
+     * @param code
+     * @param tier
+     * @param qb64
+     * @param qb64b
+     * @param qb2
+     */
     constructor({
         raw,
         code = MtrDex.Salt_128,
@@ -55,6 +73,16 @@ export class Salter extends Matter {
         this._tier = tier !== null ? tier : Tier.low;
     }
 
+    /**
+     * Stretches the salt to a secret key using the path, .raw, tier, and size determined by self.code.
+     *
+     * @param size number of bytes of the stretched seed
+     * @param path string of bytes prepended (prefixed) to the salt before stretching
+     * @param tier security tier for stretching
+     * @param temp boolean, True means use temporary, insecure tier; for testing only
+     * @returns stretched raw binary seed (secret) derived from path and .raw, and size using argon2d stretching algorithm.
+     * @private
+     */
     private stretch(
         size: number = 32,
         path: string = '',
@@ -98,6 +126,15 @@ export class Salter extends Matter {
         );
     }
 
+    /**
+     * Returns Signer with .raw secret derived from code size, path, .raw salt, and tier.
+     * The signer's public key for its .verfer is derived from code and transferable.
+     * @param code derivation code indicating seed type
+     * @param transferable whether or not the key is for a transferable or non-transferable identifier.
+     * @param path string of bytes prepended (prefixed) to the salt before stretching
+     * @param tier security tier for stretching
+     * @param temp boolean, True means use temporary, insecure tier; for testing only
+     */
     signer(
         code: string = MtrDex.Ed25519_Seed,
         transferable: boolean = true,

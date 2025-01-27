@@ -1,7 +1,7 @@
 import { Algos } from './manager';
 import { Tier } from './salter';
 
-export interface State {
+export interface KeyState {
     vn: [number, number];
     i: string;
     s: string;
@@ -26,7 +26,18 @@ export interface EstablishmentState {
     s: string;
 }
 
-export interface SaltyState {
+/**
+ * Marker interface for state configuring an IdentifierManager.
+ */
+export interface IdentifierManagerState {}
+
+/**
+ * Interface defining configuration parameters for a SaltyIdentifierManager
+ */
+export interface SaltyState extends IdentifierManagerState {
+    /**
+     * Encrypted
+     */
     sxlt: string;
     pidx: number;
     kidx: number;
@@ -38,18 +49,18 @@ export interface SaltyState {
     transferable: boolean;
 }
 
-export interface RandyState {
+export interface RandyState extends IdentifierManagerState {
     prxs: string[];
     nxts: string[];
 }
 
-export interface GroupState {
+export interface GroupState extends IdentifierManagerState {
     mhab: HabState;
     keys: string[];
     ndigs: string[];
 }
 
-export interface ExternState {
+export interface ExternState extends IdentifierManagerState {
     extern_type: string;
     pidx: number;
     [key: string]: unknown;
@@ -59,7 +70,7 @@ export interface HabState {
     name: string;
     prefix: string;
     transferable: boolean;
-    state: State;
+    state: KeyState;
     windexes: unknown[];
     icp_dt: string;
     [Algos.salty]?: SaltyState;
