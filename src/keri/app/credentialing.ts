@@ -332,7 +332,7 @@ export class Credentials {
     }
 
     /**
-     * Issue a credential
+     * Creates a credential in the specified registry to be GRANTed with IPEX to the intended recipient
      */
     async issue(
         name: string,

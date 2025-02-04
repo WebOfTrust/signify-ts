@@ -127,8 +127,19 @@ export class Salter extends Matter {
     }
 
     /**
-     * Returns Signer with .raw secret derived from code size, path, .raw salt, and tier.
-     * The signer's public key for its .verfer is derived from code and transferable.
+     * Returns Signer with the private key secret derived from code the path, the user entered passcode as a salt,
+     * and the security tier sized by the CESR cryptographic seed size indicated by the code. See the example below.
+     * The Signer's public key for its .verfer is derived from its private key, the Matter code, and the transferable boolean.
+     *
+     * The construction of the raw hash bytes used looks like this:
+     *  (      size,               password, salt                                   )
+     *  where
+     *  ( code size,                   path, Base64Decode(passcode)                 )
+     *  for example, for the initial inception signing key the following parameters are used:
+     *  (        32, "signify:controller00", Base64Decode("Athisismysecretkeyseed") )
+     *  and for the initial rotation key pair the following parameters are used:
+     *  (        32, "signify:controller01", Base64Decode("Athisismysecretkeyseed") )
+     *
      * @param code derivation code indicating seed type
      * @param transferable whether or not the key is for a transferable or non-transferable identifier.
      * @param path string of bytes prepended (prefixed) to the salt before stretching
@@ -145,7 +156,7 @@ export class Salter extends Matter {
         const seed = this.stretch(Matter._rawSize(code), path, tier, temp);
 
         return new Signer({
-            raw: seed,
+            raw: seed, // private key
             code: code,
             transferable: transferable,
         });

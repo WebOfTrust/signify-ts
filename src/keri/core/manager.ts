@@ -205,14 +205,23 @@ export class RandyCreator implements Creator {
         return new Keys(signers);
     }
 
+    /**
+     * Unused for random key generation.
+     */
     get salt(): string {
         return '';
     }
 
+    /**
+     * Unused for random key generation.
+     */
     get stem(): string {
         return '';
     }
 
+    /**
+     * Unused for random key generation.
+     */
     get tier(): Tier {
         return '' as Tier;
     }
