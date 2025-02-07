@@ -26,7 +26,7 @@ import {
     Prefixer,
     RandyIdentifierManager,
 } from '../../src';
-import { RandyState, KeyState } from '../../src/keri/core/keyState';
+import { RandyKeyState, KeyState } from '../../src/keri/core/keyState';
 import { randomUUID } from 'crypto';
 
 describe('RandyCreator', () => {
@@ -723,7 +723,7 @@ describe('Manager', () => {
             prefix: prefixes.qb64,
             name: '',
             state: {} as KeyState,
-            randy: keeper0.params() as RandyState,
+            randy: keeper0.params() as RandyKeyState,
             transferable: false,
             windexes: [],
             icp_dt: '2023-12-01T10:05:25.062609+00:00',

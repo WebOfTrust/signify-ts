@@ -419,7 +419,8 @@ export class Manager {
     private _decrypter: Decrypter | undefined;
     private readonly _ks: KeyStore;
 
-    constructor({ ks, seed, aeid, pidx, algo, salter, tier }: ManagerArgs) {
+    constructor(args: ManagerArgs) {
+        let { ks, seed, aeid, pidx, algo, salter, tier } = args;
         this._ks = ks == undefined ? new Keeper() : ks;
         this._seed = seed;
         this._encrypter = undefined;
@@ -583,7 +584,7 @@ export class Manager {
             seed != undefined ? new Decrypter({}, b(seed)) : undefined;
     }
 
-    incept(mgrIcpArgs: ManagerInceptArgs): [Array<Verfer>, Array<Diger>] {
+    incept(args: ManagerInceptArgs): [Array<Verfer>, Array<Diger>] {
         let {
             icodes = undefined,
             icount = 1,
@@ -599,7 +600,7 @@ export class Manager {
             rooted = true,
             transferable = true,
             temp = false,
-        } = mgrIcpArgs;
+        } = args;
         if (rooted && algo == undefined) {
             algo = this.algo;
         }
@@ -838,7 +839,7 @@ export class Manager {
         }
     }
 
-    rotate(rotateArgs: RotateArgs): [Array<Verfer>, Array<Diger>] {
+    rotate(args: RotateArgs): [Array<Verfer>, Array<Diger>] {
         let {
             pre,
             ncodes = undefined,
@@ -848,7 +849,7 @@ export class Manager {
             transferable = true,
             temp = false,
             erase = true,
-        } = rotateArgs;
+        } = args;
         const pp = this.ks.getPrms(pre);
         if (pp == undefined) {
             throw new Error(`Attempt to rotate nonexistent pre=${pre}.`);
@@ -975,7 +976,7 @@ export class Manager {
         return [verfers, digers];
     }
 
-    sign(signArgs: SignArgs) {
+    sign(args: SignArgs) {
         let {
             ser,
             pubs = undefined,
@@ -983,7 +984,7 @@ export class Manager {
             indexed = true,
             indices = undefined,
             ondices = undefined,
-        } = signArgs;
+        } = args;
         const signers = new Array<Signer>();
 
         if (pubs == undefined && verfers == undefined) {

@@ -11,10 +11,10 @@ import { Prefixer } from './prefixer';
 import { Signer } from './signer';
 import {
     ExternState,
-    GroupState,
+    GroupKeyState,
     HabState,
-    RandyState,
-    SaltyState,
+    RandyKeyState,
+    SaltyKeyState,
     KeyState,
 } from './keyState';
 
@@ -195,7 +195,7 @@ export class IdentifierManagerFactory {
         }
         switch (algo) {
             case Algos.salty:
-                kargs = kargs as SaltyState;
+                kargs = kargs as SaltyKeyState;
                 return new SaltyIdentifierManager(
                     this.salter,
                     kargs.pidx,
@@ -214,7 +214,7 @@ export class IdentifierManagerFactory {
                     kargs.sxlt
                 );
             case Algos.randy:
-                kargs = kargs as RandyState;
+                kargs = kargs as RandyKeyState;
                 return new RandyIdentifierManager(
                     this.salter,
                     undefined,
@@ -229,7 +229,7 @@ export class IdentifierManagerFactory {
                     kargs.nxts
                 );
             case Algos.group:
-                kargs = kargs as GroupState;
+                kargs = kargs as GroupKeyState;
                 return new GroupIdentifierManager(
                     this,
                     kargs.mhab,

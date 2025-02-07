@@ -32,9 +32,9 @@ export interface EstablishmentState {
 export interface IdentifierManagerState {}
 
 /**
- * Interface defining configuration parameters for a SaltyIdentifierManager
+ * Interface defining configuration parameters for a specified, deterministic salt of an IdentifierManager.
  */
-export interface SaltyState extends IdentifierManagerState {
+export interface SaltyKeyState extends IdentifierManagerState {
     /**
      * Encrypted
      */
@@ -49,23 +49,35 @@ export interface SaltyState extends IdentifierManagerState {
     transferable: boolean;
 }
 
-export interface RandyState extends IdentifierManagerState {
+/**
+ * Interface defining configuration parameters for a random seed identifier manager.
+ */
+export interface RandyKeyState extends IdentifierManagerState {
     prxs: string[];
     nxts: string[];
 }
 
-export interface GroupState extends IdentifierManagerState {
+/**
+ * Interface defining properties a multi-signature group identifier manager.
+ */
+export interface GroupKeyState extends IdentifierManagerState {
     mhab: HabState;
     keys: string[];
     ndigs: string[];
 }
 
+/**
+ * Interface defining properties for an external module identifier manager that uses externally managed keys such as in an HSM or a KMS system.
+ */
 export interface ExternState extends IdentifierManagerState {
     extern_type: string;
     pidx: number;
     [key: string]: unknown;
 }
 
+/**
+ * Interface defining properties of an identifier habitat, know as a Hab in KERIpy.
+ */
 export interface HabState {
     name: string;
     prefix: string;
@@ -73,8 +85,8 @@ export interface HabState {
     state: KeyState;
     windexes: unknown[];
     icp_dt: string;
-    [Algos.salty]?: SaltyState;
-    [Algos.randy]?: RandyState;
-    [Algos.group]?: GroupState;
+    [Algos.salty]?: SaltyKeyState;
+    [Algos.randy]?: RandyKeyState;
+    [Algos.group]?: GroupKeyState;
     [Algos.extern]?: ExternState;
 }
