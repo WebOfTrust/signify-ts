@@ -108,12 +108,24 @@ class PubSet {
 }
 
 /**
- *
+ * Describes a path to a specific derived keypair for a given identifier
  */
 class PubPath {
+    /**
+     * The path to a specific keypair. To generate a keypair you combine the path with the salt and tier.
+     */
     path: string = '';
+    /**
+     * Derivation code indicating the kind of cryptographic keypair to generate. Defaults to Ed25519.
+     */
     code: string = '';
+    /**
+     * Security tier to use to generate a keypair. Defaults to high.
+     */
     tier: string = Tier.high;
+    /**
+     * Flag to control whether to generate a low security, temporary key. Used for speed for unit tests. Do NOT use for production identifiers.
+     */
     temp: boolean = false;
 }
 
