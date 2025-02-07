@@ -32,21 +32,17 @@ export class Salter extends Matter {
     /**
      * Creates a Salter from the provided raw salt bytes or generates a random salt if raw is not provided.
      * Defaults to low security tier. Only supports Salt_128 salt type.
-     * @param raw
-     * @param code
-     * @param tier
-     * @param qb64
-     * @param qb64b
-     * @param qb2
+     * @param salterArgs defines the kind of cryptographic seed to create with a variety of raw material initialization sources.
      */
-    constructor({
-        raw,
-        code = MtrDex.Salt_128,
-        tier = Tier.low,
-        qb64,
-        qb64b,
-        qb2,
-    }: SalterArgs) {
+    constructor(salterArgs: SalterArgs) {
+        const {
+            raw,
+            code = MtrDex.Salt_128,
+            tier = Tier.low,
+            qb64,
+            qb64b,
+            qb2,
+        } = salterArgs;
         try {
             super({ raw, code, qb64, qb64b, qb2 });
         } catch (e) {
