@@ -79,6 +79,7 @@ export class Exchanges {
         embeds: Dict<any>,
         recipients: string[]
     ): Promise<any> {
+        const results = [];
         for (const recipient of recipients) {
             const [exn, sigs, atc] = await this.createExchangeMessage(
                 sender,
@@ -87,15 +88,17 @@ export class Exchanges {
                 embeds,
                 recipient
             );
-            return await this.sendFromEvents(
+            const result = await this.sendFromEvents(
                 name,
                 topic,
                 exn,
                 sigs,
                 atc,
-                recipients
+                [recipient]
             );
+            results.push(result);
         }
+        return results;
     }
 
     /**
