@@ -502,10 +502,7 @@ export class Credentials {
 
         const path = `/identifiers/${name}/credentials/${said}`;
         const method = 'DELETE';
-        const headers = new Headers({
-            Accept: 'application/json+cesr',
-        });
-        const res = await this.client.fetch(path, method, body, headers);
+        const res = await this.client.fetch(path, method, body);
         const op = await res.json();
 
         return {
