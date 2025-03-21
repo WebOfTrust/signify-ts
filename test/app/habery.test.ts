@@ -1,5 +1,5 @@
 import { Habery } from '../../src/keri/app/habery.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Salter } from '../../src/keri/core/salter.ts';
 import { b } from '../../src/keri/core/core.ts';

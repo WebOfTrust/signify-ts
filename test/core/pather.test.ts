@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { Pather } from '../../src/keri/core/pather.ts';
 import { b } from '../../src/index.ts';
 

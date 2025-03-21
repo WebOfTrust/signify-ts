@@ -8,7 +8,7 @@ import {
 } from '../../src/keri/core/core.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { Prefixer } from '../../src/keri/core/prefixer.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 
 describe('Prefixer', () => {
     it('should create autonomic identifier prefix using derivation as determined by code from ked', async () => {

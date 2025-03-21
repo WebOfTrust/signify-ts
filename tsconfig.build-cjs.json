@@ -1,0 +1,12 @@
+{
+    "include": ["src", "types.d.ts"],
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "src",
+        "outDir": "dist/cjs",
+        "moduleResolution": "node",
+        "module": "CommonJS",
+        "declaration": true,
+        "noEmit": false
+    }
+}

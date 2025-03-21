@@ -977,7 +977,7 @@ export class Manager {
     }
 
     sign(args: SignArgs) {
-        let {
+        const {
             ser,
             pubs = undefined,
             verfers = undefined,

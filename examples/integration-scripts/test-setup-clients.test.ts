@@ -1,3 +1,4 @@
+import { afterAll, assert, beforeAll, describe, test } from 'vitest';
 import { SignifyClient } from 'signify-ts';
 import {
     assertOperations,
@@ -29,9 +30,9 @@ afterAll(async () => {
 
 describe('test-setup-clients', () => {
     test('step1', async () => {
-        expect(name1_id).toEqual(contact1_id);
+        assert.equal(name1_id, contact1_id);
     });
     test('step2', async () => {
-        expect(name2_id).toEqual(contact2_id);
+        assert.equal(name2_id, contact2_id);
     });
 });

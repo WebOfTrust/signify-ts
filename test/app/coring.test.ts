@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it, beforeEach, vitest } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 import {
     randomPasscode,
@@ -8,7 +8,7 @@ import {
 } from '../../src/keri/app/coring.ts';
 import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { Tier } from '../../src/keri/core/salter.ts';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { createMockFetch } from './test-utils.ts';
 
 const url = 'http://127.0.0.1:3901';
@@ -141,7 +141,7 @@ describe('Coring', () => {
 describe('Operations', () => {
     class MockClient implements OperationsDeps {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        fetch = jest.fn<Promise<Response>, [string, string, any]>();
+        fetch = vitest.fn();
 
         constructor() {}
 
@@ -228,7 +228,7 @@ describe('Operations', () => {
             const op = { name, done: true };
             const result = await client.operations().wait(op);
             assert.equal(client.fetch.mock.calls.length, 0);
-            assert.equal(op, result);
+            assert.equal<unknown>(op, result);
         });
 
         it('returns when operation is done after first call', async () => {

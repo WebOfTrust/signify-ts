@@ -6,7 +6,7 @@ import {
     intToB64,
     intToB64b,
 } from '../../src/keri/core/core.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { bytesToInt, intToBytes } from '../../src/keri/core/utils.ts';
 
 describe('int to b64 and back', () => {

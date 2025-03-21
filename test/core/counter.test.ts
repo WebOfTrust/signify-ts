@@ -1,5 +1,5 @@
 import { Counter, CtrDex } from '../../src/keri/core/counter.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { b, b64ToInt, intToB64 } from '../../src/keri/core/core.ts';
 
 describe('int to b64 and back', () => {

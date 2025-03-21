@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { CesrNumber } from '../../src/keri/core/number.ts';
 
 describe('THolder', () => {

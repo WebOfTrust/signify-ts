@@ -1,5 +1,5 @@
-import { strict as assert } from 'assert';
-import { Saider, Salter, Serder, SignifyClient } from 'signify-ts';
+import { assert, test } from 'vitest';
+import { Saider, Serder, SignifyClient } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     Aid,
@@ -7,7 +7,6 @@ import {
     createAid,
     getOrCreateClients,
     getOrCreateContact,
-    getOrCreateIdentifier,
     getOrIssueCredential,
     getReceivedCredential,
     markAndRemoveNotification,

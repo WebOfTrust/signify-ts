@@ -10,7 +10,7 @@ import {
     acceptMultisigIncept,
     startMultisigIncept,
 } from './utils/multisig-utils.ts';
-import assert from 'assert';
+import { assert, test } from 'vitest';
 import { step } from './utils/test-step.ts';
 
 test('multisig inception', async () => {

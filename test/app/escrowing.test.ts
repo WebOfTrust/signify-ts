@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { Tier } from '../../src/keri/core/salter.ts';
 import libsodium from 'libsodium-wrappers-sumo';

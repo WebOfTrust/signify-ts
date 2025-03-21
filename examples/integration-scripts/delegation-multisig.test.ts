@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, test } from 'vitest';
 import signify from 'signify-ts';
 import {
     assertNotifications,

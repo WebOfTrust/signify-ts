@@ -7,7 +7,7 @@ import {
     IdentifierManagerFactory,
     SaltyIdentifierManager,
 } from '../../src/index.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, expect, it } from 'vitest';
 import { HabState, KeyState } from '../../src/keri/core/keyState.ts';
 
 describe('registry', () => {
@@ -83,18 +83,12 @@ describe('registry', () => {
 
         const registries = new Registries(instance(mockedClient));
 
-        await assert.rejects(
-            async () => {
-                await registries.create({
-                    name: 'a name',
-                    registryName: 'a registry name',
-                    nonce: '',
-                });
-            },
-            {
-                name: 'Error',
-                message: 'establishment only not implemented',
-            }
-        );
+        await expect(async () => {
+            await registries.create({
+                name: 'a name',
+                registryName: 'a registry name',
+                nonce: '',
+            });
+        }).rejects.toThrowError('establishment only not implemented');
     });
 });

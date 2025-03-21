@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it, beforeAll, beforeEach } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { b } from '../../src/keri/core/core.ts';

@@ -278,7 +278,10 @@ export class Identifier {
      * @returns {Promise<EventResult>} A promise to the interaction event result
      */
     async interact(name: string, data?: any): Promise<EventResult> {
-        let { serder, sigs, jsondata } = await this.createInteract(name, data);
+        const { serder, sigs, jsondata } = await this.createInteract(
+            name,
+            data
+        );
 
         const res = await this.client.fetch(
             '/identifiers/' + name + '/events',

@@ -1,6 +1,6 @@
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import libsodium from 'libsodium-wrappers-sumo';
-import { strict as assert } from 'assert';
+import { assert, describe, it, expect } from 'vitest';
 import { Verfer } from '../../src/keri/core/verfer.ts';
 import secp256r1 from 'ecdsa-secp256r1';
 

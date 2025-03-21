@@ -1,5 +1,5 @@
 import { Matter } from '../../src/keri/core/matter.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { blake3 } from '@noble/hashes/blake3';
 
 import { Diger } from '../../src/keri/core/diger.ts';

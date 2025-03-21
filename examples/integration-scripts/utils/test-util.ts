@@ -12,6 +12,7 @@ import { RetryOptions, retry } from './retry.ts';
 import { HabState } from '../../../src/keri/core/keyState.ts';
 import assert from 'assert';
 import { resolveEnvironment } from './resolve-env.ts';
+import { expect } from 'vitest';
 
 export interface Aid {
     name: string;
@@ -64,7 +65,7 @@ export async function assertOperations(
 ): Promise<void> {
     for (const client of clients) {
         const operations = await client.operations().list();
-        expect(operations).toHaveLength(0);
+        assert.strictEqual(operations.length, 0);
     }
 }
 
@@ -80,7 +81,7 @@ export async function assertNotifications(
     for (const client of clients) {
         const res = await client.notifications().list();
         const notes = res.notes.filter((i: { r: boolean }) => i.r === false);
-        expect(notes).toHaveLength(0);
+        assert.strictEqual(notes.length, 0);
     }
 }
 

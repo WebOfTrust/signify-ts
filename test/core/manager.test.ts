@@ -7,7 +7,7 @@ import {
     riKey,
     SaltyCreator,
 } from '../../src/keri/core/manager.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it, expect, vitest, Mocked } from 'vitest';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { Signer } from '../../src/keri/core/signer.ts';
@@ -27,7 +27,7 @@ import {
     RandyIdentifierManager,
 } from '../../src/index.ts';
 import { RandyKeyState, KeyState } from '../../src/keri/core/keyState.ts';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 describe('RandyCreator', () => {
     it('should create sets of random signers', async () => {
@@ -755,7 +755,7 @@ describe('Manager', () => {
     });
 
     describe('External Module ', () => {
-        class MockModule implements jest.Mocked<IdentifierManager> {
+        class MockModule implements Mocked<IdentifierManager> {
             #params: Record<string, unknown>;
 
             constructor(
@@ -766,11 +766,11 @@ describe('Manager', () => {
             }
 
             signers: Signer[] = [];
-            sign = jest.fn();
+            sign = vitest.fn();
             algo: Algos = Algos.extern;
-            incept = jest.fn();
-            rotate = jest.fn();
-            params = jest.fn(() => this.#params);
+            incept = vitest.fn();
+            rotate = vitest.fn();
+            params = vitest.fn(() => this.#params);
         }
 
         it('Should support creating external keeper module', async () => {

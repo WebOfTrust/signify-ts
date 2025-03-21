@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it, test, expect } from 'vitest';
 import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { Identifier } from '../../src/keri/app/aiding.ts';
 import {
@@ -215,7 +215,7 @@ describe('SignifyClient', () => {
             url + '/agent/ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
         );
         assert.equal(lastCall[1]!.method, 'PUT');
-        let lastBody = JSON.parse(lastCall[1]!.body!);
+        let lastBody = JSON.parse(lastCall[1]!.body! as string);
         assert.equal(lastBody.rot.t, 'rot');
         assert.equal(lastBody.rot.s, '1');
         assert.deepEqual(lastBody.rot.kt, ['1', '0']);
@@ -281,7 +281,7 @@ describe('SignifyClient', () => {
                     .split('"')[0]
             );
         } else {
-            fail(`${HEADER_SIG_INPUT} is empty`);
+            assert.fail(`${HEADER_SIG_INPUT} is empty`);
         }
     });
 

@@ -1,5 +1,5 @@
 import { Controller } from '../../src/keri/app/controller.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 import { openManager } from '../../src/keri/core/manager.ts';
 import { Signer } from '../../src/keri/core/signer.ts';

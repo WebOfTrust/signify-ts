@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, test } from 'vitest';
 import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -124,5 +124,5 @@ test('delegation', async () => {
         oobis.oobis[0].split('/agent/')[0]
     );
 
-    expect(contactId).toEqual(aid2.prefix);
+    assert.equal(contactId, aid2.prefix);
 }, 600000);

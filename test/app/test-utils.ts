@@ -1,3 +1,4 @@
+import { Mock, vitest } from 'vitest';
 import {
     Algos,
     Authenticater,
@@ -11,12 +12,12 @@ import {
     Tier,
     Vrsn_1_0,
     incept,
-} from '../../src/index.ts.ts';
+} from '../../src/index.ts';
 import {
     EstablishmentState,
     HabState,
     KeyState,
-} from '../../src/keri/core/keyState.ts.ts';
+} from '../../src/keri/core/keyState.ts';
 
 const boot_url = 'http://127.0.0.1:3903';
 
@@ -237,8 +238,8 @@ export const mockGetAID = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createMockFetch(): jest.Mock<Promise<Response>, [string, any]> {
-    const spy = jest.spyOn(globalThis, 'fetch');
+export function createMockFetch(): Mock<typeof globalThis.fetch> {
+    const spy = vitest.spyOn(globalThis, 'fetch');
     function resolveUrl(input: unknown) {
         if (input instanceof URL) {
             return input;
@@ -326,7 +327,7 @@ export function createMockFetch(): jest.Mock<Promise<Response>, [string, any]> {
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return spy as jest.Mock<Promise<Response>, [string, any]>;
+    return spy as Mock<typeof fetch>;
 }
 
 export const mockCredential = {

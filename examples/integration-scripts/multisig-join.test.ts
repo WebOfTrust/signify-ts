@@ -8,7 +8,7 @@ import {
     waitForNotifications,
     waitOperation,
 } from './utils/test-util.ts';
-import assert from 'assert';
+import { assert, beforeAll, describe, test } from 'vitest';
 
 describe('multisig-join', () => {
     const nameMember1 = 'member1';

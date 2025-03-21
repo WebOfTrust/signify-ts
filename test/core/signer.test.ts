@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 
 import { Signer } from '../../src/index.ts';

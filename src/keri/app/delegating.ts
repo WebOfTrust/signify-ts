@@ -19,7 +19,7 @@ export class Delegations {
      * @returns {Promise<EventResult>} A promise to the delegated approval result
      */
     async approve(name: string, data?: any): Promise<EventResult> {
-        let { serder, sigs, jsondata } = await this.client
+        const { serder, sigs, jsondata } = await this.client
             .identifiers()
             .createInteract(name, data);
 

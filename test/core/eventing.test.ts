@@ -1,6 +1,6 @@
 import libsodium from 'libsodium-wrappers-sumo';
 import { Signer } from '../../src/keri/core/signer.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { incept, messagize, rotate } from '../../src/keri/core/eventing.ts';
 import { Saider } from '../../src/keri/core/saider.ts';

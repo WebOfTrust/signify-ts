@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 
 import { Sizage } from '../../src/keri/core/matter.ts';
 

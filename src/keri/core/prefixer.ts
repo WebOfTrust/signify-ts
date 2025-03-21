@@ -3,7 +3,6 @@ import { EmptyMaterialError } from './kering.ts';
 import { Dict, Ilks } from './core.ts';
 import { sizeify } from './serder.ts';
 import { Verfer } from './verfer.ts';
-import { Buffer } from 'buffer';
 import { blake3 } from '@noble/hashes/blake3';
 
 const Dummy: string = '#';

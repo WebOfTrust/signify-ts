@@ -1,5 +1,5 @@
 import { deversify, Ilks, Serials, Version } from '../../src/keri/core/core.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { Diger } from '../../src/keri/core/diger.ts';

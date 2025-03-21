@@ -32,7 +32,7 @@ export class Serder {
         kind: Serials = Serials.JSON,
         code: string = MtrDex.Blake3_256
     ) {
-        let [raw, proto, eKind, eSad, version] = this._exhale(sad, kind);
+        const [raw, proto, eKind, eSad, version] = this._exhale(sad, kind);
         this._raw = raw;
         this._sad = eSad;
         this._proto = proto;

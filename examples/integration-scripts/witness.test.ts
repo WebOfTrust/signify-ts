@@ -1,5 +1,5 @@
 // This scrip also work if you start keria with no config file with witness urls
-import { strict as assert } from 'assert';
+import { assert, test } from 'vitest';
 import signify from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import { resolveOobi, waitOperation } from './utils/test-util.ts';

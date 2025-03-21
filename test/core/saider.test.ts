@@ -4,7 +4,7 @@ import {
     versify,
     Vrsn_1_0,
 } from '../../src/keri/core/core.ts';
-import { strict as assert } from 'assert';
+import { assert, describe, it } from 'vitest';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Saider } from '../../src/keri/core/saider.ts';
