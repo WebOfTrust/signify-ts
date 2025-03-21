@@ -1,7 +1,6 @@
 import { SignifyClient } from '../../src/keri/app/clienting';
 import { anyOfClass, anything, instance, mock, when } from 'ts-mockito';
 import libsodium from 'libsodium-wrappers-sumo';
-import 'whatwg-fetch';
 import { Registries } from '../../src/keri/app/credentialing';
 import {
     Identifier,
