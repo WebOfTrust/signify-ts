@@ -23,13 +23,11 @@
   },
   "license": "Apache-2.0",
   "exports": {
-    "require": "./dist/cjs/index.js",
-    "import": "./dist/esm/index.js"
+    "import": "./dist/index.js"
   },
   "type": "module",
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "start": "npm run build -- --watch",
