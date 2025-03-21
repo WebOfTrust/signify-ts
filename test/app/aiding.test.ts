@@ -23,7 +23,6 @@ export class MockClient implements IdentifierDeps {
     controller: Controller;
     pidx = 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fetch = vitest.fn();
 
     constructor(bran: string) {
@@ -488,6 +487,7 @@ describe('Aiding', () => {
                 isith: ['1'],
                 nsith: ['1'],
             };
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             args !== null; // avoids TS6133
         });
 
@@ -502,6 +502,7 @@ describe('Aiding', () => {
             args = {
                 nsith: ['1'],
             };
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             args !== null; // avoids TS6133
         });
     });

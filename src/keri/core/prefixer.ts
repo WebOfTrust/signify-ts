@@ -8,7 +8,9 @@ import { blake3 } from '@noble/hashes/blake3';
 const Dummy: string = '#';
 
 export class Prefixer extends Matter {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _derive: Function | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _verify: Function | undefined;
 
     constructor({ raw, code, qb64b, qb64, qb2 }: MatterArgs, ked?: Dict<any>) {

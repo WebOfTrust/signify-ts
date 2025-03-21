@@ -168,7 +168,6 @@ export class Operations {
 
         let retries = 0;
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
             op = await this.get(op.name);
 

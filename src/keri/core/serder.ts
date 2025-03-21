@@ -138,7 +138,7 @@ export class Serder {
     }
 }
 
-export function dumps(sad: Object, kind: Serials.JSON): string {
+export function dumps(sad: object, kind: Serials.JSON): string {
     if (kind == Serials.JSON) {
         return JSON.stringify(sad);
     } else {

@@ -237,7 +237,6 @@ export const mockGetAID = {
     windexes: [],
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createMockFetch(): Mock<typeof globalThis.fetch> {
     const spy = vitest.spyOn(globalThis, 'fetch');
     function resolveUrl(input: unknown) {
@@ -326,7 +325,6 @@ export function createMockFetch(): Mock<typeof globalThis.fetch> {
         }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return spy as Mock<typeof fetch>;
 }
 

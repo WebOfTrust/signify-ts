@@ -140,7 +140,6 @@ describe('Coring', () => {
 
 describe('Operations', () => {
     class MockClient implements OperationsDeps {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         fetch = vitest.fn();
 
         constructor() {}

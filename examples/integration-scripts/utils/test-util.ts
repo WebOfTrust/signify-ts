@@ -198,8 +198,8 @@ export async function getOrCreateClient(
  *   [client1, client2] = await getOrCreateClients(2);
  * });
  * @example
- * <caption>Launch jest from shell with pre-defined secrets</caption>
- * $ SIGNIFY_SECRETS="0ACqshJKkJ7DDXcaDuwnmI8s,0ABqicvyicXGvIVg6Ih-dngE" npx jest ./tests
+ * <caption>Launch test from shell with pre-defined secrets</caption>
+ * $ SIGNIFY_SECRETS="0ACqshJKkJ7DDXcaDuwnmI8s,0ABqicvyicXGvIVg6Ih-dngE" npm run test:integration
  */
 export async function getOrCreateClients(
     count: number,

@@ -180,12 +180,12 @@ export class IdentifierManagerFactory {
         const algo = aid[Algos.salty]
             ? Algos.salty
             : aid[Algos.randy]
-            ? Algos.randy
-            : aid[Algos.group]
-            ? Algos.group
-            : aid[Algos.extern]
-            ? Algos.extern
-            : undefined;
+              ? Algos.randy
+              : aid[Algos.group]
+                ? Algos.group
+                : aid[Algos.extern]
+                  ? Algos.extern
+                  : undefined;
         if (!algo) {
             throw new Error('No algo specified');
         }

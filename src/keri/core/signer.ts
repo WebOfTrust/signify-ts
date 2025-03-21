@@ -28,6 +28,7 @@ interface SignerArgs {
 }
 
 export class Signer extends Matter {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _sign: Function;
     private readonly _verfer: Verfer;
 
