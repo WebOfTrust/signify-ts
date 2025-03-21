@@ -35,7 +35,7 @@
     "start": "npm run build -- --watch",
     "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.json --noEmit",
     "test": "vitest",
-    "prepare": "npm run build",
+    "prepare": "tsc -p tsconfig.build.json",
     "test:integration": "npm -w examples/integration-scripts test",
     "lint": "eslint src test examples/integration-scripts",
     "generate-docs": "typedoc src/index.ts",
