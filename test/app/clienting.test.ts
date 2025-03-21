@@ -1,27 +1,30 @@
 import { strict as assert } from 'assert';
-import { SignifyClient } from '../../src/keri/app/clienting';
-import { Identifier } from '../../src/keri/app/aiding';
+import { SignifyClient } from '../../src/keri/app/clienting.ts';
+import { Identifier } from '../../src/keri/app/aiding.ts';
 import {
     Operations,
     KeyEvents,
     KeyStates,
     Oobis,
-} from '../../src/keri/app/coring';
-import { Contacts, Challenges } from '../../src/keri/app/contacting';
+} from '../../src/keri/app/coring.ts';
+import { Contacts, Challenges } from '../../src/keri/app/contacting.ts';
 import {
     Credentials,
     Schemas,
     Registries,
-} from '../../src/keri/app/credentialing';
-import { Escrows } from '../../src/keri/app/escrowing';
-import { Exchanges } from '../../src/keri/app/exchanging';
-import { Groups } from '../../src/keri/app/grouping';
-import { Notifications } from '../../src/keri/app/notifying';
+} from '../../src/keri/app/credentialing.ts';
+import { Escrows } from '../../src/keri/app/escrowing.ts';
+import { Exchanges } from '../../src/keri/app/exchanging.ts';
+import { Groups } from '../../src/keri/app/grouping.ts';
+import { Notifications } from '../../src/keri/app/notifying.ts';
 
-import { HEADER_SIG_INPUT, HEADER_SIG_TIME } from '../../src/keri/core/httping';
-import { Tier } from '../../src/keri/core/salter';
+import {
+    HEADER_SIG_INPUT,
+    HEADER_SIG_TIME,
+} from '../../src/keri/core/httping.ts';
+import { Tier } from '../../src/keri/core/salter.ts';
 import libsodium from 'libsodium-wrappers-sumo';
-import { createMockFetch } from './test-utils';
+import { createMockFetch } from './test-utils.ts';
 
 const fetchMock = createMockFetch();
 

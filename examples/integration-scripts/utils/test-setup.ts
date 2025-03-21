@@ -6,8 +6,8 @@ import {
     randomPasscode,
     ready,
 } from 'signify-ts';
-import { resolveEnvironment } from './resolve-env';
-import { waitOperation } from './test-util';
+import { resolveEnvironment } from './resolve-env.ts';
+import { waitOperation } from './test-util.ts';
 
 /**
  * Connect or boot a number of SignifyClient instances

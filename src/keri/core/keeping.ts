@@ -1,14 +1,14 @@
-import { Salter } from './salter';
-import { Algos, SaltyCreator, RandyCreator } from './manager';
-import { MtrDex } from './matter';
-import { Tier } from './salter';
-import { Encrypter } from '../core/encrypter';
-import { Decrypter } from './decrypter';
-import { b } from './core';
-import { Cipher } from './cipher';
-import { Diger } from './diger';
-import { Prefixer } from './prefixer';
-import { Signer } from './signer';
+import { Salter } from './salter.ts';
+import { Algos, SaltyCreator, RandyCreator } from './manager.ts';
+import { MtrDex } from './matter.ts';
+import { Tier } from './salter.ts';
+import { Encrypter } from '../core/encrypter.ts';
+import { Decrypter } from './decrypter.ts';
+import { b } from './core.ts';
+import { Cipher } from './cipher.ts';
+import { Diger } from './diger.ts';
+import { Prefixer } from './prefixer.ts';
+import { Signer } from './signer.ts';
 import {
     ExternState,
     GroupKeyState,
@@ -16,7 +16,7 @@ import {
     RandyKeyState,
     SaltyKeyState,
     KeyState,
-} from './keyState';
+} from './keyState.ts';
 
 /** External module definition */
 export interface ExternalModuleType {

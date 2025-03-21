@@ -1,5 +1,8 @@
 import assert from 'node:assert';
-import { decodeBase64Url, encodeBase64Url } from '../../src/keri/core/base64';
+import {
+    decodeBase64Url,
+    encodeBase64Url,
+} from '../../src/keri/core/base64.ts';
 
 test('encode', () => {
     assert.equal(encodeBase64Url(Buffer.from('f')), 'Zg');

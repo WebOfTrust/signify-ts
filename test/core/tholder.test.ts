@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 import { fraction } from 'mathjs';
-import { Tholder } from '../../src/keri/core/tholder';
+import { Tholder } from '../../src/keri/core/tholder.ts';
 
 describe('THolder', () => {
     it('should hold thresholds', async () => {

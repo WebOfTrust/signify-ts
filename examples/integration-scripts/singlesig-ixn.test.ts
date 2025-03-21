@@ -5,7 +5,7 @@ import {
     getOrCreateContact,
     getOrCreateIdentifier,
     waitOperation,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 
 let client1: SignifyClient, client2: SignifyClient;
 let name1_id: string, name1_oobi: string;

@@ -5,13 +5,13 @@ import {
     resolveOobi,
     waitForNotifications,
     waitOperation,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 import {
     acceptMultisigIncept,
     startMultisigIncept,
-} from './utils/multisig-utils';
+} from './utils/multisig-utils.ts';
 import assert from 'assert';
-import { step } from './utils/test-step';
+import { step } from './utils/test-step.ts';
 
 test('multisig inception', async () => {
     await signify.ready();

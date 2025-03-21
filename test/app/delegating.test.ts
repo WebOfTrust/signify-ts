@@ -1,8 +1,8 @@
 import { strict as assert } from 'assert';
-import { Tier } from '../../src';
+import { Tier } from '../../src/index.ts';
 import libsodium from 'libsodium-wrappers-sumo';
-import { SignifyClient } from '../../src/keri/app/clienting';
-import { createMockFetch } from './test-utils';
+import { SignifyClient } from '../../src/keri/app/clienting.ts';
+import { createMockFetch } from './test-utils.ts';
 
 const fetchMock = createMockFetch();
 

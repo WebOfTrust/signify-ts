@@ -1,13 +1,13 @@
 import { strict as assert } from 'assert';
 import libsodium from 'libsodium-wrappers-sumo';
-import { Salter } from '../../src/keri/core/salter';
-import { b } from '../../src/keri/core/core';
+import { Salter } from '../../src/keri/core/salter.ts';
+import { b } from '../../src/keri/core/core.ts';
 import {
     siginput,
     desiginput,
     SiginputArgs,
-} from '../../src/keri/core/httping';
-import * as utilApi from '../../src/keri/core/utils';
+} from '../../src/keri/core/httping.ts';
+import * as utilApi from '../../src/keri/core/utils.ts';
 
 describe('siginput', () => {
     it('create valid Signature-Input header with signature', async () => {

@@ -5,7 +5,7 @@ import {
     getOrCreateContact,
     getOrCreateIdentifier,
     waitOperation,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 
 let delegator: SignifyClient, delegate: SignifyClient;
 let name1_id: string, name1_oobi: string;

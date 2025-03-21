@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 import signify, { SignifyClient, Operation, CredentialData } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
     getOrCreateClient,
@@ -8,11 +8,11 @@ import {
     waitAndMarkNotification,
     waitOperation,
     warnNotifications,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 import {
     acceptMultisigIncept,
     startMultisigIncept,
-} from './utils/multisig-utils';
+} from './utils/multisig-utils.ts';
 
 const { vleiServerUrl } = resolveEnvironment();
 const WITNESS_AIDS = [

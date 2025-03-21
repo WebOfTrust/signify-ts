@@ -5,9 +5,9 @@ import {
     Serials,
     versify,
     Vrsn_1_0,
-} from '../../src/keri/core/core';
-import { MtrDex } from '../../src/keri/core/matter';
-import { Prefixer } from '../../src/keri/core/prefixer';
+} from '../../src/keri/core/core.ts';
+import { MtrDex } from '../../src/keri/core/matter.ts';
+import { Prefixer } from '../../src/keri/core/prefixer.ts';
 import { strict as assert } from 'assert';
 
 describe('Prefixer', () => {

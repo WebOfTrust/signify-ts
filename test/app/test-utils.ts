@@ -11,12 +11,12 @@ import {
     Tier,
     Vrsn_1_0,
     incept,
-} from '../../src/index.ts';
+} from '../../src/index.ts.ts';
 import {
     EstablishmentState,
     HabState,
     KeyState,
-} from '../../src/keri/core/keyState.ts';
+} from '../../src/keri/core/keyState.ts.ts';
 
 const boot_url = 'http://127.0.0.1:3903';
 

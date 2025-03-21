@@ -8,10 +8,10 @@ import signify, {
     SignifyClient,
     Tier,
 } from 'signify-ts';
-import { RetryOptions, retry } from './retry';
-import { HabState } from '../../../src/keri/core/keyState';
+import { RetryOptions, retry } from './retry.ts';
+import { HabState } from '../../../src/keri/core/keyState.ts';
 import assert from 'assert';
-import { resolveEnvironment } from './resolve-env';
+import { resolveEnvironment } from './resolve-env.ts';
 
 export interface Aid {
     name: string;

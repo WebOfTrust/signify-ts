@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 
-import { Sizage } from '../../src/keri/core/matter';
+import { Sizage } from '../../src/keri/core/matter.ts';
 
 describe('Sizage', () => {
     it('should hold size values in 4 properties', async () => {

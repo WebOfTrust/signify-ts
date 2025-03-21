@@ -1,14 +1,14 @@
 import { strict as assert } from 'assert';
 import signify from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
     getOrCreateContact,
     resolveOobi,
     waitOperation,
-} from './utils/test-util';
-import { retry } from './utils/retry';
-import { step } from './utils/test-step';
+} from './utils/test-util.ts';
+import { retry } from './utils/retry.ts';
+import { step } from './utils/test-step.ts';
 
 const { url, bootUrl } = resolveEnvironment();
 

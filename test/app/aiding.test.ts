@@ -2,8 +2,8 @@ import { strict as assert } from 'assert';
 import {
     CreateIdentiferArgs,
     RotateIdentifierArgs,
-} from '../../src/keri/app/aiding';
-import { Algos } from '../../src/keri/core/manager';
+} from '../../src/keri/app/aiding.ts';
+import { Algos } from '../../src/keri/core/manager.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { randomUUID } from 'crypto';
 import {
@@ -13,8 +13,8 @@ import {
     IdentifierManagerFactory,
     Tier,
     randomPasscode,
-} from '../../src';
-import { createMockIdentifierState } from './test-utils';
+} from '../../src/index.ts';
+import { createMockIdentifierState } from './test-utils.ts';
 
 const bran = '0123456789abcdefghijk';
 

@@ -1,10 +1,10 @@
 import { strict as assert } from 'assert';
 import libsodium from 'libsodium-wrappers-sumo';
-import { Salter } from '../../src/keri/core/salter';
-import { b } from '../../src/keri/core/core';
-import { Authenticater } from '../../src/keri/core/authing';
-import * as utilApi from '../../src/keri/core/utils';
-import { Verfer } from '../../src/keri/core/verfer';
+import { Salter } from '../../src/keri/core/salter.ts';
+import { b } from '../../src/keri/core/core.ts';
+import { Authenticater } from '../../src/keri/core/authing.ts';
+import * as utilApi from '../../src/keri/core/utils.ts';
+import { Verfer } from '../../src/keri/core/verfer.ts';
 
 describe('Authenticater.verify', () => {
     it('verify signature on Response', async () => {

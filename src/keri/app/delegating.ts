@@ -1,5 +1,5 @@
-import { EventResult } from './aiding';
-import { SignifyClient } from './clienting';
+import { EventResult } from './aiding.ts';
+import { SignifyClient } from './clienting.ts';
 
 export class Delegations {
     public client: SignifyClient;

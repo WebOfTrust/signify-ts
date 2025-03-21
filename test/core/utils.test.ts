@@ -1,8 +1,15 @@
-import { Protocols, Saider, Serder, Serials, d, versify } from '../../src';
+import {
+    Protocols,
+    Saider,
+    Serder,
+    Serials,
+    d,
+    versify,
+} from '../../src/index.ts';
 import {
     serializeACDCAttachment,
     serializeIssExnAttachment,
-} from '../../src/keri/core/utils';
+} from '../../src/keri/core/utils.ts';
 
 describe(serializeIssExnAttachment, () => {
     it('serializes iss data', () => {

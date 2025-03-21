@@ -4,7 +4,7 @@ import signify, {
     Serder,
     IssueCredentialResult,
 } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
     getOrCreateClient,
@@ -14,7 +14,7 @@ import {
     waitForNotifications,
     waitOperation,
     warnNotifications,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 
 const { vleiServerUrl } = resolveEnvironment();
 const WITNESS_AIDS = [

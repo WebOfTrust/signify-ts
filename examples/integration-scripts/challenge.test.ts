@@ -1,11 +1,11 @@
 import { strict as assert } from 'assert';
 import signify, { Serder } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
     resolveOobi,
     waitOperation,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 
 const { url, bootUrl } = resolveEnvironment();
 

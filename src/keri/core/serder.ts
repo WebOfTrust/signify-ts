@@ -1,4 +1,4 @@
-import { MtrDex } from './matter';
+import { MtrDex } from './matter.ts';
 import {
     deversify,
     Dict,
@@ -7,10 +7,10 @@ import {
     versify,
     Version,
     Vrsn_1_0,
-} from './core';
-import { Verfer } from './verfer';
-import { Diger } from './diger';
-import { CesrNumber } from './number';
+} from './core.ts';
+import { Verfer } from './verfer.ts';
+import { Diger } from './diger.ts';
+import { CesrNumber } from './number.ts';
 
 export class Serder {
     private _kind: Serials;

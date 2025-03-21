@@ -9,10 +9,10 @@ import {
     Salter,
     Serder,
     Tier,
-} from '../../src';
+} from '../../src/index.ts';
 import libsodium from 'libsodium-wrappers-sumo';
-import { SignifyClient } from '../../src/keri/app/clienting';
-import { createMockFetch } from './test-utils';
+import { SignifyClient } from '../../src/keri/app/clienting.ts';
+import { createMockFetch } from './test-utils.ts';
 
 const fetchMock = createMockFetch();
 

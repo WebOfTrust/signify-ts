@@ -6,27 +6,27 @@ import {
     RandyCreator,
     riKey,
     SaltyCreator,
-} from '../../src/keri/core/manager';
+} from '../../src/keri/core/manager.ts';
 import { strict as assert } from 'assert';
-import { MtrDex } from '../../src/keri/core/matter';
-import { Salter, Tier } from '../../src/keri/core/salter';
-import { Signer } from '../../src/keri/core/signer';
-import { Encrypter } from '../../src/keri/core/encrypter';
-import { Decrypter } from '../../src/keri/core/decrypter';
-import { Cipher } from '../../src/keri/core/cipher';
-import { Verfer } from '../../src/keri/core/verfer';
-import { Diger } from '../../src/keri/core/diger';
-import { Siger } from '../../src/keri/core/siger';
-import { b } from '../../src/keri/core/core';
-import { Cigar } from '../../src/keri/core/cigar';
+import { MtrDex } from '../../src/keri/core/matter.ts';
+import { Salter, Tier } from '../../src/keri/core/salter.ts';
+import { Signer } from '../../src/keri/core/signer.ts';
+import { Encrypter } from '../../src/keri/core/encrypter.ts';
+import { Decrypter } from '../../src/keri/core/decrypter.ts';
+import { Cipher } from '../../src/keri/core/cipher.ts';
+import { Verfer } from '../../src/keri/core/verfer.ts';
+import { Diger } from '../../src/keri/core/diger.ts';
+import { Siger } from '../../src/keri/core/siger.ts';
+import { b } from '../../src/keri/core/core.ts';
+import { Cigar } from '../../src/keri/core/cigar.ts';
 import {
     IdentifierManager,
     IdentifierManagerParams,
     IdentifierManagerFactory,
     Prefixer,
     RandyIdentifierManager,
-} from '../../src';
-import { RandyKeyState, KeyState } from '../../src/keri/core/keyState';
+} from '../../src/index.ts';
+import { RandyKeyState, KeyState } from '../../src/keri/core/keyState.ts';
 import { randomUUID } from 'crypto';
 
 describe('RandyCreator', () => {

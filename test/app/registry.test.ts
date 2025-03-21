@@ -1,14 +1,14 @@
-import { SignifyClient } from '../../src/keri/app/clienting';
+import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { anyOfClass, anything, instance, mock, when } from 'ts-mockito';
 import libsodium from 'libsodium-wrappers-sumo';
-import { Registries } from '../../src/keri/app/credentialing';
+import { Registries } from '../../src/keri/app/credentialing.ts';
 import {
     Identifier,
     IdentifierManagerFactory,
     SaltyIdentifierManager,
-} from '../../src';
+} from '../../src/index.ts';
 import { strict as assert } from 'assert';
-import { HabState, KeyState } from '../../src/keri/core/keyState';
+import { HabState, KeyState } from '../../src/keri/core/keyState.ts';
 
 describe('registry', () => {
     it('should create a registry', async () => {

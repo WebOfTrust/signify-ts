@@ -1,10 +1,13 @@
 import signify, { Serder, SignifyClient } from 'signify-ts';
-import { getOrCreateClient, getOrCreateIdentifier } from './utils/test-setup';
+import {
+    getOrCreateClient,
+    getOrCreateIdentifier,
+} from './utils/test-setup.ts';
 import {
     markNotification,
     waitForNotifications,
     waitOperation,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 import assert from 'assert';
 
 describe('multisig-join', () => {

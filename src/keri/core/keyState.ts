@@ -1,5 +1,5 @@
-import { Algos } from './manager';
-import { Tier } from './salter';
+import { Algos } from './manager.ts';
+import { Tier } from './salter.ts';
 
 export interface KeyState {
     vn: [number, number];

@@ -1,6 +1,6 @@
 import { blake3 } from '@noble/hashes/blake3';
 import { Buffer } from 'buffer';
-import { Matter, MatterArgs, MtrDex } from './matter';
+import { Matter, MatterArgs, MtrDex } from './matter.ts';
 
 /**
  * @description : Diger is subset of Matter and is used to verify the digest of serialization
@@ -25,9 +25,7 @@ export class Diger extends Matter {
             }
 
             if (code === MtrDex.Blake3_256) {
-                const dig = Buffer.from(
-                    blake3.create({ dkLen: 32 }).update(ser).digest()
-                );
+                const dig = blake3.create({ dkLen: 32 }).update(ser).digest();
                 super({ raw: dig, code: code });
             } else {
                 throw new Error(`Unsupported code = ${code} for digester.`);

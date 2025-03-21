@@ -1,10 +1,10 @@
 import { SignifyClient } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
     getOrCreateClients,
     getOrCreateIdentifier,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 
 let client: SignifyClient;
 let name1_id: string, name1_oobi: string;

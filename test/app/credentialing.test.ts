@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert';
-import { SignifyClient } from '../../src/keri/app/clienting';
+import { SignifyClient } from '../../src/keri/app/clienting.ts';
 
-import { Tier } from '../../src/keri/core/salter';
+import { Tier } from '../../src/keri/core/salter.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import {
     d,
@@ -14,8 +14,8 @@ import {
     serializeIssExnAttachment,
     Serials,
     versify,
-} from '../../src';
-import { createMockFetch, mockCredential } from './test-utils';
+} from '../../src/index.ts';
+import { createMockFetch, mockCredential } from './test-utils.ts';
 
 const fetchMock = createMockFetch();
 

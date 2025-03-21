@@ -1,8 +1,8 @@
-import { Matter, MatterArgs, MtrDex } from './matter';
-import { EmptyMaterialError } from './kering';
-import { Dict, Ilks } from './core';
-import { sizeify } from './serder';
-import { Verfer } from './verfer';
+import { Matter, MatterArgs, MtrDex } from './matter.ts';
+import { EmptyMaterialError } from './kering.ts';
+import { Dict, Ilks } from './core.ts';
+import { sizeify } from './serder.ts';
+import { Verfer } from './verfer.ts';
 import { Buffer } from 'buffer';
 import { blake3 } from '@noble/hashes/blake3';
 
@@ -147,9 +147,7 @@ export class Prefixer extends Matter {
         sad['i'] = ''.padStart(Matter.Sizes.get(MtrDex.Blake3_256)!.fs!, Dummy);
         sad['d'] = sad['i'];
         const [raw] = sizeify(sad);
-        const dig = Buffer.from(
-            blake3.create({ dkLen: 32 }).update(raw).digest()
-        );
+        const dig = blake3.create({ dkLen: 32 }).update(raw).digest();
         return [dig, MtrDex.Blake3_256];
     }
 

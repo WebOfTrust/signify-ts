@@ -1,5 +1,5 @@
 import libsodium from 'libsodium-wrappers-sumo';
-import { vdr } from '../../src/keri/core/vdring';
+import { vdr } from '../../src/keri/core/vdring.ts';
 import { strict as assert } from 'assert';
 
 describe('vdr', () => {

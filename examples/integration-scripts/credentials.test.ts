@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 import { Ilks, Saider, Serder, SignifyClient } from 'signify-ts';
-import { resolveEnvironment } from './utils/resolve-env';
+import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertNotifications,
     assertOperations,
@@ -11,10 +11,10 @@ import {
     resolveOobi,
     waitForNotifications,
     waitOperation,
-} from './utils/test-util';
-import { retry } from './utils/retry';
+} from './utils/test-util.ts';
+import { retry } from './utils/retry.ts';
 import { randomUUID } from 'crypto';
-import { step } from './utils/test-step';
+import { step } from './utils/test-step.ts';
 
 const { vleiServerUrl } = resolveEnvironment();
 
