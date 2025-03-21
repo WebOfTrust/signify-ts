@@ -33,14 +33,11 @@
   ],
   "scripts": {
     "start": "npm run build -- --watch",
-    "build:esm": "tsc -p tsconfig.build-esm.json",
-    "build:cjs": "tsc -p tsconfig.build-cjs.json",
-    "build": "npm run build:esm && npm run build:cjs && npm run typecheck",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.json --noEmit",
     "test": "vitest",
     "prepare": "npm run build",
     "test:integration": "npm -w examples/integration-scripts test",
     "lint": "eslint src test examples/integration-scripts",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
     "generate-docs": "typedoc src/index.ts",
     "pretty": "prettier --write .",
     "pretty:check": "prettier --check ."
