@@ -25,7 +25,7 @@ npm run build
 # without having to commit changes to the repo. Which is useful for tagged
 # and scoped package releases.
 publish_dir="$(mktemp -d)"
-cp -r LICENSE dist package.json package-lock.json "${publish_dir}/"
+cp -r README.md LICENSE dist package.json package-lock.json "${publish_dir}/"
 jq ".version = \"${version}\" | .name = \"${name}\" | del(.scripts.prepare)" package.json > "${publish_dir}/package.json"
 
 if [ -z "$DRY_RUN" ]; then
