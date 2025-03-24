@@ -29,5 +29,6 @@ jobs:
       - name: Publish package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_PUBLISH_TAG: ${{ inputs.dist-tag }}
           NPM_PACKAGE_SCOPE: ${{ vars.NPM_PACKAGE_SCOPE }}
         run: ./publish.sh
