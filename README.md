@@ -166,7 +166,6 @@ npm notice Publishing to https://registry.npmjs.org/ with tag dev and default ac
 
 Set the `NPM_PUBLISH_TAG` to `latest` to skip the commit hash suffix in the version:
 
-
 ```bash
 NPM_PUBLISH_TAG=latest NPM_PACKAGE_SCOPE=@myorg DRY_RUN=1 ./publish.sh
 npm notice Tarball Details
