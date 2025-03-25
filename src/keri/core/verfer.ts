@@ -3,6 +3,13 @@ import { Matter, MatterArgs, MtrDex } from './matter.ts';
 import { p256 } from '@noble/curves/p256';
 import { b } from './core.ts';
 
+const VERFER_CODES = new Set([
+    MtrDex.Ed25519N,
+    MtrDex.Ed25519,
+    MtrDex.ECDSA_256r1N,
+    MtrDex.ECDSA_256r1,
+]);
+
 /**
  * @description  Verfer :sublclass of Matter,helps to verify signature of serialization
  *  using .raw as verifier key and .code as signature cypher suite
@@ -11,14 +18,7 @@ export class Verfer extends Matter {
     constructor({ raw, code, qb64, qb64b, qb2 }: MatterArgs) {
         super({ raw, code, qb64, qb64b, qb2 });
 
-        if (
-            ![
-                MtrDex.Ed25519N,
-                MtrDex.Ed25519,
-                MtrDex.ECDSA_256r1N,
-                MtrDex.ECDSA_256r1,
-            ].includes(this.code)
-        ) {
+        if (!VERFER_CODES.has(this.code)) {
             throw new Error(`Unsupported code = ${this.code} for verifier.`);
         }
     }
