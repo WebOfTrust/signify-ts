@@ -1,6 +1,7 @@
 import libsodium from 'libsodium-wrappers-sumo';
 import { Matter, MatterArgs, MtrDex } from './matter.ts';
-import secp256r1 from 'ecdsa-secp256r1';
+import { p256 } from '@noble/curves/p256';
+import { b } from './core.ts';
 
 /**
  * @description  Verfer :sublclass of Matter,helps to verify signature of serialization
@@ -22,7 +23,7 @@ export class Verfer extends Matter {
         }
     }
 
-    verify(sig: Uint8Array, ser: Uint8Array) {
+    verify(sig: Uint8Array, ser: Uint8Array | string): boolean {
         switch (this.code) {
             case MtrDex.Ed25519:
             case MtrDex.Ed25519N: {
@@ -34,8 +35,8 @@ export class Verfer extends Matter {
             }
             case MtrDex.ECDSA_256r1:
             case MtrDex.ECDSA_256r1N: {
-                const publicKey = secp256r1.fromCompressedPublicKey(this.raw);
-                return publicKey.verify(ser, sig);
+                const message = typeof ser === 'string' ? b(ser) : ser;
+                return p256.verify(sig, message, this.raw);
             }
             default:
                 throw new Error(
