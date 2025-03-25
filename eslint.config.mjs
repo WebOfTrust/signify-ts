@@ -3,11 +3,29 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import globals from 'globals';
 
 export default tseslint.config(
     eslint.configs.recommended,
     tseslint.configs.recommended,
     { rules: prettier.rules },
+    {
+        rules: {
+            'no-undef': 'error',
+        },
+    },
+    {
+        files: ['src/**'],
+        languageOptions: {
+            globals: globals['shared-node-browser'],
+        },
+    },
+    {
+        files: ['test/**', 'test-integration/**'],
+        languageOptions: {
+            globals: globals.node,
+        },
+    },
     {
         // These are files with more lenient lint config because they have not been "fixed" yet
         // Once a directory here is fixed, it should be removed from here so the strict rules applies

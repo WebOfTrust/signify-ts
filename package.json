@@ -48,6 +48,7 @@
     "bip39": "^3.1.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
+    "globals": "^16.0.0",
     "minami": "^1.2.3",
     "prettier": "^3.5.3",
     "ts-mockito": "^2.6.1",
