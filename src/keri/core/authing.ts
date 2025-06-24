@@ -55,6 +55,12 @@ export class SignedHeaderAuthenticator extends Authenticator {
     }
 
     async verify(request: Request, response: Response, _local: string, remote: string): Promise<Response> {
+        if (response.status === 401) {
+            throw new Error(
+                `HTTP ${request.method} ${new URL(request.url).pathname} - ${response.status} ${response.statusText}`
+            );
+        }
+
         if (!this.verifyHeaders(
             response.headers,
             request.method,
