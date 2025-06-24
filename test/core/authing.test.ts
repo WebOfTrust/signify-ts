@@ -1,15 +1,24 @@
-import { assert, describe, expect, it, test, vitest } from 'vitest';
+import { assert, describe, expect, test, vitest } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { b, d } from '../../src/keri/core/core.ts';
-import { EssrAuthenticator, SignedHeaderAuthenticator } from '../../src/keri/core/authing.ts';
+import {
+    EssrAuthenticator,
+    SignedHeaderAuthenticator,
+} from '../../src/keri/core/authing.ts';
 import * as utilApi from '../../src/keri/core/utils.ts';
 import { Verfer } from '../../src/keri/core/verfer.ts';
-import { HEADER_SIG, HEADER_SIG_DESTINATION, HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../../src/keri/core/httping.ts';
+import {
+    HEADER_SIG,
+    HEADER_SIG_DESTINATION,
+    HEADER_SIG_INPUT,
+    HEADER_SIG_SENDER,
+    HEADER_SIG_TIME,
+} from '../../src/keri/core/httping.ts';
 import { designature } from '../../src/keri/end/ending.ts';
 import { Diger } from '../../src/keri/core/diger.ts';
 import { Cigar } from '../../src/keri/core/cigar.ts';
-import { MtrDex } from '../../src/keri/core/matter.ts';;
+import { MtrDex } from '../../src/keri/core/matter.ts';
 
 // prettier-ignore
 const essrPayload = new Uint8Array([134,89,250,128,50,135,60,33,214,52,216,194,200,42,118,33,91,130,129,141,158,102,96,66,95,163,32,235,6,239,150,82,59,67,100,70,116,25,10,180,189,26,104,114,166,121,247,185,12,105,147,232,68,248,238,58,53,200,129,173,34,216,228,153,190,240,53,53,134,194,69,152,21,209,3,225,5,221,57,220,159,249,90,85,73,197,64,155,168,217,24,111,211,100,129,18,21,57,70,152,77,65,156,71,84,186,222,81,82,204,120,176,67,173,207,149,39,180,129,192,22,194,84,57,226,15,4,48,240,133,54,170,34,211,204,141,15,204,78]);
@@ -19,7 +28,7 @@ const essrPayloadWrongSender = new Uint8Array([226,12,182,1,251,73,45,83,28,139,
 const essrPayloadNoSender = new Uint8Array([211,17,77,180,175,67,71,163,82,144,48,142,91,91,10,103,94,105,147,205,199,227,247,67,90,111,35,140,32,123,217,84,18,58,68,206,7,132,222,70,220,110,73,116,30,5,40,45,108,247,129,190,211,112,159,123,207,246,231,0,1,27,188,210,135,4,238,102,130,218,20,5,60]);
 
 describe('SignedHeaderAuthenticator.verify', () => {
-    it('verify signature on Response', async () => {
+    test('verify signature on Response', async () => {
         await libsodium.ready;
         const salt = '0123456789abcdef';
         const salter = new Salter({ raw: b(salt) });
@@ -56,18 +65,32 @@ describe('SignedHeaderAuthenticator.verify', () => {
         const authn = new SignedHeaderAuthenticator(signer, verfer);
         const request = new Request('http://127.0.0.1:3901/identifiers/aid1');
         const response = new Response(null, {
-            headers
+            headers,
         });
 
-        await expect(authn.verify(request, response, "notrelevant", "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei")).resolves.toBe(response);
-        await expect(authn.verify(request, response, "notrelevant", "EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs")).rejects.toThrowError('message from a different remote agent');
+        await expect(
+            authn.verify(
+                request,
+                response,
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).resolves.toBe(response);
+        await expect(
+            authn.verify(
+                request,
+                response,
+                'notrelevant',
+                'EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs'
+            )
+        ).rejects.toThrowError('message from a different remote agent');
 
         // @TODO - foconnor: missing tests... missing headers, wrong signature etc
     });
 });
 
 describe('SignedHeaderAuthenticator.prepare', () => {
-    it('Create signed headers for a request', async () => {
+    test('Create signed headers for a request', async () => {
         await libsodium.ready;
         const salt = '0123456789abcdef';
         const salter = new Salter({ raw: b(salt) });
@@ -90,10 +113,14 @@ describe('SignedHeaderAuthenticator.prepare', () => {
             .mockReturnValue(new Date('2021-01-01T00:00:00.000000+00:00'));
 
         const authn = new SignedHeaderAuthenticator(signer, verfer);
-        const request = await authn.prepare(new Request('http://127.0.0.1:3903/boot', {
-            method: 'POST',
-            headers,
-        }), "notrelevant", "notrelevant");
+        const request = await authn.prepare(
+            new Request('http://127.0.0.1:3903/boot', {
+                method: 'POST',
+                headers,
+            }),
+            'notrelevant',
+            'notrelevant'
+        );
 
         const expectedSignatureInput = [
             'signify=("@method" "@path" "signify-resource" "signify-timestamp")',
@@ -101,7 +128,10 @@ describe('SignedHeaderAuthenticator.prepare', () => {
             'keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt"',
             'alg="ed25519"',
         ].join(';');
-        assert.equal(request.headers.get('Signature-Input'), expectedSignatureInput);
+        assert.equal(
+            request.headers.get('Signature-Input'),
+            expectedSignatureInput
+        );
 
         const expectedSignature = [
             'indexed="?0"',
@@ -141,7 +171,11 @@ describe('ESSR Authenticator', () => {
             method: 'GET',
         });
 
-        const wrapperGet = await authn.prepare(getReq, 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose', 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
+        const wrapperGet = await authn.prepare(
+            getReq,
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+        );
         assert.equal(wrapperGet.url, 'http://127.0.0.1:3901/');
         assert.equal(wrapperGet.method, 'POST');
         assert.equal(
@@ -180,10 +214,7 @@ describe('ESSR Authenticator', () => {
         assert.instanceOf(cig, Cigar);
 
         assert.equal(
-            signer.verfer.verify(
-                cig.raw,
-                JSON.stringify(payload)
-            ),
+            signer.verfer.verify(cig.raw, JSON.stringify(payload)),
             true
         );
 
@@ -240,17 +271,20 @@ content-type: text/plain;charset=UTF-8\r
         const headers = new Headers();
         await expect(
             authn.verify(
-                new Request("http://test.com/xyz"),
-                new Response(null, { headers, status: 401, statusText: "Unauthorized" }),
+                new Request('http://test.com/xyz'),
+                new Response(null, {
+                    headers,
+                    status: 401,
+                    statusText: 'Unauthorized',
+                }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
             )
         ).rejects.toThrow('HTTP GET /xyz - 401 Unauthorized');
 
-
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -263,7 +297,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -277,7 +311,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -291,7 +325,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -307,7 +341,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -323,7 +357,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -333,7 +367,7 @@ content-type: text/plain;charset=UTF-8\r
         headers.set(HEADER_SIG_TIME, '2025-01-17T11:57:56.415000+00:00');
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(null, { headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -346,7 +380,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(essrPayloadNoSender, { status: 200, headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -362,7 +396,7 @@ content-type: text/plain;charset=UTF-8\r
         );
         await expect(
             authn.verify(
-                new Request("http://test.com"),
+                new Request('http://test.com'),
                 new Response(essrPayloadWrongSender, { status: 200, headers }),
                 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -377,7 +411,7 @@ content-type: text/plain;charset=UTF-8\r
             'indexed="?0";signify="0BBQZQrG5mhWU2w9nSC45Dd-PIOYKjtD3KFY-arNKj0whNrUhdlmW0_m_Y487uOdDBR6_XbR0Ey2TqXNt9gAvEMB'
         );
         const unwrapped = await authn.verify(
-            new Request("http://test.com"),
+            new Request('http://test.com'),
             new Response(essrPayload, { status: 200, headers }),
             'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
             'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
@@ -429,7 +463,7 @@ signify-resource: ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose\r
     test('Can serialise a POST request with a text body', async () => {
         const request = new Request('http://127.0.0.1:3901/oobis', {
             method: 'POST',
-            body: "Hi",
+            body: 'Hi',
             headers: {
                 [HEADER_SIG_SENDER]:
                     'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
@@ -448,56 +482,74 @@ Hi`
 
 describe('EssrAuthenticator.deserializeResponse', () => {
     test('Can deserialise a GET response with no headers', async () => {
-        const response = EssrAuthenticator.deserializeResponse(`HTTP/1.1 204 No Content\r
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 204 No Content\r
 \r
-`
-        );
+`);
         assert.equal(response.status, 204);
-        assert.equal(response.statusText, "No Content");
+        assert.equal(response.statusText, 'No Content');
         assert.equal(response.headers.has('content-type'), false);
         assert.equal(response.headers.has('signify-resource'), false);
         assert.equal(response.body, null);
     });
 
     test('Can deserialise a GET response with headers', async () => {
-        const response = EssrAuthenticator.deserializeResponse(`HTTP/1.1 204 No Content\r
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 204 No Content\r
 content-type: text/plain;charset=UTF-8\r
 signify-resource: ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose\r
 \r
-`
-        );
+`);
         assert.equal(response.status, 204);
-        assert.equal(response.statusText, "No Content");
-        assert.equal(response.headers.get('content-type'), "text/plain;charset=UTF-8");
-        assert.equal(response.headers.get('signify-resource'), "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose");
+        assert.equal(response.statusText, 'No Content');
+        assert.equal(
+            response.headers.get('content-type'),
+            'text/plain;charset=UTF-8'
+        );
+        assert.equal(
+            response.headers.get('signify-resource'),
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+        );
         assert.equal(response.body, null);
     });
 
-        test('Can deserialise a POST response with a JSON body', async () => {
-        const response = EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
+    test('Can deserialise a POST response with a JSON body', async () => {
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
 content-type: text/plain;charset=UTF-8\r
 signify-resource: ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose\r
 \r
-{"a":1}`
-        );
+{"a":1}`);
         assert.equal(response.status, 200);
-        assert.equal(response.statusText, "OK");
-        assert.equal(response.headers.get('content-type'), "text/plain;charset=UTF-8");
-        assert.equal(response.headers.get('signify-resource'), "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose");
+        assert.equal(response.statusText, 'OK');
+        assert.equal(
+            response.headers.get('content-type'),
+            'text/plain;charset=UTF-8'
+        );
+        assert.equal(
+            response.headers.get('signify-resource'),
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+        );
         assert.deepEqual(await response.json(), { a: 1 });
     });
 
-        test('Can deserialise a POST response with a text body', async () => {
-        const response = EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
+    test('Can deserialise a POST response with a text body', async () => {
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
 content-type: text/plain;charset=UTF-8\r
 signify-resource: ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose\r
 \r
-Hi`
-        );
+Hi`);
         assert.equal(response.status, 200);
-        assert.equal(response.statusText, "OK");
-        assert.equal(response.headers.get('content-type'), "text/plain;charset=UTF-8");
-        assert.equal(response.headers.get('signify-resource'), "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose");
-        assert.deepEqual(await response.text(), "Hi");
+        assert.equal(response.statusText, 'OK');
+        assert.equal(
+            response.headers.get('content-type'),
+            'text/plain;charset=UTF-8'
+        );
+        assert.equal(
+            response.headers.get('signify-resource'),
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+        );
+        assert.deepEqual(await response.text(), 'Hi');
     });
 });

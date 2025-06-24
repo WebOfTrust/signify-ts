@@ -23,14 +23,17 @@ import {
     HEADER_SIG_INPUT,
     HEADER_SIG_TIME,
     HEADER_SIG_DESTINATION,
-    HEADER_SIG_SENDER
+    HEADER_SIG_SENDER,
 } from '../../src/keri/core/httping.ts';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { createMockFetch } from './test-utils.ts';
 import { Cigar } from '../../src/keri/core/cigar.ts';
 import { Siger } from '../../src/keri/core/siger.ts';
 import { Signage, signature } from '../../src/keri/end/ending.ts';
-import { EssrAuthenticator, SignedHeaderAuthenticator } from '../../src/keri/core/authing.ts';
+import {
+    EssrAuthenticator,
+    SignedHeaderAuthenticator,
+} from '../../src/keri/core/authing.ts';
 
 const fetchMock = createMockFetch();
 
@@ -136,7 +139,14 @@ describe('SignifyClient', () => {
         assert(client.groups() instanceof Groups);
         assert(client.authn instanceof SignedHeaderAuthenticator);
 
-        const essrClient = new SignifyClient(url, bran, Tier.low, boot_url, undefined, AuthMode.ESSR);
+        const essrClient = new SignifyClient(
+            url,
+            bran,
+            Tier.low,
+            boot_url,
+            undefined,
+            AuthMode.ESSR
+        );
         await essrClient.boot();
         await essrClient.connect();
         assert(essrClient.authn instanceof EssrAuthenticator);
@@ -165,7 +175,7 @@ describe('SignifyClient', () => {
             'EGFi9pCcRaLK8dPh5S7JP9Em62fBMiR1l4gW1ZazuuAO'
         );
     });
-    
+
     test('Create signed headers HTTP request', async () => {
         await libsodium.ready;
         const bran = '0123456789abcdefghijk';
@@ -230,43 +240,68 @@ describe('SignifyClient', () => {
     });
 
     test('Client authenticated fetch', async () => {
-        const prepareSpy = vi.spyOn(SignedHeaderAuthenticator.prototype, 'prepare');
-        const verifySpy = vi.spyOn(SignedHeaderAuthenticator.prototype, 'verify');
+        const prepareSpy = vi.spyOn(
+            SignedHeaderAuthenticator.prototype,
+            'prepare'
+        );
+        const verifySpy = vi.spyOn(
+            SignedHeaderAuthenticator.prototype,
+            'verify'
+        );
 
         await libsodium.ready;
         const bran = '0123456789abcdefghijk';
         const client = new SignifyClient(url, bran, Tier.low, boot_url);
 
-        await expect(client.fetch('/identifiers', 'GET', undefined)).rejects.toThrow('Client needs to call connect first');
+        await expect(
+            client.fetch('/identifiers', 'GET', undefined)
+        ).rejects.toThrow('Client needs to call connect first');
 
         await client.connect();
 
-        const getResponse = await client.fetch('/identifiers', 'GET', undefined);
-        
-        expect(prepareSpy).toHaveBeenCalledWith(expect.any(Request), "ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose", "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei");
+        const getResponse = await client.fetch(
+            '/identifiers',
+            'GET',
+            undefined
+        );
+
+        expect(prepareSpy).toHaveBeenCalledWith(
+            expect.any(Request),
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+        );
         let request = prepareSpy.mock.calls[0][0];
 
         expect(request.url).toBe('http://127.0.0.1:3901/identifiers');
         expect(request.method).toBe('GET');
-        expect(request.headers.get(HEADER_SIG_SENDER)).toBe('ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
+        expect(request.headers.get(HEADER_SIG_SENDER)).toBe(
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+        );
         expect(request.headers.has(HEADER_SIG_TIME)).toBe(true);
         expect(request.headers.has('Content-Type')).toBe(false);
         expect(request.headers.has('Content-Length')).toBe(false);
         expect(request.body).toBe(null);
-        
-        expect(verifySpy).toHaveBeenCalledWith(expect.any(Request), expect.any(Response), expect.any(String), expect.any(String));
-        expect(verifySpy.mock.calls[0][0]).toBe(request);  // Pass baseRequest, not wrapped request (for case of ESSR)
+
+        expect(verifySpy).toHaveBeenCalledWith(
+            expect.any(Request),
+            expect.any(Response),
+            expect.any(String),
+            expect.any(String)
+        );
+        expect(verifySpy.mock.calls[0][0]).toBe(request); // Pass baseRequest, not wrapped request (for case of ESSR)
         expect(verifySpy.mock.calls[0][1]).toBe(getResponse);
 
         await client.fetch('/oobis', 'POST', {
             url: 'http://localhost:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
             alias: 'wit',
         });
-        request = prepareSpy.mock.calls[2][0];  // createFetchMock also calls prepare to get valid signed headers, so skip to 2
+        request = prepareSpy.mock.calls[2][0]; // createFetchMock also calls prepare to get valid signed headers, so skip to 2
 
         expect(request.url).toBe('http://127.0.0.1:3901/oobis');
         expect(request.method).toBe('POST');
-        expect(request.headers.get(HEADER_SIG_SENDER)).toBe('ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
+        expect(request.headers.get(HEADER_SIG_SENDER)).toBe(
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+        );
         expect(request.headers.has(HEADER_SIG_TIME)).toBe(true);
         expect(request.headers.get('Content-Type')).toBe('application/json');
         expect(request.headers.get('Content-Length')).toBe('95');
@@ -277,17 +312,24 @@ describe('SignifyClient', () => {
 
         const extraHeaders = new Headers([
             ['A', '1'],
-            ['B', '2']
+            ['B', '2'],
         ]);
-        await client.fetch('/oobis', 'POST', {
-            url: 'http://localhost:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-            alias: 'wit',
-        }, extraHeaders);
+        await client.fetch(
+            '/oobis',
+            'POST',
+            {
+                url: 'http://localhost:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+                alias: 'wit',
+            },
+            extraHeaders
+        );
         request = prepareSpy.mock.calls[4][0];
 
         expect(request.url).toBe('http://127.0.0.1:3901/oobis');
         expect(request.method).toBe('POST');
-        expect(request.headers.get(HEADER_SIG_SENDER)).toBe('ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose');
+        expect(request.headers.get(HEADER_SIG_SENDER)).toBe(
+            'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose'
+        );
         expect(request.headers.has(HEADER_SIG_TIME)).toBe(true);
         expect(request.headers.get('Content-Type')).toBe('application/json');
         expect(request.headers.get('Content-Length')).toBe('95');
@@ -298,24 +340,40 @@ describe('SignifyClient', () => {
             alias: 'wit',
         });
 
-        verifySpy.mockResolvedValueOnce(new Response('Error info', {
-            status: 400,
-            statusText: 'Bad Request',
-        }));
-        expect(client.fetch('/identifiers', 'GET', undefined)).rejects.toThrowError('HTTP GET /identifiers - 400 Bad Request - Error info');
+        verifySpy.mockResolvedValueOnce(
+            new Response('Error info', {
+                status: 400,
+                statusText: 'Bad Request',
+            })
+        );
+        expect(
+            client.fetch('/identifiers', 'GET', undefined)
+        ).rejects.toThrowError(
+            'HTTP GET /identifiers - 400 Bad Request - Error info'
+        );
     });
 
     test('ESSR protected fetch', async () => {
         await libsodium.ready;
         const bran = '0123456789abcdefghijk';
-        const client = new SignifyClient(url, bran, Tier.low, boot_url, undefined, AuthMode.ESSR);
+        const client = new SignifyClient(
+            url,
+            bran,
+            Tier.low,
+            boot_url,
+            undefined,
+            AuthMode.ESSR
+        );
 
         await client.connect();
 
         const headers = new Headers([
             [HEADER_SIG_TIME, '2025-01-16T16:37:10.345000+00:00'],
             [HEADER_SIG_SENDER, 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'],
-            [HEADER_SIG_DESTINATION, 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose']
+            [
+                HEADER_SIG_DESTINATION,
+                'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
+            ],
         ]);
 
         const signed = signWithAgent(
@@ -345,7 +403,9 @@ describe('SignifyClient', () => {
             alias: 'wit',
         });
         expect(response.status).toBe(202);
-        expect(response.headers.get(HEADER_SIG_SENDER)).toBe('EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei');
+        expect(response.headers.get(HEADER_SIG_SENDER)).toBe(
+            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+        );
         expect((await response.text()).replace(/ /g, '')).toBe(
             JSON.stringify({
                 name: 'oobi.0ABZPhjVcllT3Sa2u61PRpqd',

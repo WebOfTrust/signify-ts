@@ -1,4 +1,8 @@
-import { EssrAuthenticator, SignedHeaderAuthenticator, Authenticator } from '../core/authing.ts';
+import {
+    EssrAuthenticator,
+    SignedHeaderAuthenticator,
+    Authenticator,
+} from '../core/authing.ts';
 import { HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../core/httping.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
 import { Tier } from '../core/salter.ts';
@@ -31,8 +35,8 @@ class State {
 }
 
 export enum AuthMode {
-    SignedHeaders = "SIGNED_HEADERS",
-    ESSR = "ESSR"
+    SignedHeaders = 'SIGNED_HEADERS',
+    ESSR = 'ESSR',
 }
 
 /**
@@ -172,7 +176,7 @@ export class SignifyClient {
             this.authn = new EssrAuthenticator(
                 this.controller.signer,
                 this.agent.verfer!
-            )
+            );
         }
     }
 
@@ -219,13 +223,24 @@ export class SignifyClient {
             body,
             headers,
         });
-        const request = await this.authn.prepare(baseRequest, this.controller.pre, this.agent!.pre);
+        const request = await this.authn.prepare(
+            baseRequest,
+            this.controller.pre,
+            this.agent!.pre
+        );
 
-        const res = await this.authn.verify(baseRequest, await fetch(request), this.controller.pre, this.agent!.pre);
+        const res = await this.authn.verify(
+            baseRequest,
+            await fetch(request),
+            this.controller.pre,
+            this.agent!.pre
+        );
 
         if (!res.ok) {
             const error = await res.text();
-            throw new Error(`HTTP ${method} ${path} - ${res.status} ${res.statusText} - ${error}`);
+            throw new Error(
+                `HTTP ${method} ${path} - ${res.status} ${res.statusText} - ${error}`
+            );
         }
 
         return res;
@@ -265,11 +280,15 @@ export class SignifyClient {
             new Date().toISOString().replace('Z', '000+00:00')
         );
 
-        return await authenticator.prepare(new Request(url, {
-            headers,
-            method: req.method ?? 'GET',
-            body: req.body,
-        }), hab.prefix, hab.prefix);
+        return await authenticator.prepare(
+            new Request(url, {
+                headers,
+                method: req.method ?? 'GET',
+                body: req.body,
+            }),
+            hab.prefix,
+            hab.prefix
+        );
     }
 
     /**

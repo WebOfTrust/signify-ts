@@ -303,10 +303,14 @@ export function createMockFetch(): Mock<typeof globalThis.fetch> {
             );
 
             const authn = new SignedHeaderAuthenticator(signer, signer.verfer);
-            const req = await authn.prepare(new Request(url, {
-                headers,
-                method
-            }), "notrelevant", "notrelevant");
+            const req = await authn.prepare(
+                new Request(url, {
+                    headers,
+                    method,
+                }),
+                'notrelevant',
+                'notrelevant'
+            );
 
             if (url.pathname.startsWith('/credentials')) {
                 return Response.json(mockCredential, {

@@ -42,7 +42,10 @@ describe('Coring', () => {
         await oobis.get('aid', 'agent');
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.instanceOf(lastCall[0], Request);
-        assert.equal(lastCall[0].url, url + '/identifiers/aid/oobis?role=agent');
+        assert.equal(
+            lastCall[0].url,
+            url + '/identifiers/aid/oobis?role=agent'
+        );
         assert.equal(lastCall[0].method, 'GET');
 
         await oobis.resolve('http://oobiurl.com');
