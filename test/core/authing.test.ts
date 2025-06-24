@@ -39,53 +39,133 @@ describe('SignedHeaderAuthenticator.verify', () => {
         const headers = new Headers([
             ['Content-Length', '898'],
             ['Content-Type', 'application/json'],
-            [
-                'Signature',
-                [
-                    'indexed="?0"',
-                    'signify="0BDLh8QCytVBx1YMam4Vt8s4b9HAW1dwfE4yU5H_w1V6gUvPBoVGWQlIMdC16T3WFWHDHCbMcuceQzrr6n9OULsK"',
-                ].join(';'),
-            ],
-            [
-                'Signature-Input',
-                [
-                    'signify=("signify-resource" "@method" "@path" "signify-timestamp")',
-                    'created=1684715820',
-                    'keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei"',
-                    'alg="ed25519"',
-                ].join(';'),
-            ],
-            [
-                'Signify-Resource',
-                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei',
-            ],
-            ['Signify-Timestamp', '2023-05-22T00:37:00.248708+00:00'],
+            [HEADER_SIG_TIME, '2023-05-22T00:37:00.248708+00:00'],
         ]);
 
         const authn = new SignedHeaderAuthenticator(signer, verfer);
         const request = new Request('http://127.0.0.1:3901/identifiers/aid1');
-        const response = new Response(null, {
-            headers,
-        });
 
+        // Missing Signify-Resource
         await expect(
             authn.verify(
                 request,
-                response,
+                new Response(null, {
+                    headers,
+                    status: 401,
+                    statusText: 'Unauthorized',
+                }),
                 'notrelevant',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
             )
-        ).resolves.toBe(response);
+        ).rejects.toThrowError('HTTP GET /identifiers/aid1 - 401 Unauthorized');
+
+        // Missing Signify-Resource
         await expect(
             authn.verify(
                 request,
-                response,
+                new Response(null, { headers }),
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).rejects.toThrowError('message from a different remote agent');
+
+        // Incorrect Signify-Resource
+        headers.set(
+            HEADER_SIG_SENDER,
+            'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+        );
+        await expect(
+            authn.verify(
+                request,
+                new Response(null, { headers }),
                 'notrelevant',
                 'EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs'
             )
         ).rejects.toThrowError('message from a different remote agent');
 
-        // @TODO - foconnor: missing tests... missing headers, wrong signature etc
+        await expect(
+            authn.verify(
+                request,
+                new Response(null, { headers }),
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).rejects.toThrowError('response verification failed');
+
+        // Missing signify marker
+        headers.set(
+            HEADER_SIG_INPUT,
+            [
+                'signify=("signify-resource" "@method" "@path" "signify-timestamp")',
+                'created=1684715820',
+                'keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei"',
+                'alg="ed25519"',
+            ].join(';')
+        );
+        await expect(
+            authn.verify(
+                request,
+                new Response(null, { headers }),
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).rejects.toThrowError('response verification failed');
+
+        // Missing signature
+        headers.set(
+            HEADER_SIG_INPUT,
+            [
+                'signify=("signify-resource" "@method" "@path" "signify-timestamp")',
+                'created=1684715820',
+                'keyid="EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei"',
+                'alg="ed25519"',
+            ].join(';')
+        );
+        await expect(
+            authn.verify(
+                request,
+                new Response(null, { headers }),
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).rejects.toThrowError('response verification failed');
+
+        // Invalid signature
+        headers.set(
+            HEADER_SIG,
+            [
+                'indexed="?0"',
+                'signify="0BDLh8QCytVBx1YMam4Vt8s4b9HAW1dwfE4yU5H_w1V6gUvPBoVGWQlIMdC16T3WFWHDHCbMcuceQzrr6n9OULXX"',
+            ].join(';')
+        );
+        await expect(
+            authn.verify(
+                request,
+                new Response(null, { headers }),
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).rejects.toThrowError(
+            'Signature for EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei invalid.'
+        );
+
+        // Good
+        headers.set(
+            HEADER_SIG,
+            [
+                'indexed="?0"',
+                'signify="0BDLh8QCytVBx1YMam4Vt8s4b9HAW1dwfE4yU5H_w1V6gUvPBoVGWQlIMdC16T3WFWHDHCbMcuceQzrr6n9OULsK"',
+            ].join(';')
+        );
+        const response = new Response(null, { headers });
+        expect(
+            await authn.verify(
+                request,
+                response,
+                'notrelevant',
+                'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
+            )
+        ).toBe(response);
     });
 });
 
