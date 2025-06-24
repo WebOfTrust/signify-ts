@@ -39,26 +39,27 @@ describe('Credentialing', () => {
                 '-i': { $eq: 'EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX' },
             },
             sort: [{ '-s': 1 }],
-            limit: 25,
             skip: 5,
+            limit: 25,
         };
         await credentials.list(kargs);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        let lastBody = JSON.parse(lastCall[1]!.body!.toString());
-        assert.equal(lastCall[0]!, url + '/credentials/query');
-        assert.equal(lastCall[1]!.method, 'POST');
-        assert.deepEqual(lastBody, kargs);
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/credentials/query');
+        assert.equal(lastCall[0].method, 'POST');
+        assert.deepEqual(await lastCall[0].text(), JSON.stringify(kargs));
 
         await credentials.get(
             'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao',
             true
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/credentials/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[0].method, 'GET');
 
         const registry = 'EP10ooRj0DJF0HWZePEYMLPl-arMV-MAoTKK-o3DXbgX';
         const schema = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
@@ -69,9 +70,10 @@ describe('Credentialing', () => {
             a: { i: isuee, LEI: '1234' },
         });
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/credentials');
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.instanceOf(lastCall[0], Request);
+        let lastBody = JSON.parse(await lastCall[0].text());
+        assert.equal(lastCall[0].url, url + '/identifiers/aid1/credentials');
+        assert.equal(lastCall[0].method, 'POST');
         assert.equal(lastBody.acdc.ri, registry);
         assert.equal(lastBody.acdc.s, schema);
         assert.equal(lastBody.acdc.a.i, isuee);
@@ -89,12 +91,13 @@ describe('Credentialing', () => {
         const credential = lastBody.acdc.i;
         await credentials.revoke('aid1', credential);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.instanceOf(lastCall[0], Request);
+        lastBody = JSON.parse(await lastCall[0].text());
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/identifiers/aid1/credentials/' + credential
         );
-        assert.equal(lastCall[1]!.method, 'DELETE');
+        assert.equal(lastCall[0].method, 'DELETE');
         assert.equal(lastBody.rev.s, '1');
         assert.equal(lastBody.rev.t, 'rev');
         assert.equal(
@@ -119,22 +122,24 @@ describe('Credentialing', () => {
 
         await credentials.state(mockCredential.sad.ri, mockCredential.sad.d);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url +
                 '/registries/EGK216v1yguLfex4YRFnG7k1sXRjh3OKY7QqzdKsx7df/EMwcsEMUEruPXVwPCW7zmqmN8m0I3CihxolBm-RDrsJo'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
-        assert.equal(lastCall[1]!.body, null);
+        assert.equal(lastCall[0].method, 'GET');
+        assert.equal(lastCall[0].body, null);
 
         await credentials.delete(mockCredential.sad.d);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/credentials/EMwcsEMUEruPXVwPCW7zmqmN8m0I3CihxolBm-RDrsJo'
         );
-        assert.equal(lastCall[1]!.method, 'DELETE');
-        assert.equal(lastCall[1]!.body, undefined);
+        assert.equal(lastCall[0].method, 'DELETE');
+        assert.equal(lastCall[0].body, undefined);
     });
 });
 
@@ -263,8 +268,9 @@ describe('Ipex', () => {
 
         await ipex.submitGrant('multisig', ng, ngsigs, ngend, [holder]);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0],
+            lastCall[0].url,
             'http://127.0.0.1:3901/identifiers/multisig/ipex/grant'
         );
 
@@ -296,8 +302,9 @@ describe('Ipex', () => {
 
         await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0],
+            lastCall[0].url,
             'http://127.0.0.1:3901/identifiers/multisig/ipex/admit'
         );
 
@@ -380,8 +387,9 @@ describe('Ipex', () => {
             await ipex.submitApply('multisig', apply, applySigs, [holder]);
             let lastCall =
                 fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+            assert.instanceOf(lastCall[0], Request);
             assert.equal(
-                lastCall[0],
+                lastCall[0].url,
                 'http://127.0.0.1:3901/identifiers/multisig/ipex/apply'
             );
 
@@ -435,8 +443,9 @@ describe('Ipex', () => {
                 holder,
             ]);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+            assert.instanceOf(lastCall[0], Request);
             assert.equal(
-                lastCall[0],
+                lastCall[0].url,
                 'http://127.0.0.1:3901/identifiers/multisig/ipex/offer'
             );
 
@@ -472,8 +481,9 @@ describe('Ipex', () => {
 
             await ipex.submitAgree('multisig', agree, agreeSigs, [holder]);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+            assert.instanceOf(lastCall[0], Request);
             assert.equal(
-                lastCall[0],
+                lastCall[0].url,
                 'http://127.0.0.1:3901/identifiers/multisig/ipex/agree'
             );
 
@@ -567,8 +577,9 @@ describe('Ipex', () => {
 
             await ipex.submitGrant('multisig', ng, ngsigs, ngend, [holder]);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+            assert.instanceOf(lastCall[0], Request);
             assert.equal(
-                lastCall[0],
+                lastCall[0].url,
                 'http://127.0.0.1:3901/identifiers/multisig/ipex/grant'
             );
 
@@ -600,8 +611,9 @@ describe('Ipex', () => {
 
             await ipex.submitAdmit('multisig', admit, asigs, aend, [holder]);
             lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+            assert.instanceOf(lastCall[0], Request);
             assert.equal(
-                lastCall[0],
+                lastCall[0].url,
                 'http://127.0.0.1:3901/identifiers/multisig/ipex/admit'
             );
 
@@ -671,8 +683,9 @@ describe('Ipex', () => {
             holder,
         ]);
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0],
+            lastCall[0].url,
             'http://127.0.0.1:3901/identifiers/multisig/ipex/offer'
         );
     });
