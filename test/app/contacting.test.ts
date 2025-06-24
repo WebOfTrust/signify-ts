@@ -23,20 +23,22 @@ describe('Contacting', () => {
 
         await contacts.list('mygroup', 'company', 'mycompany');
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url +
                 '/contacts?group=mygroup&filter_field=company&filter_value=mycompany'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[0].method, 'GET');
 
         await contacts.get('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[0].method, 'GET');
 
         const info = {
             name: 'John Doe',
@@ -47,12 +49,13 @@ describe('Contacting', () => {
             info
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        let lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.instanceOf(lastCall[0], Request);
+        let lastBody = JSON.parse(await lastCall[0].text());
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastCall[0].method, 'POST');
         assert.deepEqual(lastBody, info);
 
         await contacts.update(
@@ -60,22 +63,24 @@ describe('Contacting', () => {
             info
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.instanceOf(lastCall[0], Request);
+        lastBody = JSON.parse(await lastCall[0].text());
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'PUT');
+        assert.equal(lastCall[0].method, 'PUT');
         assert.deepEqual(lastBody, info);
 
         await contacts.delete('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/contacts/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'DELETE');
-        assert.equal(lastCall[1]!.body, undefined);
+        assert.equal(lastCall[0].method, 'DELETE');
+        assert.equal(lastCall[0].body, undefined);
     });
 
     it('Challenges', async () => {
@@ -91,8 +96,9 @@ describe('Contacting', () => {
 
         await challenges.generate(128);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/challenges?strength=128');
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/challenges?strength=128');
+        assert.equal(lastCall[0].method, 'GET');
 
         const words = [
             'shell',
@@ -114,9 +120,10 @@ describe('Contacting', () => {
             words
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/exchanges');
-        assert.equal(lastCall[1]!.method, 'POST');
-        let lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/identifiers/aid1/exchanges');
+        assert.equal(lastCall[0].method, 'POST');
+        let lastBody = JSON.parse(await lastCall[0].text());
         assert.equal(lastBody.tpc, 'challenge');
         assert.equal(lastBody.exn.r, '/challenge/response');
         assert.equal(
@@ -131,13 +138,14 @@ describe('Contacting', () => {
             words
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url +
                 '/challenges_verify/EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p'
         );
-        assert.equal(lastCall[1]!.method, 'POST');
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.equal(lastCall[0].method, 'POST');
+        lastBody = JSON.parse(await lastCall[0].text());
         assert.deepEqual(lastBody.words, words);
 
         await challenges.responded(
@@ -145,13 +153,14 @@ describe('Contacting', () => {
             'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url +
                 '/challenges_verify/EG2XjQN-3jPN5rcR4spLjaJyM4zA6Lgg-Hd5vSMymu5p'
         );
-        assert.equal(lastCall[1]!.method, 'PUT');
-        lastBody = JSON.parse(lastCall[1]!.body!.toString());
+        assert.equal(lastCall[0].method, 'PUT');
+        lastBody = JSON.parse(await lastCall[0].text());
         assert.equal(
             lastBody.said,
             'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
