@@ -1,7 +1,7 @@
 import { Mock, vitest } from 'vitest';
 import {
     Algos,
-    Authenticater,
+    SignedHeaderAuthenticator,
     Controller,
     CreateIdentiferArgs,
     HEADER_SIG_TIME,
@@ -302,25 +302,22 @@ export function createMockFetch(): Mock<typeof globalThis.fetch> {
                 Tier.low
             );
 
-            const authn = new Authenticater(signer!, signer!.verfer);
-
-            signed_headers = authn.sign(
+            const authn = new SignedHeaderAuthenticator(signer, signer.verfer);
+            const req = await authn.prepare(new Request(url, {
                 headers,
-                method,
-
-                url.pathname.split('?')[0]
-            );
+                method
+            }), "notrelevant", "notrelevant");
 
             if (url.pathname.startsWith('/credentials')) {
                 return Response.json(mockCredential, {
                     status: 200,
-                    headers: signed_headers,
+                    headers: req.headers,
                 });
             }
 
             return Response.json(mockGetAID, {
                 status: 202,
-                headers: signed_headers,
+                headers: req.headers,
             });
         }
     });

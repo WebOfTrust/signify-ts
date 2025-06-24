@@ -1,12 +1,12 @@
-import { assert, describe, it, vitest } from 'vitest';
+import { assert, describe, expect, it, vitest } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Salter } from '../../src/keri/core/salter.ts';
 import { b } from '../../src/keri/core/core.ts';
-import { Authenticater } from '../../src/keri/core/authing.ts';
+import { SignedHeaderAuthenticator } from '../../src/keri/core/authing.ts';
 import * as utilApi from '../../src/keri/core/utils.ts';
 import { Verfer } from '../../src/keri/core/verfer.ts';
 
-describe('Authenticater.verify', () => {
+describe('SignedHeaderAuthenticator.verify', () => {
     it('verify signature on Response', async () => {
         await libsodium.ready;
         const salt = '0123456789abcdef';
@@ -41,17 +41,20 @@ describe('Authenticater.verify', () => {
             ['Signify-Timestamp', '2023-05-22T00:37:00.248708+00:00'],
         ]);
 
-        const authn = new Authenticater(signer, verfer);
-        assert.notEqual(authn, undefined);
+        const authn = new SignedHeaderAuthenticator(signer, verfer);
+        const request = new Request('http://127.0.0.1:3901/identifiers/aid1');
+        const response = new Response(null, {
+            headers
+        });
 
-        assert.equal(
-            authn.verify(new Headers(headers), 'GET', '/identifiers/aid1'),
-            true
-        );
+        await expect(authn.verify(request, response, "notrelevant", "EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei")).resolves.toBe(response);
+        await expect(authn.verify(request, response, "notrelevant", "EWJkQCFvKuyxZi582yJPb0wcwuW3VXmFNuvbQuBpgmIs")).rejects.toThrowError('message from a different remote agent');
+
+        // @TODO - foconnor: missing tests... missing headers, wrong signature etc
     });
 });
 
-describe('Authenticater.sign', () => {
+describe('SignedHeaderAuthenticator.prepare', () => {
     it('Create signed headers for a request', async () => {
         await libsodium.ready;
         const salt = '0123456789abcdef';
@@ -74,11 +77,11 @@ describe('Authenticater.sign', () => {
             .spyOn(utilApi, 'nowUTC')
             .mockReturnValue(new Date('2021-01-01T00:00:00.000000+00:00'));
 
-        const authn = new Authenticater(signer, verfer);
-        const result = authn.sign(headers, 'POST', '/boot');
-
-        assert.equal(result.has('Signature-Input'), true);
-        assert.equal(result.has('Signature'), true);
+        const authn = new SignedHeaderAuthenticator(signer, verfer);
+        const request = await authn.prepare(new Request('http://127.0.0.1:3903/boot', {
+            method: 'POST',
+            headers,
+        }), "notrelevant", "notrelevant");
 
         const expectedSignatureInput = [
             'signify=("@method" "@path" "signify-resource" "signify-timestamp")',
@@ -86,12 +89,12 @@ describe('Authenticater.sign', () => {
             'keyid="DN54yRad_BTqgZYUSi_NthRBQrxSnqQdJXWI5UHcGOQt"',
             'alg="ed25519"',
         ].join(';');
-        assert.equal(result.get('Signature-Input'), expectedSignatureInput);
+        assert.equal(request.headers.get('Signature-Input'), expectedSignatureInput);
 
         const expectedSignature = [
             'indexed="?0"',
             'signify="0BChvN_BWAf-mgEuTnWfNnktgHdWOuOh9cWc4o0GFWuZOwra3DyJT5dJ_6BX7AANDOTnIlAKh5Sg_9qGQXHjj5oJ"',
         ].join(';');
-        assert.equal(result.get('Signature'), expectedSignature);
+        assert.equal(request.headers.get('Signature'), expectedSignature);
     });
 });

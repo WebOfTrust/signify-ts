@@ -24,10 +24,11 @@ describe('SignifyClient', () => {
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         await escrows.listReply('/presentation/request');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/escrows/rpy?route=%2Fpresentation%2Frequest'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[0].method, 'GET');
     });
 });

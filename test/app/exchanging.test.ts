@@ -234,8 +234,9 @@ describe('exchange', () => {
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         await exchange.sendFromEvents('aid1', '', serder, [''], '', []);
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/identifiers/aid1/exchanges');
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/identifiers/aid1/exchanges');
+        assert.equal(lastCall[0].method, 'POST');
     });
 
     it('Get exchange', async () => {
@@ -247,10 +248,11 @@ describe('exchange', () => {
         const exchanges = client.exchanges();
         await exchanges.get('EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao');
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url + '/exchanges/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.equal(lastCall[0].method, 'GET');
     });
 });
