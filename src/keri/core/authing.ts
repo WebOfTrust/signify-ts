@@ -79,6 +79,10 @@ export class SignedHeaderAuthenticator extends Authenticator {
             );
         }
 
+        if (remote !== response.headers.get(HEADER_SIG_SENDER)) {
+            throw new Error('message from a different remote agent');
+        }
+
         if (
             !this.verifyHeaders(
                 response.headers,
@@ -87,10 +91,6 @@ export class SignedHeaderAuthenticator extends Authenticator {
             )
         ) {
             throw new Error('response verification failed');
-        }
-
-        if (remote !== response.headers.get(HEADER_SIG_SENDER)) {
-            throw new Error('message from a different remote agent');
         }
 
         return response;
