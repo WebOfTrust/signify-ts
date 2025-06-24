@@ -282,8 +282,6 @@ export function createMockFetch(): Mock<typeof globalThis.fetch> {
             return Response.json('', { status: 202 });
         } else {
             const headers = new Headers();
-            let signed_headers = new Headers();
-
             headers.set(
                 'Signify-Resource',
                 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
