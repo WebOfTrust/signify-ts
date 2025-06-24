@@ -1,7 +1,4 @@
-import {
-    EssrAuthenticator,
-    SignedHeaderAuthenticator,
-} from '../core/authing.ts';
+import { EssrAuthenticator, SignedHeaderAuthenticator, Authenticator } from '../core/authing.ts';
 import { HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../core/httping.ts';
 import { components } from '../../types/keria-api-schema.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
@@ -52,7 +49,7 @@ export class SignifyClient {
     bran: string;
     pidx: number;
     agent: Agent | null;
-    authn: SignedHeaderAuthenticator | EssrAuthenticator | null;
+    authn: Authenticator | null;
     manager: IdentifierManagerFactory | null;
     tier: Tier;
     bootUrl: string;
@@ -239,13 +236,14 @@ export class SignifyClient {
             headers.set('Content-Length', body.length.toString());
         }
 
-        const request = await this.authn.prepare(new Request(this.url + path, {
+        const baseRequest = new Request(this.url + path, {
             method,
             body,
             headers,
-        }), this.controller.pre, this.agent!.pre);
+        });
+        const request = await this.authn.prepare(baseRequest, this.controller.pre, this.agent!.pre);
 
-        const res = await this.authn.verify(request, await fetch(request), this.controller.pre, this.agent!.pre);
+        const res = await this.authn.verify(baseRequest, await fetch(request), this.controller.pre, this.agent!.pre);
 
         if (!res.ok) {
             const error = await res.text();
@@ -301,7 +299,7 @@ export class SignifyClient {
      * @async
      * @returns {Promise<Response>} A promise to the result of the approval
      */
-    async approveDelegation(): Promise<Response> {
+    private async approveDelegation(): Promise<Response> {
         const sigs = this.controller.approveDelegation(this.agent!);
 
         const data = {
