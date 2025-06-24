@@ -25,10 +25,19 @@ export abstract class Authenticator {
     constructor(csig: Signer, verfer: Verfer) {
         this.csig = csig;
         this.verfer = verfer;
-    } 
+    }
 
-    abstract prepare(request: Request, local: string, remote: string): Promise<Request>;
-    abstract verify(request: Request, response: Response, local: string, remote: string): Promise<Response>;
+    abstract prepare(
+        request: Request,
+        local: string,
+        remote: string
+    ): Promise<Request>;
+    abstract verify(
+        request: Request,
+        response: Response,
+        local: string,
+        remote: string
+    ): Promise<Response>;
 }
 
 export class SignedHeaderAuthenticator extends Authenticator {
@@ -39,13 +48,17 @@ export class SignedHeaderAuthenticator extends Authenticator {
         HEADER_SIG_TIME.toLowerCase(),
     ];
 
-    async prepare(request: Request, _local: string, _remote: string): Promise<Request> {
+    async prepare(
+        request: Request,
+        _local: string,
+        _remote: string
+    ): Promise<Request> {
         const headers = request.headers;
         const signedHeaders = this.sign(
             request.headers,
             request.method,
             new URL(request.url).pathname
-        )
+        );
 
         signedHeaders.forEach((value, key) => {
             headers.set(key, value);
@@ -54,21 +67,28 @@ export class SignedHeaderAuthenticator extends Authenticator {
         return request;
     }
 
-    async verify(request: Request, response: Response, _local: string, remote: string): Promise<Response> {
+    async verify(
+        request: Request,
+        response: Response,
+        _local: string,
+        remote: string
+    ): Promise<Response> {
         if (response.status === 401) {
             throw new Error(
                 `HTTP ${request.method} ${new URL(request.url).pathname} - ${response.status} ${response.statusText}`
             );
         }
 
-        if (!this.verifyHeaders(
-            response.headers,
-            request.method,
-            new URL(request.url).pathname
-        )) {
+        if (
+            !this.verifyHeaders(
+                response.headers,
+                request.method,
+                new URL(request.url).pathname
+            )
+        ) {
             throw new Error('response verification failed');
         }
-        
+
         if (remote !== response.headers.get(HEADER_SIG_SENDER)) {
             throw new Error('message from a different remote agent');
         }
@@ -76,12 +96,16 @@ export class SignedHeaderAuthenticator extends Authenticator {
         return response;
     }
 
-    private verifyHeaders(headers: Headers, method: string, path: string): boolean {
+    private verifyHeaders(
+        headers: Headers,
+        method: string,
+        path: string
+    ): boolean {
         const siginput = headers.get(HEADER_SIG_INPUT);
         if (siginput == null) {
             return false;
         }
-        const signature = headers.get('Signature');
+        const signature = headers.get(HEADER_SIG);
         if (signature == null) {
             return false;
         }
@@ -138,11 +162,7 @@ export class SignedHeaderAuthenticator extends Authenticator {
         return true;
     }
 
-    private sign(
-        headers: Headers,
-        method: string,
-        path: string,
-    ): Headers {
+    private sign(headers: Headers, method: string, path: string): Headers {
         const [header, sig] = siginput(this.csig, {
             name: 'signify',
             method,
@@ -191,7 +211,11 @@ export class EssrAuthenticator extends Authenticator {
         );
     }
 
-    async prepare(request: Request, local: string, remote: string): Promise<Request> {
+    async prepare(
+        request: Request,
+        local: string,
+        remote: string
+    ): Promise<Request> {
         const dt = new Date().toISOString().replace('Z', '000+00:00');
 
         const headers = new Headers();
@@ -228,7 +252,12 @@ export class EssrAuthenticator extends Authenticator {
         });
     }
 
-    async verify(request: Request, response: Response, local: string, remote: string): Promise<Response> {
+    async verify(
+        request: Request,
+        response: Response,
+        local: string,
+        remote: string
+    ): Promise<Response> {
         if (response.status === 401) {
             throw new Error(
                 `HTTP ${request.method} ${new URL(request.url).pathname} - ${response.status} ${response.statusText}`
@@ -318,7 +347,9 @@ export class EssrAuthenticator extends Authenticator {
         const markers = signages[0].markers as Map<string, Siger | Cigar>;
         const cig = markers.get('signify');
         if (!cig) {
-            throw new Error('Invalid signature format - missing "signify" marker');
+            throw new Error(
+                'Invalid signature format - missing "signify" marker'
+            );
         }
 
         const verified = this.verfer.verify(

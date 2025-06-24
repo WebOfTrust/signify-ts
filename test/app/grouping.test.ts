@@ -38,7 +38,10 @@ describe('Grouping', () => {
         await groups.sendRequest('aid1', exn, [], '');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.instanceOf(lastCall[0], Request);
-        assert.equal(lastCall[0].url, url + '/identifiers/aid1/multisig/request');
+        assert.equal(
+            lastCall[0].url,
+            url + '/identifiers/aid1/multisig/request'
+        );
         assert.equal(lastCall[0].method, 'POST');
 
         await groups.getRequest(
