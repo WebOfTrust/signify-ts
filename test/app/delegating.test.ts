@@ -53,9 +53,6 @@ describe('delegate', () => {
                 transferable: true,
             },
         };
-        assert.equal(
-            await lastCall[0].text(),
-            JSON.stringify(expectedBody)
-        );
+        assert.equal(await lastCall[0].text(), JSON.stringify(expectedBody));
     });
 });
