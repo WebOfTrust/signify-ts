@@ -18,7 +18,7 @@ import { Diger } from './diger.ts';
 import { MtrDex } from './matter.ts';
 import { b, d } from './core.ts';
 
-abstract class Authenticator {
+export abstract class Authenticator {
     protected verfer: Verfer;
     protected readonly csig: Signer;
 
@@ -186,35 +186,11 @@ export class EssrAuthenticator extends Authenticator {
     }
 
     async prepare(request: Request, local: string, remote: string): Promise<Request> {
-        return await this.wrap(
-            request,
-            new URL(request.url).origin,
-            local,
-            remote
-        );
-    }
-
-    async verify(request: Request, response: Response, local: string, remote: string): Promise<Response> {
-        if (response.status === 401) {
-            throw new Error(
-                `HTTP ${request.method} ${new URL(request.url).pathname} - ${response.status} ${response.statusText}`
-            );
-        }
-
-        return await this.unwrap(response, remote, local);
-    }
-
-    private async wrap(
-        request: Request,
-        baseUrl: string,
-        sender: string,
-        receiver: string
-    ): Promise<Request> {
         const dt = new Date().toISOString().replace('Z', '000+00:00');
 
         const headers = new Headers();
-        headers.set(HEADER_SIG_SENDER, sender);
-        headers.set(HEADER_SIG_DESTINATION, receiver);
+        headers.set(HEADER_SIG_SENDER, local);
+        headers.set(HEADER_SIG_DESTINATION, remote);
         headers.set(HEADER_SIG_TIME, dt);
         headers.set('Content-Type', 'application/octet-stream');
 
@@ -223,8 +199,8 @@ export class EssrAuthenticator extends Authenticator {
 
         const diger = new Diger({ code: MtrDex.Blake3_256 }, raw);
         const payload = {
-            src: sender,
-            dest: receiver,
+            src: local,
+            dest: remote,
             d: diger.qb64,
             dt,
         };
@@ -239,11 +215,21 @@ export class EssrAuthenticator extends Authenticator {
             headers.append(key, value);
         });
 
-        return new Request(baseUrl + '/', {
+        return new Request(new URL(request.url).origin + '/', {
             method: 'POST',
             body: raw,
             headers,
         });
+    }
+
+    async verify(request: Request, response: Response, local: string, remote: string): Promise<Response> {
+        if (response.status === 401) {
+            throw new Error(
+                `HTTP ${request.method} ${new URL(request.url).pathname} - ${response.status} ${response.statusText}`
+            );
+        }
+
+        return await this.unwrap(response, remote, local);
     }
 
     static async serializeRequest(request: Request) {
