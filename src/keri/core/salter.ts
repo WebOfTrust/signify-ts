@@ -4,7 +4,6 @@ import { Matter, MtrDex } from './matter.ts';
 import { EmptyMaterialError } from './kering.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Tier } from '../../types/keria-api-schema.ts';
-
 export { Tier } from '../../types/keria-api-schema.ts';
 
 interface SalterArgs {

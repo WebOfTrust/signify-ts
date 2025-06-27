@@ -5,6 +5,9 @@ import { Matter, MtrDex } from '../core/matter.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
 type OOBI = components['schemas']['OOBI'];
+type KeyState = components['schemas']['KeyStateRecord'];
+type KeyEventRecord = components['schemas']['KeyEventRecord'];
+type AgentConfig = components['schemas']['AgentConfig'];
 
 export function randomPasscode(): string {
     const raw = libsodium.randombytes_buf(16);
@@ -34,7 +37,7 @@ export class Oobis {
      * Get the OOBI(s) for a managed indentifier for a given role
      * @param {string} name Name or alias of the identifier
      * @param {string} role Authorized role
-     * @returns {Promise<any>} A promise to the OOBI(s)
+     * @returns {Promise<OOBI>} A promise to the OOBI(s)
      */
     async get(name: string, role: string = 'agent'): Promise<OOBI> {
         const path = `/identifiers/${name}/oobis?role=${role}`;
@@ -48,9 +51,9 @@ export class Oobis {
      * @async
      * @param {string} oobi The OOBI to be resolver
      * @param {string} [alias] Optional name or alias to link the OOBI resolution to a contact
-     * @returns {Promise<any>} A promise to the long-running operation
+     * @returns {Promise<Operation<unknown>>} A promise to the long-running operation
      */
-    async resolve(oobi: string, alias?: string): Promise<any> {
+    async resolve(oobi: string, alias?: string): Promise<Operation<unknown>> {
         const path = `/oobis`;
         const data: any = {
             url: oobi,
@@ -83,10 +86,6 @@ export interface OperationsDeps {
         body: unknown,
         headers?: Headers
     ): Promise<Response>;
-}
-
-export interface AgentConfig {
-    iurls?: string[];
 }
 
 /**
@@ -123,7 +122,7 @@ export class Operations {
      * @param {string} type Select operations by type
      * @returns {Promise<Operation[]>} A list of operations
      */
-    async list(type?: string): Promise<Operation<any>[]> {
+    async list(type?: string): Promise<Operation<unknown>[]> {
         const params = new URLSearchParams();
         if (type !== undefined) {
             params.append('type', type);
@@ -208,9 +207,9 @@ export class KeyEvents {
      * Retrieve key events for an identifier
      * @async
      * @param {string} pre Identifier prefix
-     * @returns {Promise<any>} A promise to the key events
+     * @returns {Promise<KeyEventRecord[]>} A promise to the key events
      */
-    async get(pre: string): Promise<any> {
+    async get(pre: string): Promise<KeyEventRecord[]> {
         const path = `/events?pre=${pre}`;
         const data = null;
         const method = 'GET';
@@ -236,9 +235,9 @@ export class KeyStates {
      * Retriene the key state for an identifier
      * @async
      * @param {string} pre Identifier prefix
-     * @returns {Promise<any>} A promise to the key states
+     * @returns {Promise<KeyState[]>} A promise to the key states
      */
-    async get(pre: string): Promise<any> {
+    async get(pre: string): Promise<KeyState[]> {
         const path = `/states?pre=${pre}`;
         const data = null;
         const method = 'GET';
@@ -252,7 +251,7 @@ export class KeyStates {
      * @param {Array<string>} pres List of identifier prefixes
      * @returns {Promise<any>} A promise to the key states
      */
-    async list(pres: string[]): Promise<any> {
+    async list(pres: string[]): Promise<KeyState[]> {
         const path = `/states?${pres.map((pre) => `pre=${pre}`).join('&')}`;
         const data = null;
         const method = 'GET';
@@ -266,9 +265,13 @@ export class KeyStates {
      * @param {string} pre Identifier prefix
      * @param {number} [sn] Optional sequence number
      * @param {any} [anchor] Optional anchor
-     * @returns {Promise<any>} A promise to the long-running operation
+     * @returns {Promise<Operation<unknown>>} A promise to the long-running operation
      */
-    async query(pre: string, sn?: string, anchor?: any): Promise<any> {
+    async query(
+        pre: string,
+        sn?: string,
+        anchor?: any
+    ): Promise<Operation<unknown>> {
         const path = `/queries`;
         const data: any = {
             pre: pre,
