@@ -7,3 +7,6 @@ dist
 # IntelliJ Project Files
 .idea
 coverage/*
+
+# Keria API types
+src/types
