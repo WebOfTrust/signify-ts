@@ -178,7 +178,12 @@ test('multisig', async function run() {
 
     let res = await client2.groups().getRequest(msgSaid);
     let exn = res[0].exn;
-    let icp = exn.e.icp;
+    if (!('e' in exn) || !exn.e || !('icp' in exn.e) || !exn.e.icp) {
+        throw new Error(
+            'exn.e.icp is missing from the group inception request'
+        );
+    }
+    let icp = exn.e.icp as MultisigInceptEmbeds['icp'];
 
     let icpResult2 = await client2.identifiers().create('multisig', {
         algo: Algos.group,
@@ -201,7 +206,7 @@ test('multisig', async function run() {
         icp: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    smids = (exn.a! as { smids: string[] }).smids;
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
 
     await client2
@@ -223,7 +228,12 @@ test('multisig', async function run() {
 
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
-    icp = exn.e.icp;
+    if (!('e' in exn) || !exn.e || !('icp' in exn.e) || !exn.e.icp) {
+        throw new Error(
+            'exn.e.icp is missing from the group inception request'
+        );
+    }
+    icp = exn.e.icp as MultisigInceptEmbeds['icp'];
     let icpResult3 = await client3.identifiers().create('multisig', {
         algo: Algos.group,
         mhab: aid3,
@@ -245,7 +255,13 @@ test('multisig', async function run() {
         icp: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    smids =
+        exn.a &&
+        typeof exn.a === 'object' &&
+        exn.a !== null &&
+        Array.isArray((exn.a as any).smids)
+            ? (exn.a as { smids: string[] }).smids
+            : [];
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
 
     await client3
@@ -368,12 +384,28 @@ test('multisig', async function run() {
     res = await client2.groups().getRequest(msgSaid);
     exn = res[0].exn;
     // stamp, eid and role are provided in the exn message
-    let rpystamp = exn.e.rpy.dt;
-    let rpyrole = exn.e.rpy.a.role;
-    let rpyeid = exn.e.rpy.a.eid;
-    endRoleRes = await client2
-        .identifiers()
-        .addEndRole('multisig', rpyrole, rpyeid, rpystamp);
+    if (
+        'e' in exn &&
+        exn.e &&
+        'rpy' in exn.e &&
+        exn.e.rpy &&
+        typeof exn.e.rpy === 'object' &&
+        exn.e.rpy !== null &&
+        'a' in (exn.e.rpy as Record<string, unknown>) &&
+        (exn.e.rpy as any).a
+    ) {
+        type RpyA = { role: string; eid: string };
+        const rpyObj = exn.e.rpy as { a?: unknown; dt?: string };
+        const rpyA = rpyObj.a as RpyA;
+        let rpystamp = rpyObj.dt;
+        let rpyrole = rpyA.role;
+        let rpyeid = rpyA.eid;
+        endRoleRes = await client2
+            .identifiers()
+            .addEndRole('multisig', rpyrole, rpyeid, rpystamp);
+    } else {
+        throw new Error('Expected properties "e.rpy.a" not found on exn');
+    }
     op2 = await endRoleRes.op();
     rpy = endRoleRes.serder;
     sigs = endRoleRes.sigs;
@@ -413,13 +445,28 @@ test('multisig', async function run() {
     );
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
-    rpystamp = exn.e.rpy.dt;
-    rpyrole = exn.e.rpy.a.role;
-    rpyeid = exn.e.rpy.a.eid;
-    endRoleRes = await client3
-        .identifiers()
-        .addEndRole('multisig', rpyrole, rpyeid, rpystamp);
-
+    if (
+        'e' in exn &&
+        exn.e &&
+        'rpy' in exn.e &&
+        exn.e.rpy &&
+        typeof exn.e.rpy === 'object' &&
+        exn.e.rpy !== null &&
+        'a' in (exn.e.rpy as Record<string, unknown>) &&
+        (exn.e.rpy as any).a
+    ) {
+        type RpyA = { role: string; eid: string };
+        const rpyObj = exn.e.rpy as { a?: unknown; dt?: string };
+        const rpyA = rpyObj.a as RpyA;
+        const rpystamp = rpyObj.dt;
+        const rpyrole = rpyA.role;
+        const rpyeid = rpyA.eid;
+        endRoleRes = await client3
+            .identifiers()
+            .addEndRole('multisig', rpyrole, rpyeid, rpystamp);
+    } else {
+        throw new Error('Expected properties "e.rpy.a" not found on exn');
+    }
     op3 = await endRoleRes.op();
     rpy = endRoleRes.serder;
     sigs = endRoleRes.sigs;
@@ -508,8 +555,20 @@ test('multisig', async function run() {
     );
     res = await client2.groups().getRequest(msgSaid);
     exn = res[0].exn;
-    let ixn = exn.e.ixn;
-    data = ixn.a;
+    if (
+        !('e' in exn) ||
+        !exn.e ||
+        !('ixn' in exn.e) ||
+        !exn.e.ixn ||
+        typeof exn.e.ixn !== 'object' ||
+        (exn.e.ixn as any).a == null
+    ) {
+        throw new Error(
+            'exn.e.ixn.a is missing from the group interaction event'
+        );
+    }
+    let ixn1 = exn.e.ixn as { a: { i: string; s: string; d: string } };
+    data = ixn1.a;
 
     icpResult2 = await client2.identifiers().interact('multisig', data);
     op2 = await icpResult2.op();
@@ -523,7 +582,10 @@ test('multisig', async function run() {
         ixn: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    if (!exn.a) {
+        throw new Error('exn.a is missing from the group interaction event');
+    }
+    smids = (exn.a as { smids: string[] }).smids;
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
 
     await client2
@@ -546,8 +608,20 @@ test('multisig', async function run() {
     );
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
-    ixn = exn.e.ixn;
-    data = ixn.a;
+    if (
+        !('e' in exn) ||
+        !exn.e ||
+        !('ixn' in exn.e) ||
+        !exn.e.ixn ||
+        typeof exn.e.ixn !== 'object' ||
+        (exn.e.ixn as any).a == null
+    ) {
+        throw new Error(
+            'exn.e.ixn.a is missing from the group interaction event'
+        );
+    }
+    let ixn2 = exn.e.ixn as { a: { i: string; s: string; d: string } };
+    data = ixn2.a;
 
     icpResult3 = await client3.identifiers().interact('multisig', data);
     op3 = await icpResult3.op();
@@ -561,7 +635,7 @@ test('multisig', async function run() {
         ixn: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    smids = (exn.a as { smids: string[] }).smids;
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
 
     await client3
@@ -688,7 +762,10 @@ test('multisig', async function run() {
         rot: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    if (!exn.a) {
+        throw new Error('exn.a is missing from the group rotation event');
+    }
+    smids = (exn.a as { smids: string[] }).smids;
     recp = [aid1State, aid3State].map((state) => state['i']);
 
     await client2
@@ -724,7 +801,7 @@ test('multisig', async function run() {
         rot: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    smids = (exn.a as { smids: string[] }).smids;
     recp = [aid1State, aid2State].map((state) => state['i']);
 
     await client3
@@ -912,8 +989,21 @@ test('multisig', async function run() {
     res = await client2.groups().getRequest(msgSaid);
     exn = res[0].exn;
 
-    const credentialSaid = exn.e.acdc.d;
-    const credRes2 = await client2.credentials().issue('multisig', exn.e.acdc);
+    if (!('e' in exn) || !exn.e || !('acdc' in exn.e) || !exn.e.acdc) {
+        throw new Error('exn.e.acdc is missing from the credential event');
+    }
+
+    const acdc = exn.e.acdc as CredentialData | undefined;
+    if (!acdc || !acdc.a) {
+        throw new Error('Credential subject (a) is missing');
+    }
+    if (!acdc.d) {
+        throw new Error(
+            'Credential SAID (acdc.d) is missing from the credential event'
+        );
+    }
+    const credentialSaid: string = acdc.d;
+    const credRes2 = await client2.credentials().issue('multisig', acdc);
 
     op2 = credRes2.op;
     await multisigIssue(client2, 'member2', 'multisig', credRes2);
@@ -927,7 +1017,12 @@ test('multisig', async function run() {
     res = await client3.groups().getRequest(msgSaid);
     exn = res[0].exn;
 
-    const credRes3 = await client3.credentials().issue('multisig', exn.e.acdc);
+    if (!('e' in exn) || !exn.e || !('acdc' in exn.e) || !exn.e.acdc) {
+        throw new Error('exn.e.acdc is missing from the credential event');
+    }
+    const credRes3 = await client3
+        .credentials()
+        .issue('multisig', exn.e.acdc as CredentialData);
 
     op3 = credRes3.op;
     await multisigIssue(client3, 'member3', 'multisig', credRes3);
@@ -1084,12 +1179,13 @@ test('multisig', async function run() {
 
     msgSaid = await waitAndMarkNotification(client4, '/exn/ipex/grant');
     console.log('Holder received exchange message with the grant message');
-    res = await client4.exchanges().get(msgSaid);
+
+    const exchangeResource = await client4.exchanges().get(msgSaid);
 
     const [admit, asigs, aend] = await client4.ipex().admit({
         senderName: 'holder',
         message: '',
-        grantSaid: res.exn.d,
+        grantSaid: exchangeResource.exn.d,
         recipient: m['prefix'],
     });
 

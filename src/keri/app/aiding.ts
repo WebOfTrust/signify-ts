@@ -183,7 +183,7 @@ export class Identifier {
 
         if (!transferable) {
             ncount = 0;
-            nsith = 0;
+            nsith = '0';
             dcode = MtrDex.Ed25519N;
         }
 

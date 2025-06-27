@@ -388,9 +388,14 @@ test('multisig', async function run() {
         exnRes.exn.i,
         recp
     );
-    console.log(
-        `Member1 admitted credential with SAID : ${exnRes.exn.e.acdc.d}`
-    );
+
+    if (exnRes.exn && 'e' in exnRes.exn && (exnRes.exn as any).e?.acdc?.d) {
+        console.log(
+            `Member1 admitted credential with SAID : ${(exnRes.exn as any).e.acdc.d}`
+        );
+    } else {
+        throw new Error('Expected property "e.acdc.d" not found on exnRes.exn');
+    }
 
     const grantMsgSaid2 = await waitAndMarkNotification(
         client2,
@@ -414,9 +419,13 @@ test('multisig', async function run() {
         exnRes.exn.i,
         recp2
     );
-    console.log(
-        `Member2 admitted credential with SAID : ${exnRes.exn.e.acdc.d}`
-    );
+    if (exnRes.exn && 'e' in exnRes.exn && (exnRes.exn as any).e?.acdc?.d) {
+        console.log(
+            `Member2 admitted credential with SAID : ${(exnRes.exn as any).e.acdc.d}`
+        );
+    } else {
+        throw new Error('Expected property "e.acdc.d" not found on exnRes.exn');
+    }
 
     await waitOperation(client1, op1);
     await waitOperation(client2, op2);

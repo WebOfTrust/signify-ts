@@ -27,7 +27,7 @@ const content = ast.filter((s) => {
     return false;
 });
 
-const header = `// AUTO-GENERATED: Only components retained from OpenAPI schema\n\n`;
+const header = `// AUTO-GENERATED: Only components and enums retained from OpenAPI schema\n\n`;
 await writeFile(outputFile, `${header}${astToString(content)}`);
 
 console.log(`🚀 ${specUrl} → ${outputFile}`);

@@ -96,7 +96,13 @@ describe('multisig-join', () => {
         const msgSaid = await waitAndMarkNotification(client2, '/multisig/icp');
 
         const response = await client2.groups().getRequest(msgSaid);
-        const icp = response[0].exn.e.icp;
+        const exn = response[0].exn;
+        if (!('e' in exn) || !exn.e || !('icp' in exn.e) || !exn.e.icp) {
+            throw new Error(
+                'exn.e.icp is missing from the group inception response'
+            );
+        }
+        const icp = exn.e.icp;
 
         const icpResult2 = await client2.identifiers().create(nameMultisig, {
             algo: signify.Algos.group,
@@ -346,13 +352,28 @@ describe('multisig-join', () => {
             .getRequest(rotationNotification3);
 
         const exn3 = response[0].exn;
+        if (!('e' in exn3) || !exn3.e || !('rot' in exn3.e) || !exn3.e.rot) {
+            throw new Error(
+                'exn3.e.rot is missing from the group rotation response'
+            );
+        }
+        if (!exn3.a || typeof (exn3.a as any).gid !== 'string') {
+            throw new Error('exn3.a.gid is missing or not a string');
+        }
         const serder3 = new Serder(exn3.e.rot);
         const keeper3 = await client3.manager!.get(aid3);
         const sigs3 = keeper3.sign(signify.b(serder3.raw));
 
         const joinOperation = await client3
             .groups()
-            .join(nameMultisig, serder3, sigs3, exn3.a.gid, smids, rmids);
+            .join(
+                nameMultisig,
+                serder3,
+                sigs3,
+                (exn3.a as { gid: string }).gid,
+                smids,
+                rmids
+            );
 
         await waitOperation(client3, joinOperation);
 

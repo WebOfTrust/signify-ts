@@ -1,4 +1,4 @@
-// AUTO-GENERATED: Only components retained from OpenAPI schema
+// AUTO-GENERATED: Only components and enums retained from OpenAPI schema
 
 export interface components {
     schemas: {
@@ -250,6 +250,49 @@ export interface components {
             i: string;
             dt: string;
             r: string;
+            a: unknown;
+        };
+        VCP_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            ii: string;
+            s: string;
+            c: string[];
+            bt: string;
+            b: string[];
+            n: string;
+        };
+        EXN_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            rp: string;
+            p: string;
+            dt: string;
+            r: string;
+            q: {
+                [key: string]: unknown;
+            };
+            a: unknown;
+            e: {
+                [key: string]: unknown;
+            };
+        };
+        EXN_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            x: string;
+            p: string;
+            dt: string;
+            r: string;
+            q: {
+                [key: string]: unknown;
+            };
             a: unknown;
         };
         Credential: {
@@ -542,20 +585,149 @@ export interface components {
         };
         KeyEventRecord: {
             ked:
-                | components['schemas']['ICP_V_1']
-                | components['schemas']['ROT_V_1']
                 | components['schemas']['IXN_V_1']
-                | components['schemas']['DIP_V_1']
-                | components['schemas']['DRT_V_1']
-                | components['schemas']['ICP_V_2']
-                | components['schemas']['ROT_V_2']
                 | components['schemas']['IXN_V_2']
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['DIP_V_1']
                 | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_1']
                 | components['schemas']['DRT_V_2'];
             atc: string;
         };
         AgentConfig: {
             iurls?: string[];
+        };
+        Exn:
+            | components['schemas']['EXN_V_1']
+            | components['schemas']['EXN_V_2'];
+        Icp:
+            | components['schemas']['ICP_V_1']
+            | components['schemas']['ICP_V_2'];
+        Rot:
+            | components['schemas']['ROT_V_1']
+            | components['schemas']['ROT_V_2'];
+        Vcp: components['schemas']['VCP_V_1'];
+        Iss: components['schemas']['ISS_V_1'];
+        Ixn:
+            | components['schemas']['IXN_V_1']
+            | components['schemas']['IXN_V_2'];
+        NotificationData: {
+            r?: string;
+            d?: string;
+            m?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        Notification: {
+            i: string;
+            dt: string;
+            r: boolean;
+            a: components['schemas']['NotificationData'];
+        };
+        ExchangeResource: {
+            exn: components['schemas']['Exn'];
+            pathed: {
+                [key: string]: unknown;
+            };
+        };
+        MultisigInceptEmbeds: {
+            icp: components['schemas']['Icp'];
+            rot?: components['schemas']['Rot'];
+        };
+        MultisigRotateEmbeds: {
+            rot: unknown;
+        };
+        MultisigInteractEmbeds: {
+            ixn: components['schemas']['Ixn'];
+        };
+        MultisigRegistryInceptEmbeds: {
+            vcp: components['schemas']['Vcp'];
+            anc:
+                | components['schemas']['IXN_V_1']
+                | components['schemas']['IXN_V_2']
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['DIP_V_1']
+                | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_1']
+                | components['schemas']['DRT_V_2'];
+        };
+        ISS_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            ri: string;
+            dt: string;
+        };
+        MultisigIssueEmbeds: {
+            acdc:
+                | components['schemas']['ACDC_V_1']
+                | components['schemas']['ACDC_V_2'];
+            iss: components['schemas']['Iss'];
+            anc:
+                | components['schemas']['IXN_V_1']
+                | components['schemas']['IXN_V_2']
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['DIP_V_1']
+                | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_1']
+                | components['schemas']['DRT_V_2'];
+        };
+        REV_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            ri: string;
+            p: string;
+            dt: string;
+        };
+        MultisigRevokeEmbeds: {
+            rev: components['schemas']['REV_V_1'];
+            anc: unknown;
+        };
+        MultisigRpyEmbeds: {
+            rpy: components['schemas']['Rpy'];
+            anc: unknown;
+        };
+        MultisigExnEmbeds: {
+            exn: components['schemas']['Exn'];
+        };
+        ExnEmbeds: {
+            d: string;
+        } & (
+            | components['schemas']['MultisigInceptEmbeds']
+            | components['schemas']['MultisigRotateEmbeds']
+            | components['schemas']['MultisigInteractEmbeds']
+            | components['schemas']['MultisigRegistryInceptEmbeds']
+            | components['schemas']['MultisigIssueEmbeds']
+            | components['schemas']['MultisigRevokeEmbeds']
+            | components['schemas']['MultisigRpyEmbeds']
+            | components['schemas']['MultisigExnEmbeds']
+        );
+        ExnMultisig: {
+            exn: components['schemas']['Exn'];
+            paths: {
+                [key: string]: unknown;
+            };
+            e: components['schemas']['ExnEmbeds'];
+            /** @default null */
+            groupName: string | null;
+            /** @default null */
+            memberName: string | null;
+            /** @default null */
+            sender: string | null;
         };
     };
     responses: never;

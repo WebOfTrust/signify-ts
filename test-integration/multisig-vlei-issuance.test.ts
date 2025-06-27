@@ -999,6 +999,7 @@ test('multisig-vlei-issuance', async function run() {
         throw new Error('Expected leCredbyQAR1.sad.a to be defined');
     }
 
+    assert.equal(leCredbyQAR1.sad.a.i, aidLE.prefix);
     assert.equal(leCredbyQAR1.status.s, '0');
     assert(leCredbyQAR1.atc !== undefined);
     const leCred = leCredbyQAR1;
@@ -1253,6 +1254,7 @@ test('multisig-vlei-issuance', async function run() {
         throw new Error('Expected ecrCredbyLAR1.sad.a to be defined');
     }
 
+    assert.equal(ecrCredbyLAR1.sad.a.i, aidECR.prefix);
     assert.equal(ecrCredbyLAR1.status.s, '0');
     assert(ecrCredbyLAR1.atc !== undefined);
     const ecrCred = ecrCredbyLAR1;

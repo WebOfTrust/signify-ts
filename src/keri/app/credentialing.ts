@@ -781,7 +781,7 @@ export class Ipex {
         exn: Serder,
         sigs: string[],
         recp: string[]
-    ): Promise<any> {
+    ): Promise<Operation<unknown>> {
         const body = {
             exn: exn.sad,
             sigs,
@@ -825,7 +825,7 @@ export class Ipex {
         sigs: string[],
         atc: string,
         recp: string[]
-    ): Promise<any> {
+    ): Promise<Operation<unknown>> {
         const body = {
             exn: exn.sad,
             sigs,
@@ -869,7 +869,7 @@ export class Ipex {
         exn: Serder,
         sigs: string[],
         recp: string[]
-    ): Promise<any> {
+    ): Promise<Operation<unknown>> {
         const body = {
             exn: exn.sad,
             sigs,
@@ -937,7 +937,7 @@ export class Ipex {
         sigs: string[],
         atc: string,
         recp: string[]
-    ): Promise<any> {
+    ): Promise<Operation<unknown>> {
         const body = {
             exn: exn.sad,
             sigs: sigs,
@@ -982,7 +982,7 @@ export class Ipex {
         sigs: string[],
         atc: string,
         recp: string[]
-    ): Promise<any> {
+    ): Promise<Operation<unknown>> {
         const body = {
             exn: exn.sad,
             sigs: sigs,
