@@ -2,6 +2,20 @@ import signify, {
     CreateIdentiferArgs,
     EventResult,
     Operation,
+    OOBIOperation,
+    QueryOperation,
+    EndRoleOperation,
+    WitnessOperation,
+    DelegationOperation,
+    RegistryOperation,
+    LocSchemeOperation,
+    ChallengeOperation,
+    ExchangeOperation,
+    SubmitOperation,
+    DoneOperation,
+    CredentialOperation,
+    GroupOperation,
+    DelegatorOperation,
     randomPasscode,
     ready,
     Salter,
@@ -9,6 +23,20 @@ import signify, {
     Tier,
     HabState,
     ExternalModule,
+    CompletedOOBIOperation,
+    CompletedQueryOperation,
+    CompletedEndRoleOperation,
+    CompletedChallengeOperation,
+    CompletedWitnessOperation,
+    CompletedExchangeOperation,
+    CompletedLocSchemeOperation,
+    CompletedRegistryOperation,
+    CompletedDelegationOperation,
+    CompletedDelegatorOperation,
+    CompletedGroupOperation,
+    CompletedCredentialOperation,
+    CompletedDoneOperation,
+    CompletedSubmitOperation,
 } from 'signify-ts';
 import { RetryOptions, retry } from './retry.ts';
 import assert from 'assert';
@@ -248,9 +276,9 @@ export async function getOrCreateContact(
             return contact.id;
         }
     }
-    let op = await client.oobis().resolve(oobi, name);
-    op = await waitOperation(client, op);
-    const response = op.response as { i: string };
+    const op: OOBIOperation = await client.oobis().resolve(oobi, name);
+    const completed_op = await waitOperation(client, op);
+    const response = completed_op.response;
     return response.i;
 }
 
@@ -272,7 +300,7 @@ export async function getOrCreateIdentifier(
     let id: any = undefined;
     try {
         const identfier = await client.identifiers().get(name);
-        // console.log("identifiers.get", identfier);
+        // console.log('identifiers.get', identfier);
         id = identfier.prefix;
     } catch {
         const env = resolveEnvironment();
@@ -285,7 +313,7 @@ export async function getOrCreateIdentifier(
             .create(name, kargs);
         let op = await result.op();
         op = await waitOperation(client, op);
-        // console.log("identifiers.create", op);
+        // console.log('identifiers.create', op);
         id = op.response.i;
     }
     const eid = client.agent?.pre!;
@@ -393,11 +421,8 @@ export async function warnNotifications(
     expect(count).toBeGreaterThan(0); // replace warnNotifications with assertNotifications
 }
 
-async function deleteOperations<T = any>(
-    client: SignifyClient,
-    op: Operation<T>
-) {
-    if (op.metadata?.depends) {
+async function deleteOperations(client: SignifyClient, op: Operation) {
+    if (op.metadata && 'depends' in op.metadata && op.metadata.depends) {
         await deleteOperations(client, op.metadata.depends);
     }
 
@@ -512,11 +537,86 @@ export async function waitForNotifications(
  * Poll for operation to become completed.
  * Removes completed operation
  */
-export async function waitOperation<T = any>(
+export async function waitOperation(
     client: SignifyClient,
-    op: Operation<T> | string,
+    op: OOBIOperation | string,
     signal?: AbortSignal
-): Promise<Operation<T>> {
+): Promise<CompletedOOBIOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: QueryOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedQueryOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: EndRoleOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedEndRoleOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: WitnessOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedWitnessOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: DelegationOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedDelegationOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: RegistryOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedRegistryOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: LocSchemeOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedLocSchemeOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: ChallengeOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedChallengeOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: ExchangeOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedExchangeOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: SubmitOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedSubmitOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: DoneOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedDoneOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: CredentialOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedCredentialOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: GroupOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedGroupOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: DelegatorOperation | string,
+    signal?: AbortSignal
+): Promise<CompletedDelegatorOperation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: Operation | string,
+    signal?: AbortSignal
+): Promise<Operation>;
+export async function waitOperation(
+    client: SignifyClient,
+    op: Operation | string,
+    signal?: AbortSignal
+): Promise<Operation> {
     if (typeof op === 'string') {
         op = await client.operations().get(op);
     }

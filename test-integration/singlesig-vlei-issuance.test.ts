@@ -511,7 +511,7 @@ async function sendGrantMessage(
     let op = await senderClient
         .ipex()
         .submitGrant(senderAid.name, grant, gsigs, gend, [recipientAid.prefix]);
-    op = await waitOperation(senderClient, op);
+    await waitOperation(senderClient, op);
 }
 
 async function sendAdmitMessage(
@@ -537,7 +537,7 @@ async function sendAdmitMessage(
     let op = await senderClient
         .ipex()
         .submitAdmit(senderAid.name, admit, sigs, aend, [recipientAid.prefix]);
-    op = await waitOperation(senderClient, op);
+    await waitOperation(senderClient, op);
 
     await markAndRemoveNotification(senderClient, grantNotification);
 }

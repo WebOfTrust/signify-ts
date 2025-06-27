@@ -1,6 +1,6 @@
 import { SignifyClient } from './clienting.ts';
-import { Operation } from './coring.ts';
 import { components } from '../../types/keria-api-schema.ts';
+import { ChallengeOperation } from '../core/keyState.ts';
 
 export type Contact = components['schemas']['Contact'];
 
@@ -168,7 +168,7 @@ export class Challenges {
      * @param words List of challenge words to check for
      * @returns A promise to the long running operation
      */
-    async verify(source: string, words: string[]): Promise<Operation<unknown>> {
+    async verify(source: string, words: string[]): Promise<ChallengeOperation> {
         const path = `/challenges_verify/${source}`;
         const method = 'POST';
         const data = {

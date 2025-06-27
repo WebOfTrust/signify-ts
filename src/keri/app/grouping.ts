@@ -1,6 +1,6 @@
 import { SignifyClient } from './clienting.ts';
 import { Dict } from '../core/core.ts';
-import { Operation } from './coring.ts';
+import { GroupOperation } from '../core/keyState.ts';
 import { ExnMultisig } from './exchanging.ts';
 import { Exn } from './exchanging.ts';
 
@@ -67,7 +67,7 @@ export class Groups {
      * @param {string} [gid] prefix
      * @param {string[]} [smids] array of particpants
      * @param {string[]} [rmids] array of particpants
-     * @returns {Promise<Operation<unknown>} A promise to the list of replay messages
+     * @returns {Promise<GroupOperation>} A promise to the list of replay messages
      */
     async join(
         name: string,
@@ -76,7 +76,7 @@ export class Groups {
         gid: string,
         smids: string[],
         rmids: string[]
-    ): Promise<Operation<unknown>> {
+    ): Promise<GroupOperation> {
         const path = `/identifiers/${name}/multisig/join`;
         const method = 'POST';
         const data = {
