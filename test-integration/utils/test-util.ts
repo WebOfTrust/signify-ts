@@ -23,6 +23,7 @@ import signify, {
     Tier,
     HabState,
     ExternalModule,
+    AuthMode,
     CompletedOOBIOperation,
     CompletedQueryOperation,
     CompletedEndRoleOperation,
@@ -251,6 +252,8 @@ export async function getOrCreateClient(
     externalModule: ExternalModule[] = []
 ): Promise<SignifyClient> {
     const env = resolveEnvironment();
+    const authMode = process.env.TEST_AUTH_MODE === "essr" ? AuthMode.ESSR : AuthMode.SignedHeaders;
+
     await ready();
     bran ??= randomPasscode();
     bran = bran.padEnd(21, '_');
@@ -259,7 +262,8 @@ export async function getOrCreateClient(
         bran,
         Tier.low,
         env.bootUrl,
-        externalModule
+        externalModule,
+        authMode
     );
     try {
         await client.connect();
