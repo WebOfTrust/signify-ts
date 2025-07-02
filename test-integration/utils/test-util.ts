@@ -9,6 +9,7 @@ import signify, {
     Tier,
     HabState,
     ExternalModule,
+    AuthMode,
 } from 'signify-ts';
 import { RetryOptions, retry } from './retry.ts';
 import assert from 'assert';
@@ -173,6 +174,8 @@ export async function getOrCreateClient(
     externalModule: ExternalModule[] = []
 ): Promise<SignifyClient> {
     const env = resolveEnvironment();
+    const authMode = process.env.TEST_AUTH_MODE === "essr" ? AuthMode.ESSR : AuthMode.SignedHeaders;
+
     await ready();
     bran ??= randomPasscode();
     bran = bran.padEnd(21, '_');
@@ -181,7 +184,8 @@ export async function getOrCreateClient(
         bran,
         Tier.low,
         env.bootUrl,
-        externalModule
+        externalModule,
+        authMode
     );
     try {
         await client.connect();
