@@ -10,10 +10,7 @@ import { retry } from './utils/retry.ts';
 import { step } from './utils/test-step.ts';
 
 test('delegation', async () => {
-    const [
-        client1,
-        client2
-    ] = await getOrCreateClients(2);
+    const [client1, client2] = await getOrCreateClients(2);
 
     // Client 1 create delegator AID
     const icpResult1 = await client1.identifiers().create('delegator', {

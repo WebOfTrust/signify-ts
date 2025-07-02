@@ -176,7 +176,13 @@ export async function getOrCreateClient(
     await ready();
     bran ??= randomPasscode();
     bran = bran.padEnd(21, '_');
-    const client = new SignifyClient(env.url, bran, Tier.low, env.bootUrl, externalModule);
+    const client = new SignifyClient(
+        env.url,
+        bran,
+        Tier.low,
+        env.bootUrl,
+        externalModule
+    );
     try {
         await client.connect();
     } catch {

@@ -1,7 +1,11 @@
 // This scrip also work if you start keria with no config file with witness urls
 import { assert, test } from 'vitest';
 import { resolveEnvironment } from './utils/resolve-env.ts';
-import { getOrCreateClient, resolveOobi, waitOperation } from './utils/test-util.ts';
+import {
+    getOrCreateClient,
+    resolveOobi,
+    waitOperation,
+} from './utils/test-util.ts';
 
 const WITNESS_AID = 'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha';
 const { witnessUrls } = resolveEnvironment();

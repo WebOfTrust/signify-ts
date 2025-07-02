@@ -1,6 +1,10 @@
 import { assert, test } from 'vitest';
 import signify from 'signify-ts';
-import { assertOperations, getOrCreateClient, waitOperation } from './utils/test-util.ts';
+import {
+    assertOperations,
+    getOrCreateClient,
+    waitOperation,
+} from './utils/test-util.ts';
 
 test('randy', async () => {
     const client1 = await getOrCreateClient();

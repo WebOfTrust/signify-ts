@@ -8,10 +8,7 @@ import {
 } from './utils/test-util.ts';
 
 test('challenge', async () => {
-    const [
-        client1,
-        client2
-    ] = await getOrCreateClients(2);
+    const [client1, client2] = await getOrCreateClients(2);
 
     // Generate challenge words
     const challenge1_small = await client1.challenges().generate(128);
