@@ -174,7 +174,10 @@ export async function getOrCreateClient(
     externalModule: ExternalModule[] = []
 ): Promise<SignifyClient> {
     const env = resolveEnvironment();
-    const authMode = process.env.TEST_AUTH_MODE === "essr" ? AuthMode.ESSR : AuthMode.SignedHeaders;
+    const authMode =
+        process.env.TEST_AUTH_MODE === 'essr'
+            ? AuthMode.ESSR
+            : AuthMode.SignedHeaders;
 
     await ready();
     bran ??= randomPasscode();
