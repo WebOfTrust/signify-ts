@@ -152,7 +152,7 @@ export class Identifier {
         name: string,
         requireAccepted = true
     ): Promise<HabState | PendingHabState> {
-        const path = `/identifiers/${encodeURIComponent(name)}`;
+        const path = `/identifiers/${name}`;
         const data = null;
         const method = 'GET';
         const res = await this.client.fetch(path, method, data);
@@ -195,7 +195,7 @@ export class Identifier {
         info: IdentifierInfo,
         requireAccepted = true
     ): Promise<HabState | PendingHabState> {
-        const path = `/identifiers/${encodeURIComponent(name)}`;
+        const path = `/identifiers/${name}`;
         const method = 'PUT';
         const res = await this.client.fetch(path, method, info);
         const hab: HabState | PendingHabState = await res.json();
