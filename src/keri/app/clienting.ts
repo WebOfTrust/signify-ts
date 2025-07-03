@@ -215,7 +215,6 @@ export class SignifyClient {
         const body = method == 'GET' ? null : JSON.stringify(data);
         if (body) {
             headers.set('Content-Type', 'application/json');
-            headers.set('Content-Length', body.length.toString());
         }
 
         const baseRequest = new Request(this.url + path, {
