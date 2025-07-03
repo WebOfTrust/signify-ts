@@ -142,6 +142,8 @@ describe('Aiding', () => {
         assert.deepEqual(lastCall.body.salty.transferable, false);
     });
 
+    // The path is passed unencoded; SignifyClient.fetch builds a Request, whose
+    // URL parsing encodes it.
     it('Can get identifiers with special characters in the name', async () => {
         const name = 'a name with ñ!';
         client.fetch.mockResolvedValue(
@@ -151,7 +153,11 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.method, 'GET');
-        assert.equal(lastCall.path, '/identifiers/a%20name%20with%20%C3%B1!');
+        assert.equal(lastCall.path, `/identifiers/${name}`);
+        assert.equal(
+            new URL(`http://agent${lastCall.path}`).pathname,
+            '/identifiers/a%20name%20with%20%C3%B1!'
+        );
     });
 
     it('Get requires key state unless accepted is false', async () => {
