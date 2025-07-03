@@ -178,7 +178,6 @@ export class SignifyClient {
                 this.agent.verfer!
             );
         }
-        console.log(`temporary removeme authmode is ${this.authMode}`);
     }
 
     /**
