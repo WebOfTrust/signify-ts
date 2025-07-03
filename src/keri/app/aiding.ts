@@ -120,7 +120,7 @@ export class Identifier {
      * @returns {Promise<HabState>} A promise to the identifier information
      */
     async get(name: string): Promise<HabState> {
-        const path = `/identifiers/${encodeURIComponent(name)}`;
+        const path = `/identifiers/${name}`;
         const data = null;
         const method = 'GET';
         const res = await this.client.fetch(path, method, data);

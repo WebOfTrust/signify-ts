@@ -52,15 +52,17 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   test:
-    name: Run integration test using keria:${{ matrix.keria-version }}
+    name: Run integration test using keria:${{ matrix.keria-version }} and auth-mode ${{ matrix.auth-mode }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ['ubuntu-latest']
         keria-version: ['0.2.0-dev6']
         node-version: ['20']
+        auth-mode: ['signed-headers', 'essr']
     env:
       KERIA_IMAGE_TAG: ${{ matrix.keria-version }}
+      TEST_AUTH_MODE: ${{ matrix.auth-mode }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

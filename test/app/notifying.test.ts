@@ -23,19 +23,22 @@ describe('SignifyClient', () => {
 
         await notifications.list(20, 40);
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/notifications');
-        assert.equal(lastCall[1]!.method, 'GET');
-        const lastHeaders = new Headers(lastCall[1]!.headers!);
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/notifications');
+        assert.equal(lastCall[0].method, 'GET');
+        const lastHeaders = new Headers(lastCall[0].headers);
         assert.equal(lastHeaders.get('Range'), 'notes=20-40');
 
         await notifications.mark('notificationSAID');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/notifications/notificationSAID');
-        assert.equal(lastCall[1]!.method, 'PUT');
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/notifications/notificationSAID');
+        assert.equal(lastCall[0].method, 'PUT');
 
         await notifications.delete('notificationSAID');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + '/notifications/notificationSAID');
-        assert.equal(lastCall[1]!.method, 'DELETE');
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + '/notifications/notificationSAID');
+        assert.equal(lastCall[0].method, 'DELETE');
     });
 });

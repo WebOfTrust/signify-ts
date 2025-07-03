@@ -21,12 +21,13 @@ describe('delegate', () => {
             'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
         );
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.instanceOf(lastCall[0], Request);
         assert.equal(
-            lastCall[0]!,
+            lastCall[0].url,
             url +
                 '/identifiers/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao/delegation'
         );
-        assert.equal(lastCall[1]!.method, 'POST');
+        assert.equal(lastCall[0].method, 'POST');
         const expectedBody = {
             ixn: {
                 v: 'KERI10JSON0000cf_',
@@ -52,9 +53,6 @@ describe('delegate', () => {
                 transferable: true,
             },
         };
-        assert.equal(
-            lastCall[1]?.body?.toString(),
-            JSON.stringify(expectedBody)
-        );
+        assert.equal(await lastCall[0].text(), JSON.stringify(expectedBody));
     });
 });
