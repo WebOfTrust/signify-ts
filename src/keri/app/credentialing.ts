@@ -22,6 +22,10 @@ import {
 import { Operation } from './coring.ts';
 import { HabState } from '../core/keyState.ts';
 
+import { components } from '../../types/keria-api-schema.ts';
+
+type CredentialResult = components['schemas']['CredentialSchema'];
+
 /** Types of credentials */
 export class CredentialTypes {
     static issued = 'issued';
@@ -287,6 +291,8 @@ export class Credentials {
         return await res.json();
     }
 
+
+
     /**
      * Get a credential
      * @async
@@ -294,7 +300,7 @@ export class Credentials {
      * @param {boolean} [includeCESR=false] - Optional flag export the credential in CESR format
      * @returns {Promise<any>} A promise to the credential
      */
-    async get(said: string, includeCESR: boolean = false): Promise<any> {
+    async get(said: string, includeCESR: boolean = false): Promise<CredentialResult> {
         const path = `/credentials/${said}`;
         const method = 'GET';
         const headers = includeCESR
@@ -302,7 +308,13 @@ export class Credentials {
             : new Headers({ Accept: 'application/json' });
         const res = await this.client.fetch(path, method, null, headers);
 
-        return includeCESR ? await res.text() : await res.json();
+        if (includeCESR) {
+            const text = await res.text();
+            // If CESR is JSON, parse it:
+            return JSON.parse(text) as CredentialResult;
+        } else {
+            return await res.json();
+        }
     }
 
     /**

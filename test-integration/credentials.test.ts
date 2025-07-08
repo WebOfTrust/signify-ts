@@ -138,6 +138,8 @@ test('single signature credentials', { timeout: 90000 }, async () => {
 
         const issuerLeSchema = await issuerClient.schemas().get(LE_SCHEMA_SAID);
 
+        console.log('issuerLeSchema', issuerLeSchema);
+
         assert.equal(issuerLeSchema.$id, LE_SCHEMA_SAID);
     });
 
@@ -427,7 +429,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
             anc: new Serder(holderCredential.anc),
             iss: new Serder(holderCredential.iss),
             acdcAttachment: holderCredential.atc,
-            ancAttachment: holderCredential.ancatc,
+            ancAttachment: holderCredential.ancAttachment,
             issAttachment: holderCredential.issAtc,
             agreeSaid: agreeSaid,
             datetime: createTimestamp(),
@@ -473,6 +475,8 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const verifierCredential = await retry(async () =>
             verifierClient.credentials().get(qviCredentialId)
         );
+
+        console.log('verifierCredential from credentials().get', verifierCredential);
 
         assert.equal(verifierCredential.sad.s, QVI_SCHEMA_SAID);
         assert.equal(verifierCredential.sad.i, issuerAid.prefix);
@@ -607,11 +611,16 @@ test('single signature credentials', { timeout: 90000 }, async () => {
             legalEntityClient.credentials().get(leCredentialId)
         );
 
+        console.log('legalEntityCredential from credentials().get', legalEntityCredential);
+
         assert.equal(legalEntityCredential.sad.s, LE_SCHEMA_SAID);
         assert.equal(legalEntityCredential.sad.i, holderAid.prefix);
         assert.equal(legalEntityCredential.sad.a.i, legalEntityAid.prefix);
         assert.equal(legalEntityCredential.status.s, '0');
-        assert.equal(legalEntityCredential.chains[0].sad.d, qviCredentialId);
+        assert(Array.isArray(legalEntityCredential.chains));
+        assert(legalEntityCredential.chains.length > 0);
+        const firstChain = legalEntityCredential.chains[0] as { sad: { d: string } };
+        assert.equal(firstChain.sad.d, qviCredentialId);
         assert(legalEntityCredential.atc !== undefined);
     });
 
