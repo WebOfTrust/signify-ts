@@ -8,5 +8,3 @@ dist
 .idea
 coverage/*
 
-# Keria API types
-src/types
