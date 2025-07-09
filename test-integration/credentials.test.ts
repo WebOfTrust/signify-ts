@@ -615,7 +615,10 @@ test('single signature credentials', { timeout: 90000 }, async () => {
 
         assert.equal(legalEntityCredential.sad.s, LE_SCHEMA_SAID);
         assert.equal(legalEntityCredential.sad.i, holderAid.prefix);
-        assert.equal(legalEntityCredential.sad.a.i, legalEntityAid.prefix);
+        assert.equal(legalEntityCredential.sad.a !== undefined, true);
+        if (legalEntityCredential.sad.a) {
+            assert.equal(legalEntityCredential.sad.a.i, legalEntityAid.prefix);
+        }
         assert.equal(legalEntityCredential.status.s, '0');
         assert(Array.isArray(legalEntityCredential.chains));
         assert(legalEntityCredential.chains.length > 0);

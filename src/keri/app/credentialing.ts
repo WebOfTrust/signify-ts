@@ -25,6 +25,8 @@ import { HabState } from '../core/keyState.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
 type CredentialResult = components['schemas']['CredentialSchema'];
+type CredentialStateIssOrRev = components['schemas']['CredentialStateIssOrRevSchema'];
+type CredentialStateBisOrBrv = components['schemas']['CredentialStateBisOrBrvSchema'];
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -233,25 +235,9 @@ export interface IpexAdmitArgs {
     datetime?: string;
 }
 
-export type CredentialState = {
-    vn: [number, number];
-    i: string;
-    s: string;
-    d: string;
-    ri: string;
-    a: { s: number; d: string };
-    dt: string;
-    et: string;
-} & (
-    | {
-          et: 'iss' | 'rev';
-          ra: Record<string, never>;
-      }
-    | {
-          et: 'bis' | 'brv';
-          ra: { i: string; s: string; d: string };
-      }
-);
+
+export type CredentialState = CredentialStateIssOrRev | CredentialStateBisOrBrv;
+
 
 /**
  * Credentials
