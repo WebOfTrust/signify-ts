@@ -2,28 +2,24 @@
 
 export interface components {
     schemas: {
-        SADAttributes: {
-            d: string;
-            i: string;
-            LEI: string;
-            dt: string;
-        };
         SADSchema: {
             v: string;
             d: string;
             i: string;
-            ri: string;
             s: string;
-            a: components["schemas"]["SADAttributes"];
-            u?: boolean;
-            e?: boolean;
-            r?: boolean;
+            ri?: string;
+            a?: {
+                [key: string]: unknown;
+            };
+            u?: string;
+            e?: unknown[];
+            r?: unknown[];
         };
         SADAttributesSchema: {
             d: string;
-            i: string;
             LEI: string;
             dt: string;
+            i?: string;
         };
         ISSSchema: {
             v: string;
@@ -71,11 +67,11 @@ export interface components {
             d: string;
         };
         SealSchema: {
-            i: string;
             s: string;
             d: string;
-            t?: boolean;
-            p?: boolean;
+            i?: string;
+            t?: string;
+            p?: string;
         };
         ANCSchema: {
             v: string;
@@ -96,10 +92,15 @@ export interface components {
             chains: {
                 [key: string]: unknown;
             }[];
-            status: components["schemas"]["CredentialStatusSchema"];
+            status: components["schemas"]["CredentialStateIssOrRevSchema"] | components["schemas"]["CredentialStateBisOrBrvSchema"];
             anchor: components["schemas"]["AnchorSchema"];
             anc: components["schemas"]["ANCSchema"];
             ancAttachment: string;
+        };
+        OperationBaseSchema: {
+            name: string;
+            done?: boolean;
+            error?: boolean;
         };
         StatusSchema: {
             code: number;
@@ -113,6 +114,37 @@ export interface components {
             name: string;
             done?: boolean;
             error?: boolean;
+        };
+        CredentialStateIssOrRevSchema: {
+            vn: unknown;
+            i: string;
+            s: string;
+            d: string;
+            ri: string;
+            a: components["schemas"]["SealSchema"];
+            dt: string;
+            /** @enum {unknown} */
+            et: "iss" | "rev";
+            ra: {
+                [key: string]: unknown;
+            };
+        };
+        RaFields: {
+            i: string;
+            s: string;
+            d: string;
+        };
+        CredentialStateBisOrBrvSchema: {
+            vn: unknown;
+            i: string;
+            s: string;
+            d: string;
+            ri: string;
+            a: components["schemas"]["SealSchema"];
+            dt: string;
+            /** @enum {unknown} */
+            et: "bis" | "brv";
+            ra: components["schemas"]["RaFields"];
         };
         Operation: components["schemas"]["OperationBase"] & {
             metadata?: Record<string, never>;
