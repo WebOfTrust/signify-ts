@@ -275,8 +275,6 @@ export class Credentials {
         return await res.json();
     }
 
-
-
     /**
      * Get a credential
      * @async
@@ -298,13 +296,7 @@ export class Credentials {
             : new Headers({ Accept: 'application/json' });
         const res = await this.client.fetch(path, method, null, headers);
 
-        if (includeCESR) {
-            const text = await res.text();
-            // If CESR is JSON, parse it:
-            return JSON.parse(text) as CredentialResult;
-        } else {
-            return await res.json();
-        }
+        return includeCESR ? await res.text() : await res.json();
     }
 
     /**
@@ -439,7 +431,7 @@ export class Credentials {
         const dt =
             datetime ?? new Date().toISOString().replace('Z', '000+00:00');
 
-        const cred = await this.get(said);
+        const cred = (await this.get(said)) as CredentialResult;
 
         let registryId: string;
         if ('ri' in cred.sad && cred.sad.ri !== undefined) {
