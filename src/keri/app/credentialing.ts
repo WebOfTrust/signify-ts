@@ -24,9 +24,11 @@ import { HabState } from '../core/keyState.ts';
 
 import { components } from '../../types/keria-api-schema.ts';
 
-type CredentialResult = components['schemas']['CredentialSchema'];
-type CredentialStateIssOrRev = components['schemas']['CredentialStateIssOrRevSchema'];
-type CredentialStateBisOrBrv = components['schemas']['CredentialStateBisOrBrvSchema'];
+export type CredentialResult = components['schemas']['CredentialSchema'];
+type CredentialStateIssOrRev =
+    components['schemas']['CredentialStateIssOrRevSchema'];
+type CredentialStateBisOrBrv =
+    components['schemas']['CredentialStateBisOrBrvSchema'];
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -235,9 +237,7 @@ export interface IpexAdmitArgs {
     datetime?: string;
 }
 
-
 export type CredentialState = CredentialStateIssOrRev | CredentialStateBisOrBrv;
-
 
 /**
  * Credentials
@@ -277,8 +277,6 @@ export class Credentials {
         return await res.json();
     }
 
-
-
     /**
      * Get a credential
      * @async
@@ -286,7 +284,10 @@ export class Credentials {
      * @param {boolean} [includeCESR=false] - Optional flag export the credential in CESR format
      * @returns {Promise<any>} A promise to the credential
      */
-    async get(said: string, includeCESR: boolean = false): Promise<CredentialResult> {
+    async get(
+        said: string,
+        includeCESR: boolean = false
+    ): Promise<CredentialResult | string> {
         const path = `/credentials/${said}`;
         const method = 'GET';
         const headers = includeCESR
@@ -294,13 +295,7 @@ export class Credentials {
             : new Headers({ Accept: 'application/json' });
         const res = await this.client.fetch(path, method, null, headers);
 
-        if (includeCESR) {
-            const text = await res.text();
-            // If CESR is JSON, parse it:
-            return JSON.parse(text) as CredentialResult;
-        } else {
-            return await res.json();
-        }
+        return includeCESR ? await res.text() : await res.json();
     }
 
     /**
@@ -435,7 +430,7 @@ export class Credentials {
         const dt =
             datetime ?? new Date().toISOString().replace('Z', '000+00:00');
 
-        const cred = await this.get(said);
+        const cred = (await this.get(said)) as CredentialResult;
 
         // Create rev
         const _rev = {

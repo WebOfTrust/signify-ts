@@ -115,6 +115,7 @@ export interface components {
             done?: boolean;
             error?: boolean;
         };
+        EmptyDict: Record<string, never>;
         CredentialStateIssOrRevSchema: {
             vn: unknown;
             i: string;
@@ -125,9 +126,7 @@ export interface components {
             dt: string;
             /** @enum {unknown} */
             et: "iss" | "rev";
-            ra: {
-                [key: string]: unknown;
-            };
+            ra: components["schemas"]["EmptyDict"];
         };
         RaFields: {
             i: string;
