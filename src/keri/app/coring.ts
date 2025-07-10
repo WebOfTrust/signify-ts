@@ -70,7 +70,7 @@ export type Operation<T = unknown> = OperationBase & {
         depends?: Operation;
         [property: string]: any;
     };
-}
+};
 
 export interface OperationsDeps {
     fetch(
