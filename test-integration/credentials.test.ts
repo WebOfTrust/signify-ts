@@ -478,11 +478,6 @@ test('single signature credentials', { timeout: 90000 }, async () => {
             verifierClient.credentials().get(qviCredentialId)
         )) as CredentialResult;
 
-        console.log(
-            'verifierCredential from credentials().get',
-            verifierCredential
-        );
-
         assert.equal(verifierCredential.sad.s, QVI_SCHEMA_SAID);
         assert.equal(verifierCredential.sad.i, issuerAid.prefix);
         assert.equal(verifierCredential.status.s, '0'); // 0 = issued
