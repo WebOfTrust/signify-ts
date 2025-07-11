@@ -170,6 +170,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
 
     await step('issuer list credentials', async () => {
         const issuerCredentials = await issuerClient.credentials().list();
+        assertLength(issuerCredentials, 1);
         assert(issuerCredentials.length >= 1);
         assert.equal(issuerCredentials[0].sad.s, QVI_SCHEMA_SAID);
         assert.equal(issuerCredentials[0].sad.i, issuerAid.prefix);
@@ -475,11 +476,6 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const verifierCredential = (await retry(async () =>
             verifierClient.credentials().get(qviCredentialId)
         )) as CredentialResult;
-
-        console.log(
-            'verifierCredential from credentials().get',
-            verifierCredential
-        );
 
         assert.equal(verifierCredential.sad.s, QVI_SCHEMA_SAID);
         assert.equal(verifierCredential.sad.i, issuerAid.prefix);
