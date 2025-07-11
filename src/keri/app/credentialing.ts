@@ -25,6 +25,7 @@ import { HabState } from '../core/keyState.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
 export type CredentialResult = components['schemas']['CredentialSchema'];
+export type Registry = components['schemas']['RegistrySchema'];
 type CredentialStateIssOrRev =
     components['schemas']['CredentialStateIssOrRevSchema'];
 type CredentialStateBisOrBrv =
@@ -258,7 +259,7 @@ export class Credentials {
      * @param {CredentialFilter} [kargs] Optional parameters to filter the credentials
      * @returns {Promise<any>} A promise to the list of credentials
      */
-    async list(kargs: CredentialFilter = {}): Promise<any> {
+    async list(kargs: CredentialFilter = {}): Promise<CredentialResult[]> {
         const path = `/credentials/query`;
         const filtr = kargs.filter === undefined ? {} : kargs.filter;
         const sort = kargs.sort === undefined ? [] : kargs.sort;
@@ -545,7 +546,7 @@ export class RegistryResult {
         return this._sigs;
     }
 
-    async op(): Promise<any> {
+    async op(): Promise<Registry> {
         const res = await this.promise;
         return await res.json();
     }
@@ -570,7 +571,7 @@ export class Registries {
      * @param {string} name Name or alias of the identifier
      * @returns {Promise<any>} A promise to the list of registries
      */
-    async list(name: string): Promise<any> {
+    async list(name: string): Promise<Registry[]> {
         const path = `/identifiers/${name}/registries`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
@@ -679,7 +680,7 @@ export class Registries {
         name: string,
         registryName: string,
         newName: string
-    ): Promise<any> {
+    ): Promise<Registry> {
         const path = `/identifiers/${name}/registries/${registryName}`;
         const method = 'PUT';
         const data = {

@@ -149,6 +149,12 @@ export interface components {
             metadata?: Record<string, never>;
             response?: Record<string, never>;
         };
+        RegistrySchema: {
+            name: string;
+            regk: string;
+            pre: string;
+            state: components["schemas"]["CredentialStateIssOrRevSchema"] | components["schemas"]["CredentialStateBisOrBrvSchema"];
+        };
     };
     responses: never;
     parameters: never;
