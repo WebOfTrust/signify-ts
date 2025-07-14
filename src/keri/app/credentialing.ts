@@ -26,10 +26,7 @@ import { components } from '../../types/keria-api-schema.ts';
 
 export type CredentialResult = components['schemas']['CredentialSchema'];
 export type Registry = components['schemas']['RegistrySchema'];
-type CredentialStateIssOrRev =
-    components['schemas']['CredentialStateIssOrRevSchema'];
-type CredentialStateBisOrBrv =
-    components['schemas']['CredentialStateBisOrBrvSchema'];
+export type Schema = components['schemas']['SchemaSchema'];
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -238,7 +235,7 @@ export interface IpexAdmitArgs {
     datetime?: string;
 }
 
-export type CredentialState = CredentialStateIssOrRev | CredentialStateBisOrBrv;
+export type CredentialState = components['schemas']['CredentialStateSchema'];
 
 /**
  * Credentials
@@ -257,7 +254,7 @@ export class Credentials {
      * List credentials
      * @async
      * @param {CredentialFilter} [kargs] Optional parameters to filter the credentials
-     * @returns {Promise<any>} A promise to the list of credentials
+     * @returns {Promise<CredentialResult[]>} A promise to the list of credentials
      */
     async list(kargs: CredentialFilter = {}): Promise<CredentialResult[]> {
         const path = `/credentials/query`;
@@ -283,7 +280,7 @@ export class Credentials {
      * @async
      * @param {string} said - SAID of the credential
      * @param {boolean} [includeCESR=false] - Optional flag export the credential in CESR format
-     * @returns {Promise<any>} A promise to the credential
+     * @returns {Promise<CredentialResult | string>} A promise to the credential
      */
     async get(
         said: string,
@@ -417,7 +414,7 @@ export class Credentials {
      * @param {string} name Name or alias of the identifier
      * @param {string} said SAID of the credential
      * @param {string} datetime date time of revocation
-     * @returns {Promise<any>} A promise to the long-running operation
+     * @returns {Promise<RevokeCredentialResult>} A promise to the long-running operation
      */
     async revoke(
         name: string,
@@ -569,7 +566,7 @@ export class Registries {
      * List registries
      * @async
      * @param {string} name Name or alias of the identifier
-     * @returns {Promise<any>} A promise to the list of registries
+     * @returns {Promise<Registry[]>} A promise to the list of registries
      */
     async list(name: string): Promise<Registry[]> {
         const path = `/identifiers/${name}/registries`;
@@ -674,7 +671,7 @@ export class Registries {
      * @param {string} name Name or alias of the identifier
      * @param {string} registryName Current registry name
      * @param {string} newName New registry name
-     * @returns {Promise<any>} A promise to the registry record
+     * @returns {Promise<Registry>} A promise to the registry record
      */
     async rename(
         name: string,
@@ -707,9 +704,9 @@ export class Schemas {
      * Get a schema
      * @async
      * @param {string} said SAID of the schema
-     * @returns {Promise<any>} A promise to the schema
+     * @returns {Promise<Schema>} A promise to the schema
      */
-    async get(said: string): Promise<any> {
+    async get(said: string): Promise<Schema> {
         const path = `/schema/${said}`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
@@ -719,9 +716,9 @@ export class Schemas {
     /**
      * List schemas
      * @async
-     * @returns {Promise<any>} A promise to the list of schemas
+     * @returns {Promise<Schema[]>} A promise to the list of schemas
      */
-    async list(): Promise<any> {
+    async list(): Promise<Schema[]> {
         const path = `/schema`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
