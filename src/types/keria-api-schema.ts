@@ -540,12 +540,11 @@ export interface components {
             signing: components['schemas']['AidRecord'][];
             rotation: components['schemas']['AidRecord'][];
         };
-        CredentialStateSchema: components["schemas"]["CredentialStateIssOrRevSchema"] | components["schemas"]["CredentialStateBisOrBrvSchema"];
-        RegistrySchema: {
+        Registry: {
             name: string;
             regk: string;
             pre: string;
-            state: components["schemas"]["CredentialStateSchema"];
+            state: components["schemas"]["CredentialState"];
         };
     };
     responses: never;
