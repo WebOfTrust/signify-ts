@@ -232,6 +232,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const issuerCredential = (await issuerClient
             .credentials()
             .get(qviCredentialId)) as CredentialResult;
+        assert(issuerCredential !== undefined);
         assert.equal(issuerCredential.sad.s, QVI_SCHEMA_SAID);
         assert.equal(issuerCredential.sad.i, issuerAid.prefix);
         assert.equal(issuerCredential.status.s, '0');
@@ -249,7 +250,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
             acdc: new Serder(issuerCredential.sad),
             anc: new Serder(issuerCredential.anc),
             iss: new Serder(issuerCredential.iss),
-            ancAttachment: issuerCredential.ancAttachment,
+            ancAttachment: issuerCredential.ancatc,
             recipient: holderAid.prefix,
             datetime: dt,
         });
@@ -430,8 +431,8 @@ test('single signature credentials', { timeout: 90000 }, async () => {
             anc: new Serder(holderCredential.anc),
             iss: new Serder(holderCredential.iss),
             acdcAttachment: holderCredential.atc,
-            ancAttachment: holderCredential.ancAttachment,
-            issAttachment: holderCredential.issAtc,
+            ancAttachment: holderCredential.ancatc,
+            issAttachment: holderCredential.issatc,
             agreeSaid: agreeSaid,
             datetime: createTimestamp(),
         });
@@ -559,7 +560,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
             acdc: new Serder(leCredential.sad),
             anc: new Serder(leCredential.anc),
             iss: new Serder(leCredential.iss),
-            ancAttachment: leCredential.ancAttachment,
+            ancAttachment: leCredential.ancatc,
             recipient: legalEntityAid.prefix,
             datetime: dt,
         });

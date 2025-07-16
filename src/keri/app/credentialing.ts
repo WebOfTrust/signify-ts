@@ -24,9 +24,9 @@ import { HabState } from '../core/keyState.ts';
 
 import { components } from '../../types/keria-api-schema.ts';
 
-export type CredentialResult = components['schemas']['CredentialSchema'];
-export type Registry = components['schemas']['RegistrySchema'];
-export type Schema = components['schemas']['SchemaSchema'];
+export type CredentialResult = components['schemas']['Credential'];
+export type Registry = components['schemas']['Registry'];
+export type Schema = components['schemas']['Schema'];
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -235,7 +235,7 @@ export interface IpexAdmitArgs {
     datetime?: string;
 }
 
-export type CredentialState = components['schemas']['CredentialStateSchema'];
+export type CredentialState = components['schemas']['CredentialState'];
 
 /**
  * Credentials
