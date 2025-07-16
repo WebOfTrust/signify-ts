@@ -117,8 +117,7 @@ export interface components {
         StatusSchema: {
             code: number;
             message: string;
-            /** @default null */
-            details: {
+            details?: {
                 [key: string]: unknown;
             } | null;
         };
