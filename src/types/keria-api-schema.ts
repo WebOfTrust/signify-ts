@@ -540,6 +540,16 @@ export interface components {
             signing: components['schemas']['AidRecord'][];
             rotation: components['schemas']['AidRecord'][];
         };
+        CredentialStateBase: {
+            vn: unknown;
+            i: string;
+            s: string;
+            d: string;
+            ri: string;
+            a: components["schemas"]["Seal"];
+            dt: string;
+            et: string;
+        };
         Registry: {
             name: string;
             regk: string;
