@@ -24,7 +24,8 @@ export interface components {
         };
         IssEvt: {
             v: string;
-            t: string;
+            /** @enum {unknown} */
+            t: "iss" | "bis";
             d: string;
             i: string;
             s: string;
@@ -82,16 +83,6 @@ export interface components {
             di?: string;
             a?: unknown[];
         };
-        CredentialStateBase: {
-            vn: unknown;
-            i: string;
-            s: string;
-            d: string;
-            ri: string;
-            a: components["schemas"]["Seal"];
-            dt: string;
-            et: string;
-        };
         Credential: {
             sad: components["schemas"]["ACDC"];
             atc: string;
@@ -107,19 +98,17 @@ export interface components {
             anc: components["schemas"]["ANC"];
             ancatc: string;
         };
-        OperationBase: {
-            name: string;
-            done?: boolean;
-            error?: {
-                [key: string]: unknown;
-            };
-        };
-        StatusSchema: {
+        OperationStatus: {
             code: number;
             message: string;
             details?: {
                 [key: string]: unknown;
             } | null;
+        };
+        OperationBase: {
+            name: string;
+            error?: components["schemas"]["OperationStatus"];
+            done?: boolean;
         };
         EmptyDict: Record<string, never>;
         CredentialStateIssOrRev: {
@@ -155,6 +144,16 @@ export interface components {
         Operation: components["schemas"]["OperationBase"] & {
             metadata?: Record<string, never>;
             response?: Record<string, never>;
+        };
+        CredentialStateBase: {
+            vn: unknown;
+            i: string;
+            s: string;
+            d: string;
+            ri: string;
+            a: components["schemas"]["Seal"];
+            dt: string;
+            et: string;
         };
         Registry: {
             name: string;
