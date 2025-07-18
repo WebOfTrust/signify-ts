@@ -282,6 +282,9 @@ export class Credentials {
      * @param {boolean} [includeCESR=false] - Optional flag export the credential in CESR format
      * @returns {Promise<CredentialResult | string>} A promise to the credential
      */
+    async get(said: string): Promise<CredentialResult>;
+    async get(said: string, includeCESR: false): Promise<CredentialResult>;
+    async get(said: string, includeCESR: true): Promise<string>;
     async get(
         said: string,
         includeCESR: boolean = false
@@ -428,7 +431,7 @@ export class Credentials {
         const dt =
             datetime ?? new Date().toISOString().replace('Z', '000+00:00');
 
-        const cred = (await this.get(said)) as CredentialResult;
+        const cred = (await this.get(said));
 
         // Create rev
         const _rev = {
