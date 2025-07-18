@@ -138,8 +138,6 @@ test('single signature credentials', { timeout: 90000 }, async () => {
 
         const issuerLeSchema = await issuerClient.schemas().get(LE_SCHEMA_SAID);
 
-        console.log('issuerLeSchema', issuerLeSchema);
-
         assert.equal(issuerLeSchema.$id, LE_SCHEMA_SAID);
     });
 
@@ -242,7 +240,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const dt = createTimestamp();
         const issuerCredential = (await issuerClient
             .credentials()
-            .get(qviCredentialId)) as CredentialResult;
+            .get(qviCredentialId));
         assert(issuerCredential !== undefined);
 
         const [grant, gsigs, gend] = await issuerClient.ipex().grant({
@@ -309,7 +307,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const holderCredential = await retry(async () => {
             const result = (await holderClient
                 .credentials()
-                .get(qviCredentialId)) as CredentialResult;
+                .get(qviCredentialId));
             assert(result !== undefined);
             return result;
         });
@@ -422,7 +420,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
 
         const holderCredential = (await holderClient
             .credentials()
-            .get(qviCredentialId)) as CredentialResult;
+            .get(qviCredentialId));
 
         const [grant2, gsigs2, gend2] = await holderClient.ipex().grant({
             senderName: holderAid.name,
@@ -476,7 +474,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
 
         const verifierCredential = (await retry(async () =>
             verifierClient.credentials().get(qviCredentialId)
-        )) as CredentialResult;
+        ));
 
         assert.equal(verifierCredential.sad.s, QVI_SCHEMA_SAID);
         assert.equal(verifierCredential.sad.i, issuerAid.prefix);
@@ -514,7 +512,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         async () => {
             const qviCredential = (await holderClient
                 .credentials()
-                .get(qviCredentialId)) as CredentialResult;
+                .get(qviCredentialId));
 
             const result = await holderClient
                 .credentials()
@@ -552,7 +550,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const dt = createTimestamp();
         const leCredential = (await holderClient
             .credentials()
-            .get(leCredentialId)) as CredentialResult;
+            .get(leCredentialId));
         assert(leCredential !== undefined);
 
         const [grant, gsigs, gend] = await holderClient.ipex().grant({
@@ -639,7 +637,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         await waitOperation(issuerClient, revokeOperation.op);
         const issuerCredential = (await issuerClient
             .credentials()
-            .get(qviCredentialId)) as CredentialResult;
+            .get(qviCredentialId));
 
         assert.equal(issuerCredential.status.s, '1');
     });
