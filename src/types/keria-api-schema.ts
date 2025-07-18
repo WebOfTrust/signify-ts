@@ -2,25 +2,23 @@
 
 export interface components {
     schemas: {
-        ACDC: {
-            v: string;
-            d: string;
-            i: string;
-            s: string;
-            ri?: string;
-            a?: {
-                [key: string]: unknown;
-            };
-            u?: string;
-            e?: unknown[];
-            r?: unknown[];
-        };
         ACDCAttributes: {
             dt?: string;
             i?: string;
             u?: string;
         } & {
             [key: string]: unknown;
+        };
+        ACDC: {
+            v: string;
+            d: string;
+            i: string;
+            s: string;
+            ri?: string;
+            a?: components["schemas"]["ACDCAttributes"];
+            u?: string;
+            e?: unknown[];
+            r?: unknown[];
         };
         IssEvt: {
             v: string;
@@ -81,7 +79,7 @@ export interface components {
             s: string;
             p: string;
             di?: string;
-            a?: unknown[];
+            a?: components["schemas"]["Seal"][];
         };
         Credential: {
             sad: components["schemas"]["ACDC"];
@@ -144,16 +142,6 @@ export interface components {
         Operation: components["schemas"]["OperationBase"] & {
             metadata?: Record<string, never>;
             response?: Record<string, never>;
-        };
-        CredentialStateBase: {
-            vn: unknown;
-            i: string;
-            s: string;
-            d: string;
-            ri: string;
-            a: components["schemas"]["Seal"];
-            dt: string;
-            et: string;
         };
         Registry: {
             name: string;
