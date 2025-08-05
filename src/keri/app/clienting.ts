@@ -45,6 +45,23 @@ export class SignifyClient {
     public tier: Tier;
     public bootUrl: string;
     public exteralModules: ExternalModule[];
+    private _identifiers: Identifier | null = null;
+    private _operations: Operations | null = null;
+    private _keyEvents: KeyEvents | null = null;
+    private _keyStates: KeyStates | null = null;
+    private _oobis: Oobis | null = null;
+    private _config: Config | null = null;
+    private _delegations: Delegations | null = null;
+    private _exchanges: Exchanges | null = null;
+    private _groups: Groups | null = null;
+    private _escrows: Escrows | null = null;
+    private _credentials: Credentials | null = null;
+    private _registries: Registries | null = null;
+    private _ipex: Ipex | null = null;
+    private _notifications: Notifications | null = null;
+    private _contacts: Contacts | null = null;
+    private _challenges: Challenges | null = null;
+    private _schemas: Schemas | null = null;
 
     /**
      * SignifyClient constructor
@@ -359,7 +376,11 @@ export class SignifyClient {
      * @returns {Identifier}
      */
     identifiers(): Identifier {
-        return new Identifier(this);
+        if (!this._identifiers) {
+            this._identifiers = new Identifier(this);
+        }
+
+        return this._identifiers;
     }
 
     /**
@@ -367,7 +388,11 @@ export class SignifyClient {
      * @returns {Oobis}
      */
     oobis(): Oobis {
-        return new Oobis(this);
+        if (!this._oobis) {
+            this._oobis = new Oobis(this);
+        }
+
+        return this._oobis;
     }
 
     /**
@@ -375,7 +400,11 @@ export class SignifyClient {
      * @returns {Operations}
      */
     operations(): Operations {
-        return new Operations(this);
+        if (!this._operations) {
+            this._operations = new Operations(this);
+        }
+
+        return this._operations;
     }
 
     /**
@@ -383,7 +412,11 @@ export class SignifyClient {
      * @returns {KeyEvents}
      */
     keyEvents(): KeyEvents {
-        return new KeyEvents(this);
+        if (!this._keyEvents) {
+            this._keyEvents = new KeyEvents(this);
+        }
+
+        return this._keyEvents;
     }
 
     /**
@@ -391,7 +424,11 @@ export class SignifyClient {
      * @returns {KeyStates}
      */
     keyStates(): KeyStates {
-        return new KeyStates(this);
+        if (!this._keyStates) {
+            this._keyStates = new KeyStates(this);
+        }
+
+        return this._keyStates;
     }
 
     /**
@@ -399,7 +436,11 @@ export class SignifyClient {
      * @returns {Credentials}
      */
     credentials(): Credentials {
-        return new Credentials(this);
+        if (!this._credentials) {
+            this._credentials = new Credentials(this);
+        }
+
+        return this._credentials;
     }
 
     /**
@@ -407,7 +448,11 @@ export class SignifyClient {
      * @returns {Ipex}
      */
     ipex(): Ipex {
-        return new Ipex(this);
+        if (!this._ipex) {
+            this._ipex = new Ipex(this);
+        }
+
+        return this._ipex;
     }
 
     /**
@@ -415,7 +460,11 @@ export class SignifyClient {
      * @returns {Registries}
      */
     registries(): Registries {
-        return new Registries(this);
+        if (!this._registries) {
+            this._registries = new Registries(this);
+        }
+
+        return this._registries;
     }
 
     /**
@@ -423,7 +472,11 @@ export class SignifyClient {
      * @returns {Schemas}
      */
     schemas(): Schemas {
-        return new Schemas(this);
+        if (!this._schemas) {
+            this._schemas = new Schemas(this);
+        }
+
+        return this._schemas;
     }
 
     /**
@@ -431,7 +484,11 @@ export class SignifyClient {
      * @returns {Challenges}
      */
     challenges(): Challenges {
-        return new Challenges(this);
+        if (!this._challenges) {
+            this._challenges = new Challenges(this);
+        }
+
+        return this._challenges;
     }
 
     /**
@@ -439,7 +496,11 @@ export class SignifyClient {
      * @returns {Contacts}
      */
     contacts(): Contacts {
-        return new Contacts(this);
+        if (!this._contacts) {
+            this._contacts = new Contacts(this);
+        }
+
+        return this._contacts;
     }
 
     /**
@@ -447,7 +508,11 @@ export class SignifyClient {
      * @returns {Notifications}
      */
     notifications(): Notifications {
-        return new Notifications(this);
+        if (!this._notifications) {
+            this._notifications = new Notifications(this);
+        }
+
+        return this._notifications;
     }
 
     /**
@@ -455,7 +520,11 @@ export class SignifyClient {
      * @returns {Escrows}
      */
     escrows(): Escrows {
-        return new Escrows(this);
+        if (!this._escrows) {
+            this._escrows = new Escrows(this);
+        }
+
+        return this._escrows;
     }
 
     /**
@@ -463,7 +532,11 @@ export class SignifyClient {
      * @returns {Groups}
      */
     groups(): Groups {
-        return new Groups(this);
+        if (!this._groups) {
+            this._groups = new Groups(this);
+        }
+
+        return this._groups;
     }
 
     /**
@@ -471,7 +544,11 @@ export class SignifyClient {
      * @returns {Exchanges}
      */
     exchanges(): Exchanges {
-        return new Exchanges(this);
+        if (!this._exchanges) {
+            this._exchanges = new Exchanges(this);
+        }
+
+        return this._exchanges;
     }
 
     /**
@@ -479,7 +556,11 @@ export class SignifyClient {
      * @returns {Delegations}
      */
     delegations(): Delegations {
-        return new Delegations(this);
+        if (!this._delegations) {
+            this._delegations = new Delegations(this);
+        }
+
+        return this._delegations;
     }
 
     /**
@@ -487,6 +568,10 @@ export class SignifyClient {
      * @returns {Config}
      */
     config(): Config {
-        return new Config(this);
+        if (!this._config) {
+            this._config = new Config(this);
+        }
+
+        return this._config;
     }
 }
