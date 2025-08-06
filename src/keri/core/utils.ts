@@ -3,9 +3,8 @@ import { Seqner } from './seqner.ts';
 import { Prefixer } from './prefixer.ts';
 import { Saider } from './saider.ts';
 import { Serder } from './serder.ts';
-import { b } from './core.ts';
 
-export function pad(n: any, width = 3, z = 0) {
+export function pad(n: string, width = 3, z = 0) {
     return (String(z).repeat(width) + String(n)).slice(String(n).length);
 }
 
@@ -16,8 +15,8 @@ export function pad(n: any, width = 3, z = 0) {
  * @param {*} ked  ked is key event dict
  * @param {*} labels    labels is list of element labels in ked from which to extract values
  */
-export function extractValues(ked: any, labels: any) {
-    let values = [];
+export function extractValues(ked: Record<string, unknown>, labels: string[]) {
+    let values: unknown[] = [];
     for (const label of labels) {
         values = extractElementValues(ked[label], values);
     }
@@ -41,7 +40,7 @@ export function arrayEquals(ar1: Uint8Array, ar2: Uint8Array) {
  * @param {*} values
  */
 
-function extractElementValues(element: any, values: any) {
+function extractElementValues(element: unknown, values: unknown[]) {
     let data = [];
 
     try {
