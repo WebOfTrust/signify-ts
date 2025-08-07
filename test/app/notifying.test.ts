@@ -1,5 +1,5 @@
 import { assert, describe, it } from 'vitest';
-import { Tier } from '../../src/keri/core/salter.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { createMockFetch } from './test-utils.ts';

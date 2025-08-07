@@ -15,6 +15,7 @@ import {
     Tier,
 } from '../../src/index.ts';
 import { createMockIdentifierState } from './test-utils.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 
 const bran = '0123456789abcdefghijk';
 
