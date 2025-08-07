@@ -1,7 +1,7 @@
 import { Salter } from './salter.ts';
 import { Algos, SaltyCreator, RandyCreator } from './manager.ts';
 import { MtrDex } from './matter.ts';
-import { Tier } from './salter.ts';
+import { Tier} from '../../types/keria-api-schema.ts';
 import { Encrypter } from '../core/encrypter.ts';
 import { Decrypter } from './decrypter.ts';
 import { b } from './core.ts';

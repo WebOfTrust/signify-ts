@@ -4,7 +4,8 @@ import libsodium from 'libsodium-wrappers-sumo';
 import { openManager } from '../../src/keri/core/manager.ts';
 import { Signer } from '../../src/keri/core/signer.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
-import { Tier, randomPasscode } from '../../src/index.ts';
+import { randomPasscode } from '../../src/index.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 
 describe('Controller', () => {
     it('manage account AID signing and agent verification', async () => {
