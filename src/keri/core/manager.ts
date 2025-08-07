@@ -1,6 +1,7 @@
 import { Encrypter } from './encrypter.ts';
 import { Decrypter } from './decrypter.ts';
-import { Salter, Tier } from './salter.ts';
+import { Salter } from './salter.ts';
+import { Tier} from '../../types/keria-api-schema.ts';
 import { Signer } from './signer.ts';
 import { Verfer } from './verfer.ts';
 import { MtrDex } from './matter.ts';

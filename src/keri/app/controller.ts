@@ -1,5 +1,6 @@
 import { SaltyCreator } from '../core/manager.ts';
-import { Salter, Tier } from '../core/salter.ts';
+import { Salter } from '../core/salter.ts';
+import { Tier} from '../../types/keria-api-schema.ts';
 import { MtrDex } from '../core/matter.ts';
 import { Diger } from '../core/diger.ts';
 import { incept, rotate, interact } from '../core/eventing.ts';

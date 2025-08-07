@@ -9,10 +9,10 @@ import {
     MtrDex,
     Salter,
     Serials,
-    Tier,
     Vrsn_1_0,
     incept,
 } from '../../src/index.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 import {
     EstablishmentState,
     HabState,

@@ -9,7 +9,8 @@ import {
 } from '../../src/keri/core/manager.ts';
 import { assert, describe, it, expect, vitest, Mocked } from 'vitest';
 import { MtrDex } from '../../src/keri/core/matter.ts';
-import { Salter, Tier } from '../../src/keri/core/salter.ts';
+import { Salter } from '../../src/keri/core/salter.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 import { Signer } from '../../src/keri/core/signer.ts';
 import { Encrypter } from '../../src/keri/core/encrypter.ts';
 import { Decrypter } from '../../src/keri/core/decrypter.ts';

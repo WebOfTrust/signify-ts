@@ -1,7 +1,7 @@
+import { components, Tier } from '../../types/keria-api-schema.ts';
 import { Authenticater } from '../core/authing.ts';
 import { HEADER_SIG_TIME } from '../core/httping.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
-import { Tier } from '../core/salter.ts';
 
 import { Identifier } from './aiding.ts';
 import { Contacts, Challenges } from './contacting.ts';
@@ -15,6 +15,9 @@ import { Groups } from './grouping.ts';
 import { Notifications } from './notifying.ts';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
+
+// Export type outside the class
+export type AgentResourceResult = components["schemas"]["AgentResourceResult"];
 
 class State {
     agent: any | null;
@@ -134,7 +137,7 @@ export class SignifyClient {
             throw new Error(`agent does not exist for controller ${caid}`);
         }
 
-        const data = await res.json();
+        const data = await res.json() as AgentResourceResult;
         const state = new State();
         state.agent = data.agent ?? {};
         state.controller = data.controller ?? {};

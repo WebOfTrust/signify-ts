@@ -7,7 +7,7 @@ import {
     OperationsDeps,
 } from '../../src/keri/app/coring.ts';
 import { SignifyClient } from '../../src/keri/app/clienting.ts';
-import { Tier } from '../../src/keri/core/salter.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 import { randomUUID } from 'node:crypto';
 import { createMockFetch } from './test-utils.ts';
 

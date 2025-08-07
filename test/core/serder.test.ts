@@ -1,6 +1,7 @@
 import { deversify, Ilks, Serials, Version } from '../../src/keri/core/core.ts';
 import { assert, describe, it } from 'vitest';
-import { Salter, Tier } from '../../src/keri/core/salter.ts';
+import { Salter } from '../../src/keri/core/salter.ts';
+import { Tier } from '../../src/types/keria-api-schema.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { Diger } from '../../src/keri/core/diger.ts';
 import { Serder } from '../../src/keri/core/serder.ts';
