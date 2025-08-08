@@ -542,7 +542,7 @@ test('single signature credentials', { timeout: 90000 }, async () => {
                 });
 
             await waitOperation(holderClient, result.op);
-            return result.acdc.sad.d;
+            return result.acdc.sad.d!;
         }
     );
 

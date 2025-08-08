@@ -9,7 +9,7 @@ describe('vdr', () => {
             pre: 'ECJIoBpEcCWMzvquk861dXP8JJZ-vbmJczlDR-NYcE3g',
             toad: 0,
         });
-        assert.equal(actual.pre.length, 44);
+        assert.equal(actual.pre?.length, 44);
 
         actual = vdr.incept({
             pre: 'ECJIoBpEcCWMzvquk861dXP8JJZ-vbmJczlDR-NYcE3g',

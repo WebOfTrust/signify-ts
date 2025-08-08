@@ -1,5 +1,10 @@
 import { assert, test } from 'vitest';
-import signify, { SignifyClient, Operation, CredentialData } from 'signify-ts';
+import signify, {
+    SignifyClient,
+    Operation,
+    CredentialData,
+    Seal,
+} from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
@@ -145,7 +150,7 @@ test('multisig', async function run() {
     let rpy = endRoleRes.serder;
     let sigs = endRoleRes.sigs;
     let ghabState1 = ghab1['state'];
-    let seal = [
+    let seal: Seal = [
         'SealEvent',
         {
             i: ghab1['prefix'],
@@ -523,7 +528,7 @@ async function multisigAdmitCredential(
         .submitAdmit(groupName, admit, sigs, end, [issuerPrefix]);
 
     const mstate = gHab['state'];
-    const seal = [
+    const seal: Seal = [
         'SealEvent',
         { i: gHab['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];

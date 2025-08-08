@@ -2,7 +2,7 @@ import libsodium from 'libsodium-wrappers-sumo';
 import { Signer } from '../../src/keri/core/signer.ts';
 import { assert, describe, it } from 'vitest';
 import { MtrDex } from '../../src/keri/core/matter.ts';
-import { incept, messagize, rotate } from '../../src/keri/core/eventing.ts';
+import { incept, messagize, rotate, Seal } from '../../src/keri/core/eventing.ts';
 import { Saider } from '../../src/keri/core/saider.ts';
 import { Diger } from '../../src/keri/core/diger.ts';
 import { b, d, Ilks } from '../../src/keri/core/core.ts';
@@ -172,7 +172,7 @@ describe('key event function', () => {
                 '"nt":1,"n":["EIf-ENw7PrM52w4H-S7NGU2qVIfraXVIlV9hEAaMHg7W"],"bt":0,"b":[],"c":[],"a":[]}' +
                 '-AABAABB3MJGmBXxSEryNHw3YwZZLRl_6Ws4Me2WFq8PrQ6WlluSOpPqbwXuiG9RvNWZkqeW8A_0VRjokGMVRZ3m-c0I'
         );
-        const seal = [
+        const seal:Seal = [
             'SealEvent',
             {
                 i: 'EIflL4H4134zYoRM6ls6Q086RLC_BhfNFh5uk-WxvhsL',

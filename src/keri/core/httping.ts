@@ -138,14 +138,14 @@ export class Unqualified {
 }
 
 export class Inputage {
-    public name: any;
-    public fields: any;
-    public created: any;
-    public expires: any;
-    public nonce: any;
-    public alg: any;
-    public keyid: any;
-    public context: any;
+    public name: string = "";
+    public fields: Item[0][] = [];
+    public created?: Item[0];
+    public expires?: Item[0];
+    public nonce?: Item[0];
+    public alg?: Item[0];
+    public keyid?: Item[0];
+    public context?: Item[0];
 }
 
 export function desiginput(value: string): Array<Inputage> {
@@ -155,9 +155,7 @@ export function desiginput(value: string): Array<Inputage> {
     sid.forEach((value, key) => {
         const siginput = new Inputage();
         siginput.name = key;
-        let list: Item[];
-        let params;
-        [list, params] = value as [Item[], Parameters];
+        const [list, params] = value as [Item[], Parameters];
         siginput.fields = list.map((item) => item[0]);
 
         if (!params.has('created')) {

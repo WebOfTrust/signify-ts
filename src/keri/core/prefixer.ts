@@ -1,19 +1,28 @@
-import { Matter, MatterArgs, MtrDex } from './matter.ts';
+import { blake3 } from '@noble/hashes/blake3';
+import { Ilks } from './core.ts';
 import { EmptyMaterialError } from './kering.ts';
-import { Dict, Ilks } from './core.ts';
+import { Matter, MatterArgs, MtrDex } from './matter.ts';
+import { BaseSAD } from './saider.ts';
 import { sizeify } from './serder.ts';
 import { Verfer } from './verfer.ts';
-import { blake3 } from '@noble/hashes/blake3';
 
 const Dummy: string = '#';
 
-export class Prefixer extends Matter {
+export interface PrefixerSAD extends BaseSAD {
+    k?: string[];
+    n?: string | string[];
+    b?: string[];
+    a?: Record<string, unknown>[];
+    i?: string;
+}
+
+export class Prefixer<T extends PrefixerSAD = PrefixerSAD> extends Matter {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _derive: Function | undefined;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     private readonly _verify: Function | undefined;
 
-    constructor({ raw, code, qb64b, qb64, qb2 }: MatterArgs, ked?: Dict<any>) {
+    constructor({ raw, code, qb64b, qb64, qb2 }: MatterArgs, ked?: T) {
         try {
             super({ raw, code, qb64b, qb64, qb2 });
         } catch (e) {
@@ -23,7 +32,7 @@ export class Prefixer extends Matter {
                 }
 
                 if (code == undefined) {
-                    super({ qb64: ked['i'], code: code });
+                    super({ qb64: String(ked['i']), code: code });
                     code = this.code;
                 }
 
@@ -57,7 +66,7 @@ export class Prefixer extends Matter {
         }
     }
 
-    derive(sad: Dict<any>): [Uint8Array, string] {
+    derive(sad: BaseSAD): [Uint8Array, string] {
         if (sad['i'] != Ilks.icp) {
             throw new Error(
                 `Non-incepting ilk ${sad['i']} for prefix derivation`
@@ -66,7 +75,7 @@ export class Prefixer extends Matter {
         return this._derive!(sad);
     }
 
-    verify(sad: Dict<any>, prefixed: boolean = false): boolean {
+    verify(sad: BaseSAD, prefixed: boolean = false): boolean {
         if (sad['i'] != Ilks.icp) {
             throw new Error(
                 `Non-incepting ilk ${sad['i']} for prefix derivation`
@@ -75,12 +84,12 @@ export class Prefixer extends Matter {
         return this._verify!(sad, this.qb64, prefixed);
     }
 
-    static _derive_ed25519N(sad: Dict<any>): [Uint8Array, string] {
+    static _derive_ed25519N(sad: PrefixerSAD): [Uint8Array, string] {
         let verfer;
         const keys = sad['k'];
-        if (keys.length != 1) {
+        if (keys?.length != 1) {
             throw new Error(
-                `Basic derivation needs at most 1 key got ${keys.length} keys instead`
+                `Basic derivation needs at most 1 key got ${keys?.length} keys instead`
             );
         }
         try {
@@ -93,21 +102,22 @@ export class Prefixer extends Matter {
             throw new Error(`Mismatch derivation code = ${verfer.code}`);
         }
 
-        const next = 'n' in sad ? sad['n'] : [];
+        const next = 'n' in sad && sad['n'] ? sad['n'] : [];
         if (verfer.code == MtrDex.Ed25519N && next.length > 0) {
             throw new Error(
                 `Non-empty nxt = ${next} for non-transferable code = ${verfer.code}`
             );
         }
 
-        const backers = 'b' in sad ? sad['b'] : [];
+        const backers = 'b' in sad && sad['b'] ? sad['b'] : [];
         if (verfer.code == MtrDex.Ed25519N && backers.length > 0) {
             throw new Error(
                 `Non-empty b =${backers} for non-transferable code = ${verfer.code}`
             );
         }
 
-        const anchor = 'a' in sad ? sad['a'] : [];
+        const anchor =
+            'a' in sad && sad['a'] && Array.isArray(sad['a']) ? sad['a'] : [];
         if (verfer.code == MtrDex.Ed25519N && anchor.length > 0) {
             throw new Error(
                 `Non-empty a = ${verfer.code} for non-transferable code = ${verfer.code}`
@@ -117,12 +127,12 @@ export class Prefixer extends Matter {
         return [verfer.raw, verfer.code];
     }
 
-    static _derive_ed25519(sad: Dict<any>): [Uint8Array, string] {
+    static _derive_ed25519(sad: PrefixerSAD): [Uint8Array, string] {
         let verfer;
         const keys = sad['k'];
-        if (keys.length != 1) {
+        if (keys?.length != 1) {
             throw new Error(
-                `Basic derivation needs at most 1 key got ${keys.length} keys instead`
+                `Basic derivation needs at most 1 key got ${keys?.length} keys instead`
             );
         }
 
@@ -139,9 +149,9 @@ export class Prefixer extends Matter {
         return [verfer.raw, verfer.code];
     }
 
-    static _derive_blake3_256(sad: Dict<any>): [Uint8Array, string] {
+    static _derive_blake3_256(sad: PrefixerSAD): [Uint8Array, string] {
         const ilk = sad['t'];
-        if (![Ilks.icp, Ilks.dip, Ilks.vcp, Ilks.dip].includes(ilk)) {
+        if (!ilk || ![Ilks.icp, Ilks.dip, Ilks.vcp, Ilks.dip].includes(ilk)) {
             throw new Error(`Invalid ilk = ${ilk} to derive pre.`);
         }
 
@@ -152,14 +162,10 @@ export class Prefixer extends Matter {
         return [dig, MtrDex.Blake3_256];
     }
 
-    _verify_ed25519N(
-        sad: Dict<any>,
-        pre: string,
-        prefixed: boolean = false
-    ): boolean {
+    _verify_ed25519N(sad: T, pre: string, prefixed: boolean = false): boolean {
         try {
             const keys = sad['k'];
-            if (keys.length != 1) {
+            if (keys?.length != 1) {
                 return false;
             }
 
@@ -171,7 +177,7 @@ export class Prefixer extends Matter {
                 return false;
             }
 
-            const next = 'n' in sad ? sad['n'] : [];
+            const next = 'n' in sad && sad['n'] ? sad['n'] : [];
             if (next.length > 0) {
                 // must be empty
                 return false;
@@ -183,14 +189,10 @@ export class Prefixer extends Matter {
         return true;
     }
 
-    _verify_ed25519(
-        sad: Dict<any>,
-        pre: string,
-        prefixed: boolean = false
-    ): boolean {
+    _verify_ed25519(sad: T, pre: string, prefixed: boolean = false): boolean {
         try {
             const keys = sad['k'];
-            if (keys.length != 1) {
+            if (keys?.length != 1) {
                 return false;
             }
 
@@ -209,7 +211,7 @@ export class Prefixer extends Matter {
     }
 
     _verify_blake3_256(
-        sad: Dict<any>,
+        sad: T,
         pre: string,
         prefixed: boolean = false
     ): boolean {

@@ -1,5 +1,5 @@
 import { assert, test } from 'vitest';
-import signify, { Serder } from 'signify-ts';
+import signify, { Serder, SerderSAD } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
@@ -115,11 +115,11 @@ test('challenge', async () => {
 
     //Alice mark response as accepted
     const verifyResponse = verifyOperation.response as {
-        exn: Record<string, unknown>;
+        exn: SerderSAD;
     };
-    const exn = new Serder(verifyResponse.exn);
+    const exn = new Serder(verifyResponse.exn as SerderSAD);
 
-    await client1.challenges().responded(aid2.i, exn.sad.d);
+    await client1.challenges().responded(aid2.i, exn.sad.d!);
     console.log('Alice marked challenge response as accepted');
 
     // Check Bob's challenge in conctats

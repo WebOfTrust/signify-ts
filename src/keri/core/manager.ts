@@ -1,13 +1,13 @@
-import { Encrypter } from './encrypter.ts';
+import { Cigar } from './cigar.ts';
+import { b } from './core.ts';
 import { Decrypter } from './decrypter.ts';
+import { Diger } from './diger.ts';
+import { Encrypter } from './encrypter.ts';
+import { MtrDex } from './matter.ts';
 import { Salter, Tier } from './salter.ts';
+import { Siger } from './siger.ts';
 import { Signer } from './signer.ts';
 import { Verfer } from './verfer.ts';
-import { MtrDex } from './matter.ts';
-import { Diger } from './diger.ts';
-import { Cigar } from './cigar.ts';
-import { Siger } from './siger.ts';
-import { b } from './core.ts';
 
 /**
  * Kinds of key pair generation algorithms.
@@ -310,7 +310,11 @@ export class SaltyCreator implements Creator {
 }
 
 export class Creatory {
-    private readonly _make: any;
+    private readonly _make: (
+        salt?: string,
+        tier?: Tier,
+        stem?: string
+    ) => Creator;
     constructor(algo: Algos = Algos.salty) {
         switch (algo) {
             case Algos.randy:
@@ -324,16 +328,16 @@ export class Creatory {
         }
     }
 
-    make(...args: any[]): Creator {
-        return this._make(...args);
+    make(salt?: string, tier?: string, stem?: string): Creator {
+        return this._make(salt, tier as Tier, stem);
     }
 
     _makeRandy(): Creator {
         return new RandyCreator();
     }
 
-    _makeSalty(...args: any[]): Creator {
-        return new SaltyCreator(...args);
+    _makeSalty(salt?: string, tier?: Tier, stem?: string): Creator {
+        return new SaltyCreator(salt, tier, stem);
     }
 }
 
@@ -373,10 +377,10 @@ export interface ManagerArgs {
 }
 
 export interface ManagerInceptArgs {
-    icodes?: any | undefined;
+    icodes?: string[] | undefined;
     icount?: number;
     icode?: string;
-    ncodes?: any | undefined;
+    ncodes?: string[] | undefined;
     ncount?: number;
     ncode?: string;
     dcode?: string;
@@ -391,7 +395,7 @@ export interface ManagerInceptArgs {
 
 interface RotateArgs {
     pre: string;
-    ncodes?: any | undefined;
+    ncodes?: string[] | undefined;
     ncount?: number;
     ncode?: string;
     dcode?: string;
@@ -564,7 +568,7 @@ export class Manager {
                     data.salt =
                         this._encrypter == undefined
                             ? salter.qb64
-                            : this._encrypter.encrypt(null, salter);
+                            : this._encrypter.encrypt(null, salter).qb64;
                     this.ks.pinPrms(keys, data);
                 }
             }
@@ -1218,7 +1222,7 @@ class Keeper implements KeyStore {
         const out = new Array<[string, Signer]>();
         this._pris.forEach(function (val, pubKey) {
             const verfer = new Verfer({ qb64: pubKey });
-            const signer = decrypter.decrypt(val, null, verfer.transferable);
+            const signer = decrypter.decrypt(val, null, verfer.transferable) as Signer;
             out.push([pubKey, signer]);
         });
         return out;
@@ -1245,7 +1249,7 @@ class Keeper implements KeyStore {
         }
         const verfer = new Verfer({ qb64: pubKey });
 
-        return decrypter.decrypt(val, null, verfer.transferable);
+        return decrypter.decrypt(val, null, verfer.transferable) as Signer;
     }
 
     pinPths(pubKey: string, val: PubPath): boolean {

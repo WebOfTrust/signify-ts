@@ -11,6 +11,7 @@ import {
 import { ample } from './eventing.ts';
 import { MtrDex } from './matter.ts';
 import { Prefixer } from './prefixer.ts';
+import { BaseSAD } from './saider.ts';
 import { Serder } from './serder.ts';
 
 namespace vdr {
@@ -23,6 +24,19 @@ namespace vdr {
         version?: Version;
         kind?: Serials;
         code?: string;
+    }
+
+    export interface VDRInceptSAD extends BaseSAD {
+        v: string;
+        t: string;
+        d: string;
+        i: string;
+        ii: string;
+        s: string;
+        c: string[];
+        bt: string;
+        b: string[];
+        n: string;
     }
 
     export function incept({
@@ -70,7 +84,7 @@ namespace vdr {
             }
         }
 
-        const sad = {
+        const sad: VDRInceptSAD = {
             v: vs,
             t: ilk,
             d: '',

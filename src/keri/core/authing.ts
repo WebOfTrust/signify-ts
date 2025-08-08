@@ -41,7 +41,9 @@ export class Authenticater {
         }
         inputs.forEach((input) => {
             const items = new Array<string>();
-            input.fields!.forEach((field: string) => {
+            input.fields!.forEach((field) => {
+                if (typeof field !== 'string') return;
+
                 if (field.startsWith('@')) {
                     if (field == '@method') {
                         items.push(`"${field}": ${method}`);

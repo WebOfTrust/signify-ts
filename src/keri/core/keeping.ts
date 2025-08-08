@@ -1,22 +1,21 @@
-import { Salter } from './salter.ts';
-import { Algos, SaltyCreator, RandyCreator } from './manager.ts';
-import { MtrDex } from './matter.ts';
-import { Tier } from './salter.ts';
 import { Encrypter } from '../core/encrypter.ts';
-import { Decrypter } from './decrypter.ts';
-import { b } from './core.ts';
 import { Cipher } from './cipher.ts';
+import { b } from './core.ts';
+import { Decrypter } from './decrypter.ts';
 import { Diger } from './diger.ts';
-import { Prefixer } from './prefixer.ts';
-import { Signer } from './signer.ts';
 import {
     ExternState,
     GroupKeyState,
     HabState,
+    KeyState,
     RandyKeyState,
     SaltyKeyState,
-    KeyState,
 } from './keyState.ts';
+import { Algos, RandyCreator, SaltyCreator } from './manager.ts';
+import { MtrDex } from './matter.ts';
+import { Prefixer } from './prefixer.ts';
+import { Salter, Tier } from './salter.ts';
+import { Signer } from './signer.ts';
 
 /** External module definition */
 export interface ExternalModuleType {
@@ -83,6 +82,33 @@ export interface IdentifierManager<
     ): Promise<SignResult>;
 }
 
+export interface KArgs
+    extends IdentifierManagerParams,
+        Record<string, unknown> {
+    pidx?: number;
+    kidx?: number;
+    tier?: Tier;
+    stem?: string | undefined;
+    transferable?: boolean;
+    code?: string;
+    count?: number;
+    icodes?: string[];
+    ncode?: string;
+    ncount?: number;
+    ncodes?: string[];
+    dcode?: string;
+    bran?: string | undefined;
+    sxlt?: string;
+    prxs?: string[] | undefined;
+    nxts?: string[] | undefined;
+    mhab?: HabState;
+    states?: KeyState[] | undefined;
+    rstates?: KeyState[] | undefined;
+    keys?: string[];
+    ndigs?: string[];
+    extern_type?: string;
+}
+
 /**
  * Creates IdentifierManager instances based on the algorithm and key indexes.
  */
@@ -112,7 +138,7 @@ export class IdentifierManagerFactory {
      * @param pidx
      * @param kargs
      */
-    new(algo: Algos, pidx: number, kargs: any) {
+    new(algo: Algos, pidx: number, kargs: KArgs) {
         switch (algo) {
             case Algos.salty:
                 return new SaltyIdentifierManager(
@@ -141,7 +167,7 @@ export class IdentifierManagerFactory {
                     kargs['transferable'],
                     kargs['ncode'],
                     kargs['ncount'],
-                    kargs['ncodes'],
+                    kargs['ncodes']!,
                     kargs['dcode'],
                     kargs['prxs'],
                     kargs['nxts']
@@ -149,21 +175,24 @@ export class IdentifierManagerFactory {
             case Algos.group:
                 return new GroupIdentifierManager(
                     this,
-                    kargs['mhab'],
+                    kargs['mhab']!,
                     kargs['states'],
                     kargs['rstates'],
                     kargs['keys'],
                     kargs['ndigs']
                 );
             case Algos.extern: {
-                const ModuleConstructor = this.modules[kargs.extern_type];
+                const ModuleConstructor = this.modules[kargs.extern_type!];
                 if (!ModuleConstructor) {
                     throw new Error(
                         `unsupported external module type ${kargs.extern_type}`
                     );
                 }
 
-                return new ModuleConstructor(pidx, kargs);
+                return new ModuleConstructor(
+                    pidx,
+                    kargs as IdentifierManagerParams
+                );
             }
             default:
                 throw new Error('Unknown algo');
@@ -557,12 +586,13 @@ export class RandyIdentifierManager implements IdentifierManager {
 
         this.creator = new RandyCreator();
 
-        this.signers = this.prxs.map((prx) =>
-            this.decrypter.decrypt(
-                new Cipher({ qb64: prx }).qb64b,
-                undefined,
-                this.transferable
-            )
+        this.signers = this.prxs.map(
+            (prx) =>
+                this.decrypter.decrypt(
+                    new Cipher({ qb64: prx }).qb64b,
+                    undefined,
+                    this.transferable
+                ) as Signer
         );
     }
 
@@ -616,12 +646,13 @@ export class RandyIdentifierManager implements IdentifierManager {
         this.transferable = transferable;
         this.prxs = this.nxts;
 
-        const signers = this.nxts!.map((nxt) =>
-            this.decrypter.decrypt(
-                undefined,
-                new Cipher({ qb64: nxt }),
-                this.transferable
-            )
+        const signers = this.nxts!.map(
+            (nxt) =>
+                this.decrypter.decrypt(
+                    undefined,
+                    new Cipher({ qb64: nxt }),
+                    this.transferable
+                ) as Signer
         );
         const verfers = signers.map((signer) => signer.verfer.qb64);
         const nsigners = this.creator.create(
@@ -649,12 +680,13 @@ export class RandyIdentifierManager implements IdentifierManager {
         indices: number[] | undefined = undefined,
         ondices: number[] | undefined = undefined
     ): Promise<SignResult> {
-        const signers = this.prxs!.map((prx) =>
-            this.decrypter.decrypt(
-                new Cipher({ qb64: prx }).qb64b,
-                undefined,
-                this.transferable
-            )
+        const signers = this.prxs!.map(
+            (prx) =>
+                this.decrypter.decrypt(
+                    new Cipher({ qb64: prx }).qb64b,
+                    undefined,
+                    this.transferable
+                ) as Signer
         );
 
         if (indexed) {

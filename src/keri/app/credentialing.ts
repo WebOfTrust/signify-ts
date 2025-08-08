@@ -1,26 +1,26 @@
-import { SignifyClient } from './clienting.ts';
-import { interact, messagize } from '../core/eventing.ts';
-import { vdr } from '../core/vdring.ts';
 import {
     b,
     d,
     Dict,
-    Protocols,
     Ilks,
+    Protocols,
     Serials,
     versify,
     Vrsn_1_0,
 } from '../core/core.ts';
-import { Saider } from '../core/saider.ts';
+import { interact, InteractEventData, messagize } from '../core/eventing.ts';
+import { HabState } from '../core/keyState.ts';
+import { BaseSAD, Saider } from '../core/saider.ts';
 import { Serder } from '../core/serder.ts';
 import { Siger } from '../core/siger.ts';
-import { TraitDex } from './habery.ts';
 import {
     serializeACDCAttachment,
     serializeIssExnAttachment,
 } from '../core/utils.ts';
+import { vdr } from '../core/vdring.ts';
+import { SignifyClient } from './clienting.ts';
 import { Operation } from './coring.ts';
-import { HabState } from '../core/keyState.ts';
+import { TraitDex } from './habery.ts';
 
 import { components } from '../../types/keria-api-schema.ts';
 
@@ -431,7 +431,7 @@ export class Credentials {
         const dt =
             datetime ?? new Date().toISOString().replace('Z', '000+00:00');
 
-        const cred = (await this.get(said));
+        const cred = await this.get(said);
 
         // Create rev
         const _rev = {
@@ -448,20 +448,16 @@ export class Credentials {
         const [, rev] = Saider.saidify(_rev);
 
         // create ixn
-        let ixn = {};
+        let ixn: BaseSAD;
         let sigs = [];
 
         const state = hab.state;
-        if (state.c !== undefined && state.c.includes('EO')) {
-            var estOnly = true;
-        } else {
-            var estOnly = false;
-        }
+        const estOnly = state.c !== undefined && state.c.includes('EO');
 
         const sn = parseInt(state.s, 16);
         const dig = state.d;
 
-        const data: any = [
+        const data: InteractEventData[] = [
             {
                 i: rev.i,
                 s: rev.s,
@@ -501,7 +497,7 @@ export class Credentials {
 
         return {
             rev: new Serder(rev),
-            anc: new Serder(ixn),
+            anc: new Serder(ixn || {}),
             op,
         };
     }

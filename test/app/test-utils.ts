@@ -98,7 +98,7 @@ export async function createMockIdentifierState(
 
     return {
         name: name,
-        prefix: serder.pre,
+        prefix: serder.pre!,
         [algo]: keeper.params(),
         transferable,
         windexes: [],
@@ -114,12 +114,12 @@ export async function createMockIdentifierState(
             n: serder.sad.n,
             bt: serder.sad.bt,
             b: serder.sad.b,
-            p: serder.sad.p ?? '',
+            p: String(serder.sad.p ?? ''),
             f: '',
             dt: new Date().toISOString().replace('Z', '000+00:00'),
             et: '',
             c: [],
-            di: serder.sad.di ?? '',
+            di: String(serder.sad.di ?? ''),
         } as KeyState,
         icp_dt: '2023-12-01T10:05:25.062609+00:00',
     };

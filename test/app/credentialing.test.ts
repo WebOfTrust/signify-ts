@@ -14,6 +14,7 @@ import {
     serializeIssExnAttachment,
     Serials,
     versify,
+    InteractEventData,
 } from '../../src/index.ts';
 import { createMockFetch, mockCredential } from './test-utils.ts';
 
@@ -169,7 +170,7 @@ describe('Ipex', () => {
         const anc = interact({
             pre: mockCredential.sad.i,
             sn: 1,
-            data: [{}],
+            data: [{}] as InteractEventData[],
             dig: mockCredential.sad.d,
             version: undefined,
             kind: undefined,
@@ -271,7 +272,7 @@ describe('Ipex', () => {
         const [admit, asigs, aend] = await ipex.admit({
             senderName: 'holder',
             message: '',
-            grantSaid: grant.sad.d,
+            grantSaid: grant.sad.d!,
             recipient: holder,
             datetime: mockCredential.sad.a.dt,
         });
@@ -337,7 +338,7 @@ describe('Ipex', () => {
             const anc = interact({
                 pre: mockCredential.sad.i,
                 sn: 1,
-                data: [{}],
+                data: [{}] as InteractEventData[],
                 dig: mockCredential.sad.d,
                 version: undefined,
                 kind: undefined,
@@ -445,7 +446,7 @@ describe('Ipex', () => {
                 recipient: holder,
                 message: 'OK!',
                 datetime: mockCredential.sad.a.dt,
-                offerSaid: offer.sad.d,
+                offerSaid: offer.sad.d!,
             });
 
             assert.deepStrictEqual(agree.sad, {
@@ -576,7 +577,7 @@ describe('Ipex', () => {
                 senderName: 'holder',
                 message: '',
                 recipient: holder,
-                grantSaid: grant.sad.d,
+                grantSaid: grant.sad.d!,
                 datetime: mockCredential.sad.a.dt,
             });
 

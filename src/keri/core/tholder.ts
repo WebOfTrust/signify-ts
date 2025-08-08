@@ -1,17 +1,23 @@
+import { Fraction, format, fraction, sum } from 'mathjs';
 import { BexDex, Matter, NumDex } from './matter.ts';
 import { CesrNumber } from './number.ts';
-import { Fraction, format, sum, fraction } from 'mathjs';
+
+interface Thold {
+    thold?: number | Array<Array<Fraction>>;
+    limen?: string;
+    sith?: number | string | string[] | (string | string[])[];
+}
 
 export class Tholder {
     private _weighted: boolean = false;
-    private _thold: any = undefined;
+    private _thold: number | Array<Array<Fraction>> = 0;
     private _size: number = 0;
     private _number: CesrNumber | undefined = undefined;
-    private _satisfy: any = undefined;
+    private _satisfy: ((indices: number[]) => boolean) | undefined = undefined;
 
     // private _bexter: any
 
-    constructor(kargs: { thold?: any; limen?: any; sith?: any }) {
+    constructor(kargs: Thold) {
         if (kargs.thold !== undefined) {
             this._processThold(kargs.thold);
         } else if (kargs.limen != undefined) {
@@ -27,7 +33,7 @@ export class Tholder {
         return this._weighted;
     }
 
-    get thold(): any {
+    get thold(): number | Array<Array<Fraction>> {
         return this._thold;
     }
 
@@ -35,13 +41,13 @@ export class Tholder {
         return this._size;
     }
 
-    get limen(): any {
+    get limen() {
         return this._number?.qb64b;
     }
 
-    get sith(): string {
-        if (this.weighted) {
-            let sith = this.thold.map((clause: Fraction[]) => {
+    get sith(): string | string[] | string[][] {
+        if (this.weighted && Array.isArray(this.thold)) {
+            const sith = this.thold.map((clause: Fraction[]) => {
                 return clause.map((c) => {
                     if (0 < Number(c) && Number(c) < 1) {
                         return format(c, { fraction: 'ratio' });
@@ -50,11 +56,8 @@ export class Tholder {
                     }
                 });
             });
-            if (sith.length == 1) {
-                sith = sith[0];
-            }
 
-            return sith;
+            return sith.length == 1 ? sith[0] : sith;
         } else {
             return this.thold.toString(16);
         }
@@ -65,7 +68,7 @@ export class Tholder {
     }
 
     get num(): number | undefined {
-        return this._weighted ? undefined : this._thold;
+        return this._weighted ? undefined : (this._thold as number);
     }
 
     private _processThold(thold: number | Array<Array<Fraction>>) {
@@ -91,31 +94,34 @@ export class Tholder {
         }
     }
 
-    private _processSith(sith: string | number | Array<string>) {
+    private _processSith(
+        sith: string | number | Array<string> | (string | string[])[]
+    ) {
         if (typeof sith == 'number') {
             this._processUnweighted(sith);
         } else if (typeof sith == 'string' && sith.indexOf('[') == -1) {
             this._processUnweighted(parseInt(sith, 16));
         } else {
-            let _sith: any = sith;
+            let _sith: string | string[] | string[][] | (string | string[])[] =
+                sith;
             if (typeof sith == 'string') {
                 _sith = JSON.parse(sith);
             }
 
-            if (_sith.length == 0) {
+            if (!Array.isArray(_sith) || _sith.length == 0) {
                 throw new Error('Empty weight list');
             }
 
-            const mask = _sith.map((x: any) => {
+            const mask = _sith.map((x) => {
                 return typeof x !== 'string';
             });
 
             if (mask.length > 0 && !mask.every((x: boolean) => x)) {
-                _sith = [_sith];
+                _sith = [_sith] as string[][];
             }
 
-            for (const c of _sith) {
-                const mask = c.map((x: any) => {
+            for (const c of _sith as string[][]) {
+                const mask = c.map((x) => {
                     return typeof x === 'string';
                 });
                 if (mask.length > 0 && !mask.every((x: boolean) => x)) {
@@ -127,7 +133,7 @@ export class Tholder {
                 }
             }
 
-            const thold = this._processClauses(_sith);
+            const thold = this._processClauses(_sith as string[][]);
             this._processWeighted(thold);
         }
     }
@@ -180,11 +186,14 @@ export class Tholder {
         return fraction(w);
     }
 
-    private _satisfy_numeric(indices: any[]) {
-        return this.thold > 0 && indices.length >= this.thold; // at least one
+    private _satisfy_numeric(indices: number[]) {
+        return (
+            (this.thold as number) > 0 &&
+            indices.length >= (this.thold as number)
+        ); // at least one
     }
 
-    private _satisfy_weighted(indices: any) {
+    private _satisfy_weighted(indices: number[]) {
         if (indices.length === 0) {
             return false;
         }
@@ -195,7 +204,7 @@ export class Tholder {
             sats[idx] = true;
         }
         let wio = 0;
-        for (const clause of this.thold) {
+        for (const clause of this.thold as Array<Array<Fraction>>) {
             let cw = 0;
             for (const w of clause) {
                 if (sats[wio]) {
@@ -211,7 +220,7 @@ export class Tholder {
         return true;
     }
 
-    public satisfy(indices: any): boolean {
-        return this._satisfy(indices);
+    public satisfy(indices: number[]): boolean {
+        return !!this._satisfy?.(indices);
     }
 }

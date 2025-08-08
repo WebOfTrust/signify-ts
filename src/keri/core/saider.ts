@@ -1,8 +1,8 @@
-import { DigiDex, Matter, MatterArgs, MtrDex } from './matter.ts';
-import { deversify, Dict, Serials } from './core.ts';
-import { EmptyMaterialError } from './kering.ts';
-import { dumps, sizeify } from './serder.ts';
 import { blake3 } from '@noble/hashes/blake3';
+import { deversify, Serials } from './core.ts';
+import { EmptyMaterialError } from './kering.ts';
+import { DigiDex, Matter, MatterArgs, MtrDex } from './matter.ts';
+import { dumps, sizeify } from './serder.ts';
 
 const Dummy = '#';
 
@@ -10,10 +10,16 @@ export enum Ids {
     d = 'd',
 }
 
-export class Saider extends Matter {
+export interface BaseSAD extends Record<string, unknown> {
+    d?: string;
+    v?: string;
+    t?: string;
+}
+
+export class Saider<T extends BaseSAD = BaseSAD> extends Matter {
     constructor(
         { raw, code, qb64b, qb64, qb2 }: MatterArgs,
-        sad?: Dict<any>,
+        sad?: T,
         kind?: Serials,
         label: string = Ids.d
     ) {
@@ -27,7 +33,7 @@ export class Saider extends Matter {
 
                 if (code == undefined) {
                     if (sad[label] != '') {
-                        super({ qb64: sad[label], code: code });
+                        super({ qb64: String(sad[label]), code: code });
                         code = this.code;
                     } else {
                         code = MtrDex.Blake3_256;
@@ -51,11 +57,11 @@ export class Saider extends Matter {
     }
 
     private static _derive(
-        sad: Dict<any>,
+        sad: BaseSAD,
         code: string,
         kind: Serials | undefined,
         label: string
-    ): [Uint8Array, Dict<any>] {
+    ): [Uint8Array, BaseSAD] {
         if (!DigiDex.has(code)) {
             throw new Error(`Unsupported digest code = ${code}.`);
         }
@@ -79,17 +85,17 @@ export class Saider extends Matter {
     }
 
     public derive(
-        sad: Dict<any>,
+        sad: BaseSAD,
         code: string,
         kind: Serials | undefined,
         label: string
-    ): [Uint8Array, Dict<any>] {
+    ): [Uint8Array, BaseSAD] {
         code = code != undefined ? code : this.code;
         return Saider._derive(sad, code, kind, label);
     }
 
     public verify(
-        sad: Dict<any>,
+        sad: BaseSAD,
         prefixed: boolean = false,
         versioned: boolean = false,
         kind?: Serials,
@@ -118,10 +124,10 @@ export class Saider extends Matter {
         return true;
     }
 
-    private static _serialze(sad: Dict<any>, kind?: Serials): string {
+    private static _serialze(sad: BaseSAD, kind?: Serials): string {
         let knd = Serials.JSON;
         if ('v' in sad) {
-            [, knd] = deversify(sad['v']);
+            [, knd] = deversify(sad['v']!);
         }
 
         if (kind == undefined) {
@@ -131,24 +137,24 @@ export class Saider extends Matter {
         return dumps(sad, kind);
     }
 
-    public static saidify(
-        sad: Dict<any>,
+    public static saidify<T extends BaseSAD>(
+        sad: T,
         code: string = MtrDex.Blake3_256,
         kind: Serials = Serials.JSON,
         label: string = Ids.d
-    ): [Saider, Dict<any>] {
+    ): [Saider, T] {
         if (!(label in sad)) {
             throw new Error(`Missing id field labeled=${label} in sad.`);
         }
-        let raw;
-        [raw, sad] = Saider._derive(sad, code, kind, label);
+
+        const [raw, derivedSad] = Saider._derive(sad, code, kind, label);
         const saider = new Saider(
             { raw: raw, code: code },
             undefined,
             kind,
             label
         );
-        sad[label] = saider.qb64;
-        return [saider, sad];
+        derivedSad[label] = saider.qb64;
+        return [saider, derivedSad as T];
     }
 }

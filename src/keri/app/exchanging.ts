@@ -4,7 +4,7 @@ import { Serder } from '../core/serder.ts';
 import { nowUTC } from '../core/utils.ts';
 import { Pather } from '../core/pather.ts';
 import { Counter, CtrDex } from '../core/counter.ts';
-import { Saider } from '../core/saider.ts';
+import { BaseSAD, Saider } from '../core/saider.ts';
 import { HabState } from '../core/keyState.ts';
 
 /**
@@ -165,7 +165,7 @@ export function exchange(
     const q = modifiers !== undefined ? modifiers : {};
     const ems = embeds != undefined ? embeds : {};
 
-    let e = {} as Dict<any>;
+    let e = {} as BaseSAD;
     let end = '';
     Object.entries(ems).forEach(([key, value]) => {
         const serder = value[0];

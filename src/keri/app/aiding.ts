@@ -1,13 +1,13 @@
-import { Tier } from '../core/salter.ts';
-import { Algos } from '../core/manager.ts';
-import { incept, interact, reply, rotate } from '../core/eventing.ts';
 import { b, Ilks, Serials, Vrsn_1_0 } from '../core/core.ts';
-import { Tholder } from '../core/tholder.ts';
-import { MtrDex } from '../core/matter.ts';
-import { Serder } from '../core/serder.ts';
+import { incept, interact, reply, ReplyData, rotate } from '../core/eventing.ts';
 import { parseRangeHeaders } from '../core/httping.ts';
 import { IdentifierManagerFactory } from '../core/keeping.ts';
 import { HabState } from '../core/keyState.ts';
+import { Algos } from '../core/manager.ts';
+import { MtrDex } from '../core/matter.ts';
+import { Tier } from '../core/salter.ts';
+import { Serder } from '../core/serder.ts';
+import { Tholder } from '../core/tholder.ts';
 
 /** Arguments required to create an identfier */
 export interface CreateIdentiferArgs {
@@ -472,7 +472,7 @@ export class Identifier {
         eid?: string,
         stamp?: string
     ): Serder {
-        const data: any = {
+        const data: ReplyData = {
             cid: pre,
             role: role,
         };

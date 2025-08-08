@@ -99,7 +99,7 @@ describe('Decrypter', () => {
             seedcipher.qb64b,
             null,
             signer.verfer.transferable
-        );
+        ) as Signer;
         assert.deepStrictEqual(designer.qb64b, seedqb64b);
         assert.equal(designer.code, MtrDex.Ed25519_Seed);
         assert.equal(designer.verfer.code, MtrDex.Ed25519);
@@ -110,7 +110,7 @@ describe('Decrypter', () => {
             null,
             seedcipher,
             signer.verfer.transferable
-        );
+        ) as Signer;
         assert.deepStrictEqual(designer.qb64b, seedqb64b);
         assert.equal(designer.code, MtrDex.Ed25519_Seed);
         assert.equal(designer.verfer.code, MtrDex.Ed25519);
@@ -139,7 +139,7 @@ describe('Decrypter', () => {
             b(cipherseed),
             null,
             signer.verfer.transferable
-        );
+        ) as Signer;
         assert.deepStrictEqual(designer.qb64b, seedqb64b);
         assert.equal(designer.code, MtrDex.Ed25519_Seed);
         assert.equal(designer.verfer.code, MtrDex.Ed25519);

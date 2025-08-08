@@ -8,6 +8,7 @@ import signify, {
     d,
     messagize,
     HabState,
+    Seal,
 } from 'signify-ts';
 import { getStates, waitAndMarkNotification } from './test-util.ts';
 import assert from 'assert';
@@ -108,7 +109,7 @@ export async function addEndRoleMultisig(
         const rpy = endRoleResult.serder;
         const sigs = endRoleResult.sigs;
         const ghabState1 = multisigAID.state;
-        const seal = [
+        const seal: Seal = [
             'SealEvent',
             {
                 i: multisigAID.prefix,
@@ -170,7 +171,7 @@ export async function admitMultisig(
         .submitAdmit(multisigAID.name, admit, sigs, end, [recipientAID.prefix]);
 
     const mstate = multisigAID.state;
-    const seal = [
+    const seal: Seal = [
         'SealEvent',
         { i: multisigAID.prefix, s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];
@@ -311,7 +312,9 @@ export async function delegateMultisig(
     );
 
     assert.equal(
-        JSON.stringify(delResult.serder.sad.a[0]),
+        JSON.stringify(
+            (delResult.serder.sad.a as Record<string, unknown>[])[0]
+        ),
         JSON.stringify(anchor)
     );
 
@@ -375,7 +378,7 @@ export async function grantMultisig(
         .submitGrant(multisigAID.name, grant, sigs, end, [recipientAID.prefix]);
 
     const mstate = multisigAID.state;
-    const seal = [
+    const seal: Seal = [
         'SealEvent',
         { i: multisigAID.prefix, s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];

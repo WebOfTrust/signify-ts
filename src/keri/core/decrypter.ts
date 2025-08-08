@@ -7,7 +7,7 @@ import { EmptyMaterialError } from './kering.ts';
 import { Salter } from './salter.ts';
 
 export class Decrypter extends Matter {
-    private readonly _decrypt: any;
+    private readonly _decrypt: typeof this._x25519;
     constructor(
         { raw, code = MtrDex.X25519_Private, qb64, qb64b, qb2 }: MatterArgs,
         seed: Uint8Array | undefined = undefined
@@ -59,7 +59,7 @@ export class Decrypter extends Matter {
             cipher = new Cipher({ qb64b: ser });
         }
 
-        return this._decrypt(cipher, this.raw, transferable);
+        return this._decrypt(cipher!, this.raw, transferable);
     }
 
     _x25519(cipher: Cipher, prikey: Uint8Array, transferable: boolean = false) {

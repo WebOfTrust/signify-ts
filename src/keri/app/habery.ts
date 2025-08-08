@@ -1,10 +1,10 @@
+import { Diger } from '../core/diger.ts';
+import { incept } from '../core/eventing.ts';
 import { Algos, Manager } from '../core/manager.ts';
 import { MtrDex } from '../core/matter.ts';
 import { Salter } from '../core/salter.ts';
-import { Verfer } from '../core/verfer.ts';
-import { Diger } from '../core/diger.ts';
-import { incept } from '../core/eventing.ts';
 import { Serder } from '../core/serder.ts';
+import { Verfer } from '../core/verfer.ts';
 
 export class TraitCodex {
     EstOnly: string = 'EO'; // Only allow establishment events
@@ -48,7 +48,7 @@ export class Hab {
         this.serder = icp;
     }
 
-    get pre(): string {
+    get pre(): string | undefined {
         return this.serder.sad['i'];
     }
 }

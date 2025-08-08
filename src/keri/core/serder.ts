@@ -1,21 +1,28 @@
-import { MtrDex } from './matter.ts';
 import {
     deversify,
-    Dict,
     Protocols,
     Serials,
     versify,
     Version,
     Vrsn_1_0,
 } from './core.ts';
-import { Verfer } from './verfer.ts';
 import { Diger } from './diger.ts';
+import { MtrDex } from './matter.ts';
 import { CesrNumber } from './number.ts';
+import { BaseSAD } from './saider.ts';
+import { Verfer } from './verfer.ts';
 
-export class Serder {
+export interface SerderSAD extends BaseSAD {
+    i?: string;
+    k?: string[];
+    n?: string[] | string;
+    s?: string | number;
+}
+
+export class Serder<T extends SerderSAD = SerderSAD> {
     private _kind: Serials;
     private _raw: string = '';
-    private _sad: Dict<any> = {};
+    private _sad: T;
     private _proto: Protocols = Protocols.KERI;
     private _size: number = 0;
     private _version: Version = Vrsn_1_0;
@@ -28,7 +35,7 @@ export class Serder {
      * @param code derivation code for the prefix
      */
     constructor(
-        sad: Dict<any>,
+        sad: T,
         kind: Serials = Serials.JSON,
         code: string = MtrDex.Blake3_256
     ) {
@@ -42,11 +49,11 @@ export class Serder {
         this._size = raw.length;
     }
 
-    get sad(): Dict<any> {
+    get sad(): T {
         return this._sad;
     }
 
-    get pre(): string {
+    get pre(): string | undefined {
         return this._sad['i'];
     }
 
@@ -58,12 +65,12 @@ export class Serder {
         return this._raw;
     }
 
-    get said(): string {
+    get said(): string | undefined {
         return this._sad['d'];
     }
 
     get sner(): CesrNumber {
-        return new CesrNumber({}, this.sad['s']);
+        return new CesrNumber({}, String(this.sad['s']));
     }
 
     get sn(): number {
@@ -82,9 +89,9 @@ export class Serder {
      * @private
      */
     private _exhale(
-        sad: Dict<any>,
+        sad: T,
         kind: Serials
-    ): [string, Protocols, Serials, Dict<any>, Version] {
+    ): [string, Protocols, Serials, T, Version] {
         return sizeify(sad, kind);
     }
 
@@ -100,10 +107,10 @@ export class Serder {
         return this._version;
     }
     get verfers(): Verfer[] {
-        let keys: any = [];
+        let keys: string[] = [];
         if ('k' in this._sad) {
             // establishment event
-            keys = this._sad['k'];
+            keys = this._sad['k'] || [];
         } else {
             // non-establishment event
             keys = [];
@@ -117,10 +124,10 @@ export class Serder {
     }
 
     get digers(): Diger[] {
-        let keys: any = [];
+        let keys: string[] | string = [];
         if ('n' in this._sad) {
             // establishment event
-            keys = this._sad['n'];
+            keys = this._sad['n'] || [];
         } else {
             // non-establishment event
             keys = [];
@@ -146,10 +153,10 @@ export function dumps(sad: object, kind: Serials.JSON): string {
     }
 }
 
-export function sizeify(
-    ked: Dict<any>,
+export function sizeify<T extends BaseSAD = BaseSAD>(
+    ked: T,
     kind?: Serials
-): [string, Protocols, Serials, Dict<any>, Version] {
+): [string, Protocols, Serials, T, Version] {
     if (!('v' in ked)) {
         throw new Error('Missing or empty version string');
     }

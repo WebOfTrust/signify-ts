@@ -7,7 +7,7 @@ import { Cipher } from './cipher.ts';
 import { arrayEquals } from './utils.ts';
 
 export class Encrypter extends Matter {
-    private _encrypt: any;
+    private _encrypt: typeof this._x25519;
     constructor(
         { raw, code = MtrDex.X25519, qb64, qb64b, qb2 }: MatterArgs,
         verkey: Uint8Array | null = null
@@ -60,7 +60,7 @@ export class Encrypter extends Matter {
             code = MtrDex.X25519_Cipher_Seed;
         }
 
-        return this._encrypt(matter!.qb64, this.raw, code);
+        return this._encrypt(matter!.qb64b, this.raw, code);
     }
 
     _x25519(ser: Uint8Array, pubkey: Uint8Array, code: string) {

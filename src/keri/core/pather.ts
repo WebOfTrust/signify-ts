@@ -76,7 +76,7 @@ export class Pather extends Bexter {
         }
     }
 
-    static _bextify(path: any[]): string {
+    static _bextify(path: (number | string)[]): string {
         const vath = [];
         for (const p of path) {
             let sp = '';
