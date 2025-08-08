@@ -232,8 +232,8 @@ export class Controller {
         const sn =
             new CesrNumber({}, undefined, String(this.serder.sad['s'])).num + 1;
         this.serder = interact({
-            pre: this.serder.pre || '',
-            dig: this.serder.sad['d'] || '',
+            pre: this.serder.pre!,
+            dig: this.serder.sad['d']!,
             sn: sn,
             data: [anchor],
             version: Vrsn_1_0,

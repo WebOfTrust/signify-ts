@@ -179,7 +179,7 @@ export class SignifyClient {
         let signed_headers = new Headers();
         const final_headers = new Headers();
 
-        headers.set('Signify-Resource', String(this.controller.pre));
+        headers.set('Signify-Resource', this.controller.pre!);
         headers.set(
             HEADER_SIG_TIME,
             new Date().toISOString().replace('Z', '000+00:00')
