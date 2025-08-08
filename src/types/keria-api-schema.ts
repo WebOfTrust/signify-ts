@@ -687,6 +687,51 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        MemberEnds: {
+            agent: {
+                [key: string]: string;
+            };
+            /** @default null */
+            controller: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            witness: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            registrar: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            watcher: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            judge: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            juror: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            peer: {
+                [key: string]: string;
+            } | null;
+            /** @default null */
+            mailbox: {
+                [key: string]: string;
+            } | null;
+        };
+        AidRecord: {
+            aid: string;
+            ends: components["schemas"]["MemberEnds"];
+        };
+        GroupMember: {
+            signing: components["schemas"]["AidRecord"][];
+            rotation: components["schemas"]["AidRecord"][];
+        };
     };
     responses: never;
     parameters: never;
