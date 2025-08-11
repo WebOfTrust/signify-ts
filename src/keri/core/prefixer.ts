@@ -8,7 +8,10 @@ import { Verfer } from './verfer.ts';
 
 const Dummy: string = '#';
 
-export interface PrefixerSAD extends BaseSAD {
+export interface PrefixerSAD extends Omit<BaseSAD, "d"> {
+    d?: string;
+    t?: string;
+    v: string;
     k?: string[];
     n?: string | string[];
     b?: string[];
@@ -157,7 +160,7 @@ export class Prefixer<T extends PrefixerSAD = PrefixerSAD> extends Matter {
 
         sad['i'] = ''.padStart(Matter.Sizes.get(MtrDex.Blake3_256)!.fs!, Dummy);
         sad['d'] = sad['i'];
-        const [raw] = sizeify(sad);
+        const [raw] = sizeify(sad as BaseSAD);
         const dig = blake3.create({ dkLen: 32 }).update(raw).digest();
         return [dig, MtrDex.Blake3_256];
     }

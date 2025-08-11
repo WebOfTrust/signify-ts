@@ -53,7 +53,7 @@ export class Serder<T extends SerderSAD = SerderSAD> {
         return this._sad;
     }
 
-    get pre(): string | undefined {
+    get pre(): T['i'] {
         return this._sad['i'];
     }
 
@@ -65,7 +65,7 @@ export class Serder<T extends SerderSAD = SerderSAD> {
         return this._raw;
     }
 
-    get said(): string | undefined {
+    get said(): T["d"] {
         return this._sad['d'];
     }
 

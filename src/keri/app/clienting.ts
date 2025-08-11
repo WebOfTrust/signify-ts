@@ -172,14 +172,14 @@ export class SignifyClient {
     async fetch(
         path: string,
         method: string,
-        data: Record<string, unknown> | null | undefined,
+        data: unknown | null | undefined,
         extraHeaders?: Headers
     ): Promise<Response> {
         const headers = new Headers();
         let signed_headers = new Headers();
         const final_headers = new Headers();
 
-        headers.set('Signify-Resource', this.controller.pre!);
+        headers.set('Signify-Resource', this.controller.pre);
         headers.set(
             HEADER_SIG_TIME,
             new Date().toISOString().replace('Z', '000+00:00')

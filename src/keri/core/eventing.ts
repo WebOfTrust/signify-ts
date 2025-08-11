@@ -1,3 +1,4 @@
+import { components } from '../../types/keria-api-schema.ts';
 import { Cigar } from './cigar.ts';
 import {
     b,
@@ -42,9 +43,9 @@ export interface RotateArgs {
     intive?: boolean;
 }
 
-export interface ReplyData {
-    cid?: string;
-    role?: string;
+export interface EndRoleAddAttributes extends Record<string, unknown> {
+    cid: string;
+    role: string;
     eid?: string;
 }
 
@@ -55,9 +56,9 @@ export interface RotateEventSAD extends BaseSAD, Record<string, unknown> {
     i: string;
     s: string;
     p?: string;
-    kt: number | string | string[] | string[][];
+    kt: string | string[] | string[][];
     k: string[];
-    nt: number | string | string[] | string[][];
+    nt: string | string[] | string[][];
     n: string[];
     bt: number | string;
     br?: string[];
@@ -81,11 +82,8 @@ export interface InceptEventSAD extends BaseSAD, Record<string, unknown> {
     a: Record<string, unknown>[];
 }
 
-export interface InteractEventData {
-    i: string;
-    s: string;
-    d: string;
-}
+export type InteractEventData = components['schemas']['Seal'];
+
 export interface InteractEventSAD extends BaseSAD {
     i: string;
     t: string;
@@ -96,17 +94,13 @@ export interface InteractEventSAD extends BaseSAD {
 export interface ReplyEventSAD extends BaseSAD {
     t: string;
     dt: string;
-    r: string;
-    a: ReplyData;
+    r: '/end/role/add';
+    a: EndRoleAddAttributes;
 }
 
-export interface SealData {
-    i: string;
-    s: string;
-    d: string;
-}
-
-export type Seal = [string, SealData];
+export type Seal<
+    T extends components['schemas']['Seal'] = components['schemas']['Seal'],
+> = ['SealEvent', T];
 
 export function rotate({
     pre = undefined,
@@ -624,15 +618,15 @@ export function interact(args: InteractArgs): Serder<InteractEventSAD> {
 }
 
 export function reply(
-    route: string = '',
-    data: ReplyData | undefined,
+    route: '/end/role/add',
+    data: EndRoleAddAttributes | undefined,
     stamp: string | undefined,
     version: Version | undefined,
     kind: Serials = Serials.JSON
 ) {
     const vs = versify(Protocols.KERI, version, kind, 0);
     if (data == undefined) {
-        data = {};
+        data = {} as EndRoleAddAttributes;
     }
     const _sad: ReplyEventSAD = {
         v: vs,

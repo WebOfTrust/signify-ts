@@ -497,7 +497,7 @@ export class Credentials {
 
         return {
             rev: new Serder(rev),
-            anc: new Serder(ixn || {}),
+            anc: new Serder(ixn),
             op,
         };
     }

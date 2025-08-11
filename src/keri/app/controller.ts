@@ -1,18 +1,18 @@
-import { SaltyCreator } from '../core/manager.ts';
-import { Salter, Tier } from '../core/salter.ts';
-import { MtrDex } from '../core/matter.ts';
-import { Diger } from '../core/diger.ts';
-import { incept, rotate, interact } from '../core/eventing.ts';
-import { Serder, SerderSAD } from '../core/serder.ts';
-import { Tholder } from '../core/tholder.ts';
-import { Ilks, b, Serials, Vrsn_1_0 } from '../core/core.ts';
-import { Verfer } from '../core/verfer.ts';
-import { Encrypter } from '../core/encrypter.ts';
-import { Decrypter } from '../core/decrypter.ts';
 import { Cipher } from '../core/cipher.ts';
-import { Seqner } from '../core/seqner.ts';
+import { b, Ilks, Serials, Vrsn_1_0 } from '../core/core.ts';
+import { Decrypter } from '../core/decrypter.ts';
+import { Diger } from '../core/diger.ts';
+import { Encrypter } from '../core/encrypter.ts';
+import { incept, InceptEventSAD, interact, InteractEventSAD, rotate } from '../core/eventing.ts';
+import { SaltyCreator } from '../core/manager.ts';
+import { MtrDex } from '../core/matter.ts';
 import { CesrNumber } from '../core/number.ts';
+import { Salter, Tier } from '../core/salter.ts';
+import { Seqner } from '../core/seqner.ts';
+import { Serder } from '../core/serder.ts';
 import { Signer } from '../core/signer.ts';
+import { Tholder } from '../core/tholder.ts';
+import { Verfer } from '../core/verfer.ts';
 
 /**
  * Agent is a custodial entity that can be used in conjuntion with a local Client to establish the
@@ -129,7 +129,7 @@ export class Controller {
     /**
      * Either the current establishment event, inception or rotation, or the interaction event used for delegation approval.
      */
-    public serder: Serder;
+    public serder: Serder<InteractEventSAD | InceptEventSAD>;
     /**
      * Current public keys formatted in fully-qualified Base64.
      * @private
@@ -232,7 +232,7 @@ export class Controller {
         const sn =
             new CesrNumber({}, undefined, String(this.serder.sad['s'])).num + 1;
         this.serder = interact({
-            pre: this.serder.pre!,
+            pre: this.serder.pre,
             dig: this.serder.sad['d']!,
             sn: sn,
             data: [anchor],
@@ -242,7 +242,7 @@ export class Controller {
         return [this.signer.sign(this.serder.raw, 0).qb64];
     }
 
-    get pre(): string | undefined {
+    get pre(): string {
         return this.serder.pre;
     }
 
@@ -270,7 +270,7 @@ export class Controller {
             return new Serder({
                 sad: state.controller['ee'],
                 d: '',
-            } as SerderSAD);
+            });
         }
     }
 

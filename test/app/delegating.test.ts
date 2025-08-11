@@ -18,7 +18,12 @@ describe('delegate', () => {
         await client.connect();
         const delegations = client.delegations();
         await delegations.approve(
-            'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao'
+            'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao',
+            {
+                s: '',
+                i: '',
+                d: '',
+            }
         );
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(
@@ -29,16 +34,16 @@ describe('delegate', () => {
         assert.equal(lastCall[1]!.method, 'POST');
         const expectedBody = {
             ixn: {
-                v: 'KERI10JSON0000cf_',
+                v: 'KERI10JSON0000e1_',
                 t: 'ixn',
-                d: 'EBPt7hivibUQN-dlRyE9x_Y5LgFCGJ8QoNLSJrIkBYIg',
+                d: 'EPe2DWvz02_iuMWAZSoV380_EFi3yvdRuKU7xjEvRMkG',
                 i: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
                 s: '1',
                 p: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
-                a: [null],
+                a: [{ s: '', i: '', d: '' }],
             },
             sigs: [
-                'AAC4StAw-0IiV_LujceAXB3tnkaK011rPYPBKLgz-u6jI7hwfWGTCu5LDvBUsON4CqXbZAwPgIv6JqYjIusWKv0G',
+                'AADY_50NnRkdv92XNzAYTdMVT7wLNVKuRfla9cgJK1xHlM6Ea-8pbTIjQ8k7Sn_j9AOOTUgVwqTOGBhagzmWAnkK',
             ],
             salty: {
                 sxlt: '1AAHnNQTkD0yxOC9tSz_ukbB2e-qhDTStH18uCsi5PCwOyXLONDR3MeKwWv_AVJKGKGi6xiBQH25_R1RXLS2OuK3TN3ovoUKH7-A',

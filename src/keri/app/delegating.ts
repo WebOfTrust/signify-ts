@@ -20,7 +20,7 @@ export class Delegations {
      */
     async approve(
         name: string,
-        data?: { i: string; s: string; d: string }
+        data: { i: string; s: string; d: string }
     ): Promise<EventResult> {
         const { serder, sigs, jsondata } = await this.client
             .identifiers()

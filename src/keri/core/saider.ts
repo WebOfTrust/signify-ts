@@ -11,7 +11,7 @@ export enum Ids {
 }
 
 export interface BaseSAD extends Record<string, unknown> {
-    d?: string;
+    d: string;
     v?: string;
     t?: string;
 }
