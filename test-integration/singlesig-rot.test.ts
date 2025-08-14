@@ -1,5 +1,9 @@
 import { afterAll, assert, beforeAll, describe, expect, test } from 'vitest';
-import { EventResult, RotateIdentifierArgs, SignifyClient } from 'signify-ts';
+import signify, {
+    EventResult,
+    RotateIdentifierArgs,
+    SignifyClient,
+} from 'signify-ts';
 import {
     assertOperations,
     getOrCreateClients,
@@ -25,14 +29,6 @@ afterAll(async () => {
     await assertOperations(client1, client2);
 });
 
-interface KeyState {
-    i: string;
-    s: string;
-    k: string[];
-    n: string[];
-    [property: string]: any;
-}
-
 describe('singlesig-rot', () => {
     test('step1', async () => {
         assert.equal(name1_id, contact1_id);
@@ -48,9 +44,9 @@ describe('singlesig-rot', () => {
     });
     test('rot1', async () => {
         // local keystate before rot
-        const keystate0: KeyState = (
+        const keystate0: signify.KeyState = (
             await client1.keyStates().get(name1_id)
-        ).at(0);
+        ).at(0)!;
         expect(keystate0).not.toBeNull();
         assert.strictEqual(keystate0.k.length, 1);
         assert.strictEqual(keystate0.n.length, 1);
@@ -63,9 +59,9 @@ describe('singlesig-rot', () => {
         await waitOperation(client1, await result.op());
 
         // local keystate after rot
-        const keystate1: KeyState = (
+        const keystate1: signify.KeyState = (
             await client1.keyStates().get(name1_id)
-        ).at(0);
+        ).at(0)!;
         expect(parseInt(keystate1.s)).toBeGreaterThan(0);
         // sequence has incremented
         assert.equal(parseInt(keystate1.s), parseInt(keystate0.s) + 1);
@@ -75,9 +71,9 @@ describe('singlesig-rot', () => {
         expect(keystate1.n[0]).not.toEqual(keystate0.n[0]);
 
         // remote keystate after rot
-        const keystate2: KeyState = (
+        const keystate2: signify.KeyState = (
             await client2.keyStates().get(contact1_id)
-        ).at(0);
+        ).at(0)!;
         // remote keystate is one behind
         assert.equal(parseInt(keystate2.s), parseInt(keystate1.s) - 1);
 
@@ -86,7 +82,7 @@ describe('singlesig-rot', () => {
             .keyStates()
             .query(contact1_id, keystate1.s, undefined);
         op = await waitOperation(client2, op);
-        const keystate3: KeyState = op.response;
+        const keystate3: signify.KeyState = op.response as signify.KeyState;
         // local and remote keystate match
         assert.equal(keystate3.s, keystate1.s);
         assert.equal(keystate3.k[0], keystate1.k[0]);

@@ -100,7 +100,7 @@ describe('registry', () => {
                 prxs: [],
                 nxts: [],
             },
-        } as unknown) as HabState;
+        } as unknown as HabState;
 
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(

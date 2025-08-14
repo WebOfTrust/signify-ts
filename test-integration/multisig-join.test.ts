@@ -1,4 +1,4 @@
-import signify, { Serder, SignifyClient } from 'signify-ts';
+import signify, { KeyState, Serder, SignifyClient } from 'signify-ts';
 import {
     getOrCreateClient,
     getOrCreateIdentifier,
@@ -213,8 +213,11 @@ describe('multisig-join', () => {
             waitOperation(client3, updates[5]),
         ]);
 
-        const states = [aid1State.response, aid2State.response];
-        const rstates = [...states, aid3State.response];
+        const states = [
+            aid1State.response as KeyState,
+            aid2State.response as KeyState,
+        ];
+        const rstates = [...states, aid3State.response as KeyState];
         const rotateOperation1 = await client1
             .identifiers()
             .rotate(nameMultisig, { states, rstates });
@@ -300,9 +303,9 @@ describe('multisig-join', () => {
         ]);
 
         const states = [
-            aid1State.response,
-            aid2State.response,
-            aid3State.response,
+            aid1State.response as KeyState,
+            aid2State.response as KeyState,
+            aid3State.response as KeyState,
         ];
         const rotateOperation1 = await client1
             .identifiers()

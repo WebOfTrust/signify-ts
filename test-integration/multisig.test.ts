@@ -3,6 +3,7 @@ import signify, {
     SignifyClient,
     Serder,
     IssueCredentialResult,
+    KeyState,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -108,15 +109,19 @@ test('multisig', async function run() {
     op1 = await client1.challenges().verify(aid2.prefix, words);
     op1 = await waitOperation(client1, op1);
     console.log('Member1 verified challenge response from member2');
-    let exnwords = new Serder(op1.response.exn);
-    op1 = await client1.challenges().responded(aid2.prefix, exnwords.sad.d);
+    let exnwords = new Serder((op1.response as any)?.exn);
+    let res1 = await client1
+        .challenges()
+        .responded(aid2.prefix, exnwords.sad.d);
+    assert.equal(res1.status, 202);
     console.log('Member1 marked challenge response as accepted');
 
     op1 = await client1.challenges().verify(aid3.prefix, words);
     op1 = await waitOperation(client1, op1);
     console.log('Member1 verified challenge response from member3');
-    exnwords = new Serder(op1.response.exn);
-    op1 = await client1.challenges().responded(aid3.prefix, exnwords.sad.d);
+    exnwords = new Serder((op1.response as any)?.exn);
+    res1 = await client1.challenges().responded(aid3.prefix, exnwords.sad.d);
+    assert.equal(res1.status, 202);
     console.log('Member1 marked challenge response as accepted');
 
     // First member start the creation of a multisig identifier
@@ -600,16 +605,16 @@ test('multisig', async function run() {
     // Update new key states
     op1 = await client1.keyStates().query(aid2.prefix, '1');
     op1 = await waitOperation(client1, op1);
-    const aid2State = op1['response'];
+    const aid2State = op1['response'] as KeyState;
     op1 = await client1.keyStates().query(aid3.prefix, '1');
     op1 = await waitOperation(client1, op1);
-    const aid3State = op1['response'];
+    const aid3State = op1['response'] as KeyState;
 
     op2 = await client2.keyStates().query(aid3.prefix, '1');
     op2 = await waitOperation(client2, op2);
     op2 = await client2.keyStates().query(aid1.prefix, '1');
     op2 = await waitOperation(client2, op2);
-    const aid1State = op2['response'];
+    const aid1State = op2['response'] as KeyState;
 
     op3 = await client3.keyStates().query(aid1.prefix, '1');
     op3 = await waitOperation(client3, op3);

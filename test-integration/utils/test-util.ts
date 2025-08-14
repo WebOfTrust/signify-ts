@@ -250,7 +250,8 @@ export async function getOrCreateContact(
     }
     let op = await client.oobis().resolve(oobi, name);
     op = await waitOperation(client, op);
-    return op.response.i;
+    const response = op.response as { i: string };
+    return response.i;
 }
 
 /**
