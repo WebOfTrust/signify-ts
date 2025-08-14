@@ -1,11 +1,13 @@
 import { Authenticater } from '../core/authing.ts';
+import { InceptEventSAD } from '../core/eventing.ts';
 import { HEADER_SIG_TIME } from '../core/httping.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
+import { KeyState } from '../core/keyState.ts';
 import { Tier } from '../core/salter.ts';
 
 import { Identifier } from './aiding.ts';
 import { Challenges, Contacts } from './contacting.ts';
-import { Agent, Controller } from './controller.ts';
+import { Agent, Controller, RotateAID } from './controller.ts';
 import { Config, KeyEvents, KeyStates, Oobis, Operations } from './coring.ts';
 import { Credentials, Ipex, Registries, Schemas } from './credentialing.ts';
 import { Delegations } from './delegating.ts';
@@ -16,9 +18,13 @@ import { Notifications } from './notifying.ts';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
 
-class State {
-    agent: any | null;
-    controller: any | null;
+export interface StateController {
+    state: KeyState;
+    ee: InceptEventSAD;
+}
+export class State {
+    agent: KeyState | null;
+    controller: StateController | null;
     ridx: number;
     pidx: number;
 
@@ -141,7 +147,7 @@ export class SignifyClient {
         );
         this.controller.ridx = state.ridx !== undefined ? state.ridx : 0;
         // Create agent representing the AID of KERIA cloud agent
-        this.agent = new Agent(state.agent);
+        this.agent = new Agent(state.agent!);
         if (this.agent.anchor != this.controller.pre) {
             throw Error(
                 'commitment to controller AID missing in agent inception event'
@@ -343,7 +349,7 @@ export class SignifyClient {
      * @param {Array<string>} aids List of managed AIDs to be rotated
      * @returns {Promise<Response>} A promise to the result of the rotation
      */
-    async rotate(nbran: string, aids: string[]): Promise<Response> {
+    async rotate(nbran: string, aids: RotateAID[]): Promise<Response> {
         const data = this.controller.rotate(nbran, aids);
         return await fetch(this.url + '/agent/' + this.controller.pre, {
             method: 'PUT',

@@ -22,9 +22,9 @@ test('test witness', async () => {
     const state1 = await client1.state();
     console.log(
         'Client connected. Client AID:',
-        state1.controller.state.i,
+        state1.controller?.state.i,
         'Agent AID: ',
-        state1.agent.i
+        state1.agent?.i
     );
 
     // Client 1 resolves witness OOBI

@@ -4,6 +4,7 @@ import signify, {
     Operation,
     CredentialData,
     Seal,
+    Embeds,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -163,7 +164,7 @@ test('multisig', async function run() {
         signify.messagize(rpy, sigers, seal, undefined, undefined, false)
     );
     let atc = roleims.substring(rpy.size);
-    let roleembeds = {
+    let roleembeds: Embeds = {
         rpy: [rpy, atc],
     };
     let recp = [aid2['state']].map((state) => state['i']);
@@ -536,7 +537,7 @@ async function multisigAdmitCredential(
     const ims = signify.d(signify.messagize(admit, sigers, seal));
     let atc = ims.substring(admit.size);
     atc += end;
-    const gembeds = {
+    const gembeds: Embeds = {
         exn: [admit, atc],
     };
 

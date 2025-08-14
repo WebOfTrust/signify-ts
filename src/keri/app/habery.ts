@@ -36,7 +36,7 @@ export interface MakeHabArgs {
     delpre?: string;
     estOnly?: boolean;
     DnD?: boolean;
-    data?: any;
+    data?: Record<string, unknown>[];
 }
 
 export class Hab<T extends SerderSAD = SerderSAD> {

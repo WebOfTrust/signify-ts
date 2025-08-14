@@ -4,6 +4,7 @@ import signify, {
     Serder,
     IssueCredentialResult,
     Seal,
+    Embeds,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -141,7 +142,7 @@ test('multisig', async function run() {
 
     let ims = signify.d(signify.messagize(serder, sigers));
     let atc = ims.substring(serder.size);
-    let embeds = {
+    let embeds: Embeds = {
         icp: [serder, atc],
     };
 
@@ -329,7 +330,7 @@ test('multisig', async function run() {
         signify.messagize(rpy, sigers, seal, undefined, undefined, false)
     );
     atc = roleims.substring(rpy.size);
-    let roleembeds = {
+    let roleembeds: Embeds = {
         rpy: [rpy, atc],
     };
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
@@ -471,7 +472,7 @@ test('multisig', async function run() {
 
     ims = signify.d(signify.messagize(serder, sigers));
     atc = ims.substring(serder.size);
-    let xembeds = {
+    let xembeds: Embeds = {
         ixn: [serder, atc],
     };
 
@@ -636,7 +637,7 @@ test('multisig', async function run() {
 
     ims = signify.d(signify.messagize(serder, sigers));
     atc = ims.substring(serder.size);
-    let rembeds = {
+    let rembeds: Embeds = {
         rot: [serder, atc],
     };
 
@@ -763,7 +764,7 @@ test('multisig', async function run() {
 
     ims = signify.d(signify.messagize(anc, sigers));
     atc = ims.substring(anc.size);
-    let regbeds = {
+    let regbeds: Embeds = {
         vcp: [serder, ''],
         anc: [anc, atc],
     };
@@ -970,7 +971,7 @@ test('multisig', async function run() {
     let gims = signify.d(signify.messagize(grant, sigers, seal));
     atc = gims.substring(grant.size);
     atc += end;
-    let gembeds = {
+    let gembeds: Embeds = {
         exn: [grant, atc],
     };
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
@@ -1199,7 +1200,7 @@ async function multisigIssue(
     const ims = signify.d(signify.messagize(result.anc, sigers));
     const atc = ims.substring(result.anc.size);
 
-    const embeds = {
+    const embeds: Embeds = {
         acdc: [result.acdc, ''],
         iss: [result.iss, ''],
         anc: [result.anc, atc],
@@ -1239,7 +1240,7 @@ async function multisigRevoke(
     const ims = signify.d(signify.messagize(anc, sigers));
     const atc = ims.substring(anc.size);
 
-    const embeds = {
+    const embeds: Embeds = {
         iss: [rev, ''],
         anc: [anc, atc],
     };

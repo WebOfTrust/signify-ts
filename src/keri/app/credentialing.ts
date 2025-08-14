@@ -1,14 +1,13 @@
 import {
     b,
     d,
-    Dict,
     Ilks,
     Protocols,
     Serials,
     versify,
-    Vrsn_1_0,
+    Vrsn_1_0
 } from '../core/core.ts';
-import { interact, InteractEventData, messagize } from '../core/eventing.ts';
+import { interact, InteractEventData, InteractEventSAD, messagize } from '../core/eventing.ts';
 import { HabState } from '../core/keyState.ts';
 import { BaseSAD, Saider } from '../core/saider.ts';
 import { Serder } from '../core/serder.ts';
@@ -23,6 +22,7 @@ import { Operation } from './coring.ts';
 import { TraitDex } from './habery.ts';
 
 import { components } from '../../types/keria-api-schema.ts';
+import { SignResult } from '../core/keeping.ts';
 
 export type CredentialResult = components['schemas']['Credential'];
 export type Registry = components['schemas']['Registry'];
@@ -513,7 +513,7 @@ export interface CreateRegistryArgs {
 }
 
 export class RegistryResult {
-    private readonly _regser: any;
+    private readonly _regser: Serder;
     private readonly _serder: Serder;
     private readonly _sigs: string[];
     private readonly promise: Promise<Response>;
@@ -521,7 +521,7 @@ export class RegistryResult {
     constructor(
         regser: Serder,
         serder: Serder,
-        sigs: any[],
+        sigs: SignResult,
         promise: Promise<Response>
     ) {
         this._regser = regser;
@@ -611,7 +611,7 @@ export class Registries {
             const sn = parseInt(state.s, 16);
             const dig = state.d;
 
-            const data: any = [
+            const data: InteractEventData[] = [
                 {
                     i: regser.pre,
                     s: '0',
@@ -645,14 +645,14 @@ export class Registries {
         hab: HabState,
         name: string,
         registryName: string,
-        vcp: Dict<any>,
-        ixn: Dict<any>,
-        sigs: any[]
+        vcp: vdr.VDRInceptSAD,
+        ixn: InteractEventSAD,
+        sigs: SignResult
     ) {
         const path = `/identifiers/${name}/registries`;
         const method = 'POST';
 
-        const data: any = {
+        const data: Record<string, unknown> = {
             name: registryName,
             vcp: vcp,
             ixn: ixn,
@@ -946,7 +946,7 @@ export class Ipex {
      */
     async admit(args: IpexAdmitArgs): Promise<[Serder, string[], string]> {
         const hab = await this.client.identifiers().get(args.senderName);
-        const data: any = {
+        const data = {
             m: args.message,
         };
 

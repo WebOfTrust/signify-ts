@@ -67,7 +67,7 @@ export interface components {
             d: string;
         };
         Seal: {
-            s: string;
+            s: string | number;
             d: string;
             i?: string;
         };

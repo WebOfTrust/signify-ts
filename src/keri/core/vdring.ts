@@ -48,7 +48,7 @@ namespace vdr {
         version = Vrsn_1_0,
         kind = Serials.JSON,
         code = MtrDex.Blake3_256,
-    }: VDRInceptArgs): Serder {
+    }: VDRInceptArgs) {
         const vs = versify(Protocols.KERI, version, kind, 0);
         const isn = 0;
         const ilk = Ilks.vcp;

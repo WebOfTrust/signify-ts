@@ -1,18 +1,46 @@
+import { Cigar } from '../core/cigar.ts';
 import { Cipher } from '../core/cipher.ts';
 import { b, Ilks, Serials, Vrsn_1_0 } from '../core/core.ts';
 import { Decrypter } from '../core/decrypter.ts';
 import { Diger } from '../core/diger.ts';
 import { Encrypter } from '../core/encrypter.ts';
-import { incept, InceptEventSAD, interact, InteractEventSAD, rotate } from '../core/eventing.ts';
+import {
+    incept,
+    InceptEventSAD,
+    interact,
+    InteractEventSAD,
+    rotate,
+} from '../core/eventing.ts';
+import {
+    RandyIdentifierManager,
+    SaltyIdentifierManager,
+} from '../core/keeping.ts';
+import { EstablishmentState, KeyState } from '../core/keyState.ts';
 import { SaltyCreator } from '../core/manager.ts';
 import { MtrDex } from '../core/matter.ts';
 import { CesrNumber } from '../core/number.ts';
 import { Salter, Tier } from '../core/salter.ts';
 import { Seqner } from '../core/seqner.ts';
 import { Serder } from '../core/serder.ts';
+import { Siger } from '../core/siger.ts';
 import { Signer } from '../core/signer.ts';
 import { Tholder } from '../core/tholder.ts';
 import { Verfer } from '../core/verfer.ts';
+import { StateController } from './clienting.ts';
+
+export interface RotateAID {
+    prefix: string;
+    salty?: SaltyIdentifierManager;
+    randy?: RandyIdentifierManager;
+    state: {
+        k: string[];
+    };
+}
+
+export interface DeriveParams {
+    ee: EstablishmentState;
+    controller: StateController;
+}
 
 /**
  * Agent is a custodial entity that can be used in conjuntion with a local Client to establish the
@@ -22,11 +50,11 @@ export class Agent {
     pre: string;
     anchor: string;
     verfer: Verfer | null;
-    state: any | null;
+    state: KeyState | null;
     sn: number | undefined;
     said: string | undefined;
 
-    constructor(agent: any) {
+    constructor(agent: KeyState) {
         this.pre = '';
         this.anchor = '';
         this.verfer = null;
@@ -36,7 +64,7 @@ export class Agent {
         this.parse(agent);
     }
 
-    private parse(agent: Agent) {
+    private parse(agent: KeyState) {
         const [state, verfer] = this.event(agent);
 
         this.sn = new CesrNumber({}, undefined, state['s']).num;
@@ -57,7 +85,7 @@ export class Agent {
         this.state = state;
     }
 
-    private event(evt: any): [any, Verfer, Diger] {
+    private event(evt: KeyState): [KeyState, Verfer, Diger] {
         if (evt['k'].length !== 1) {
             throw new Error(`agent inception event can only have one key`);
         }
@@ -115,17 +143,17 @@ export class Controller {
      * The salter is a cryptographic salt used to derive the controller's cryptographic key pairs
      * and is deterministically derived from the bran and the security tier.
      */
-    public salter: any;
+    public salter: Salter;
     /**
      * The current signing key used to sign requests for this controller.
      */
-    public signer: any;
+    public signer: Signer;
     /**
      * The next signing key of which a digest is committed to in an establishment event (inception or rotation) to become the
      * signing key after the next rotation.
      * @private
      */
-    private nsigner: any;
+    private nsigner: Signer;
     /**
      * Either the current establishment event, inception or rotation, or the interaction event used for delegation approval.
      */
@@ -155,7 +183,7 @@ export class Controller {
         bran: string,
         tier: Tier,
         ridx: number = 0,
-        state: any | null = null
+        state: StateController | null = null
     ) {
         this.bran = MtrDex.Salt_128 + 'A' + bran.substring(0, 21); // qb64 salt for seed
         this.stem = 'signify:controller';
@@ -190,7 +218,7 @@ export class Controller {
                 initialKeyIndex,
                 kidx
             )
-            .signers.pop(); // assumes only one key pair is created because keyCount is 1
+            .signers.pop()!; // assumes only one key pair is created because keyCount is 1
 
         // Creates the second key pair which a digest of the public key is committed to in the inception event.
         const nextKeyIndex = ridx + 1;
@@ -204,14 +232,14 @@ export class Controller {
                 nextKeyIndex,
                 kidx
             )
-            .signers.pop(); // assumes only one key pair is created because keyCount is 1
+            .signers.pop()!; // assumes only one key pair is created because keyCount is 1
         this.keys = [this.signer.verfer.qb64];
         this.ndigs = [
             new Diger({ code: MtrDex.Blake3_256 }, this.nsigner.verfer.qb64b)
                 .qb64,
         ];
 
-        if (state == null || state['ee']['s'] == 0) {
+        if (state == null || Number(state['ee']['s']) == 0) {
             this.serder = incept({
                 keys: this.keys,
                 isith: '1',
@@ -246,16 +274,16 @@ export class Controller {
         return this.serder.pre;
     }
 
-    get event() {
+    get event(): [Serder<InteractEventSAD | InceptEventSAD>, Siger | Cigar] {
         const siger = this.signer.sign(this.serder.raw, 0);
         return [this.serder, siger];
     }
 
-    get verfers(): [] {
-        return this.signer.verfer();
+    get verfers() {
+        return this.signer.verfer;
     }
 
-    derive(state: any) {
+    derive(state?: DeriveParams) {
         if (state != undefined && state['ee']['s'] === '0') {
             return incept({
                 keys: this.keys,
@@ -268,13 +296,13 @@ export class Controller {
             });
         } else {
             return new Serder({
-                sad: state.controller['ee'],
+                sad: state?.controller['ee'],
                 d: '',
             });
         }
     }
 
-    rotate(bran: string, aids: Array<any>) {
+    rotate(bran: string, aids: RotateAID[]) {
         const nbran = MtrDex.Salt_128 + 'A' + bran.substring(0, 21); // qb64 salt for seed
         const nsalter = new Salter({ qb64: nbran, tier: this.tier });
         const nsigner = this.salter.signer(undefined, false);
@@ -295,7 +323,7 @@ export class Controller {
                 0,
                 false
             )
-            .signers.pop();
+            .signers.pop()!;
 
         const ncreator = new SaltyCreator(nsalter.qb64, this.tier, this.stem);
         this.signer = ncreator
@@ -309,7 +337,7 @@ export class Controller {
                 0,
                 false
             )
-            .signers.pop();
+            .signers.pop()!;
         this.nsigner = ncreator
             .create(
                 undefined,
@@ -321,7 +349,7 @@ export class Controller {
                 0,
                 false
             )
-            .signers.pop();
+            .signers.pop()!;
 
         this.keys = [this.signer.verfer.qb64, signer?.verfer.qb64];
         this.ndigs = [new Diger({}, this.nsigner.verfer.qb64b).qb64];
@@ -343,12 +371,12 @@ export class Controller {
         const decrypter = new Decrypter({}, nsigner.qb64b);
         const sxlt = encrypter.encrypt(b(this.bran)).qb64;
 
-        const keys: Record<any, any> = {};
+        const keys: Record<string, unknown> = {};
 
         for (const aid of aids) {
-            const pre: string = aid['prefix'] as string;
+            const pre: string = aid['prefix'];
             if ('salty' in aid) {
-                const salty: any = aid['salty'];
+                const salty = aid['salty']!;
                 const cipher = new Cipher({ qb64: salty['sxlt'] });
                 const dnxt = decrypter.decrypt(null, cipher).qb64;
 
@@ -383,15 +411,19 @@ export class Controller {
                     sxlt: asxlt,
                 };
             } else if ('randy' in aid) {
-                const randy = aid['randy'];
-                const prxs = randy['prxs'];
-                const nxts = randy['nxts'];
+                const randy = aid['randy']!;
+                const prxs = randy['prxs'] || [];
+                const nxts = randy['nxts'] || [];
 
                 const nprxs = [];
                 const signers = [];
                 for (const prx of prxs) {
                     const cipher = new Cipher({ qb64: prx });
-                    const dsigner = decrypter.decrypt(null, cipher, true) as Signer;
+                    const dsigner = decrypter.decrypt(
+                        null,
+                        cipher,
+                        true
+                    ) as Signer;
                     signers.push(dsigner);
                     nprxs.push(encrypter.encrypt(b(dsigner.qb64)).qb64);
                 }

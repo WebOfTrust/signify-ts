@@ -1,11 +1,13 @@
-import { SignifyClient } from './clienting.ts';
-import { b, d, Dict, Protocols, Ilks, Serials, versify } from '../core/core.ts';
+import { b, d, Ilks, Protocols, Serials, versify } from '../core/core.ts';
+import { Counter, CtrDex } from '../core/counter.ts';
+import { HabState } from '../core/keyState.ts';
+import { Pather } from '../core/pather.ts';
+import { BaseSAD, Saider } from '../core/saider.ts';
 import { Serder } from '../core/serder.ts';
 import { nowUTC } from '../core/utils.ts';
-import { Pather } from '../core/pather.ts';
-import { Counter, CtrDex } from '../core/counter.ts';
-import { BaseSAD, Saider } from '../core/saider.ts';
-import { HabState } from '../core/keyState.ts';
+import { SignifyClient } from './clienting.ts';
+
+export type Embeds = Record<string, [Serder, string | undefined]>;
 
 /**
  * Exchanges
@@ -36,8 +38,8 @@ export class Exchanges {
     async createExchangeMessage(
         sender: HabState,
         route: string,
-        payload: Dict<any>,
-        embeds: Dict<any>,
+        payload: Record<string, unknown>,
+        embeds: Embeds,
         recipient: string,
         datetime?: string,
         dig?: string
@@ -75,8 +77,8 @@ export class Exchanges {
         topic: string,
         sender: HabState,
         route: string,
-        payload: Dict<any>,
-        embeds: Dict<any>,
+        payload: Record<string, unknown>,
+        embeds: Embeds,
         recipients: string[]
     ): Promise<any> {
         for (const recipient of recipients) {
@@ -119,7 +121,7 @@ export class Exchanges {
     ): Promise<any> {
         const path = `/identifiers/${name}/exchanges`;
         const method = 'POST';
-        const data: any = {
+        const data = {
             tpc: topic,
             exn: exn.sad,
             sigs: sigs,
@@ -147,13 +149,13 @@ export class Exchanges {
 
 export function exchange(
     route: string,
-    payload: Dict<any>,
+    payload: Record<string, unknown>,
     sender: string,
     recipient: string,
     date?: string,
     dig?: string,
-    modifiers?: Dict<any>,
-    embeds?: Dict<any>
+    modifiers?: Record<string, unknown>,
+    embeds?: Embeds
 ): [Serder, Uint8Array] {
     const vs = versify(Protocols.KERI, undefined, Serials.JSON, 0);
     const ilk = Ilks.exn;
@@ -193,7 +195,7 @@ export function exchange(
         [, e] = Saider.saidify(e);
     }
 
-    const attrs = {} as Dict<any>;
+    const attrs = {} as Record<string, unknown>;
 
     attrs['i'] = recipient;
 

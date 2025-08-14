@@ -81,7 +81,7 @@ export class Signer extends Matter {
     }
 
     sign(
-        ser: Uint8Array,
+        ser: Uint8Array | string,
         index: number | null = null,
         only: boolean = false,
         ondex: number | undefined = undefined
@@ -90,7 +90,7 @@ export class Signer extends Matter {
     }
 
     _ed25519(
-        ser: Uint8Array,
+        ser: Uint8Array | string,
         seed: Uint8Array,
         verfer: Verfer,
         index: number | null,

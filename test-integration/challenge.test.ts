@@ -33,15 +33,15 @@ test('challenge', async () => {
     const state2 = await client2.state();
     console.log(
         'Client 1 connected. Client AID:',
-        state1.controller.state.i,
+        state1.controller?.state.i,
         'Agent AID: ',
-        state1.agent.i
+        state1.agent?.i
     );
     console.log(
         'Client 2 connected. Client AID:',
-        state2.controller.state.i,
+        state2.controller?.state.i,
         'Agent AID: ',
-        state2.agent.i
+        state2.agent?.i
     );
 
     // Generate challenge words

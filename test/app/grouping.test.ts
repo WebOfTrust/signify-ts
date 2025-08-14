@@ -3,6 +3,7 @@ import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { Tier } from '../../src/keri/core/salter.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { createMockFetch } from './test-utils.ts';
+import { Serder } from 'signify-ts';
 
 const fetchMock = createMockFetch();
 
@@ -39,7 +40,7 @@ describe('Grouping', () => {
 
         await groups.join(
             'aid1',
-            { sad: {} },
+            { sad: {} } as Serder,
             ['sig'],
             'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
             ['1', '2', '3'],

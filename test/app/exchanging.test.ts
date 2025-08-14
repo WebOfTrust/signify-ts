@@ -3,6 +3,7 @@ import {
     b,
     d,
     Diger,
+    Embeds,
     exchange,
     Ilks,
     MtrDex,
@@ -108,7 +109,7 @@ describe('exchange', () => {
         };
         const vcp = new Serder(ked1);
 
-        const embeds = {
+        const embeds: Embeds = {
             icp: [serder, siger.qb64],
             vcp: [vcp, undefined],
         };

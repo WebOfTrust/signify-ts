@@ -26,9 +26,9 @@ test('bip39_shim', async () => {
     const state1 = await client1.state();
     console.log(
         'Client 1 connected. Client AID:',
-        state1.controller.state.i,
+        state1.controller?.state.i,
         'Agent AID: ',
-        state1.agent.i
+        state1.agent?.i
     );
     const words = new BIP39Shim(0, {}).generateMnemonic(256);
     const icpResult = await client1.identifiers().create('aid1', {

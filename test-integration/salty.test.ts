@@ -20,9 +20,9 @@ test('salty', async () => {
     const state1 = await client1.state();
     console.log(
         'Client 1 connected. Client AID:',
-        state1.controller.state.i,
+        state1.controller?.state.i,
         'Agent AID: ',
-        state1.agent.i
+        state1.agent?.i
     );
 
     let icpResult = await client1

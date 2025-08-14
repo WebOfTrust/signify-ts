@@ -1,4 +1,4 @@
-import signify, { Serder, SignifyClient } from 'signify-ts';
+import signify, { Embeds, Serder, SignifyClient } from 'signify-ts';
 import {
     getOrCreateClient,
     getOrCreateIdentifier,
@@ -76,7 +76,7 @@ describe('multisig-join', () => {
 
         const ims = signify.d(signify.messagize(serder, sigers));
         const atc = ims.substring(serder.size);
-        const embeds = {
+        const embeds: Embeds = {
             icp: [serder, atc],
         };
 
@@ -213,7 +213,7 @@ describe('multisig-join', () => {
         );
         const ims = signify.d(signify.messagize(serder1, sigers));
         const atc = ims.substring(serder1.size);
-        const rembeds = {
+        const rembeds: Embeds = {
             rot: [serder1, atc],
         };
         const smids = states.map((state) => state['i']);
@@ -302,7 +302,7 @@ describe('multisig-join', () => {
         );
         const ims = signify.d(signify.messagize(serder1, sigers));
         const atc = ims.substring(serder1.size);
-        const rembeds = {
+        const rembeds: Embeds = {
             rot: [serder1, atc],
         };
         const smids = states.map((state) => state['i']);
@@ -333,7 +333,7 @@ describe('multisig-join', () => {
         const exn3 = response[0].exn;
         const serder3 = new Serder(exn3.e.rot);
         const keeper3 = await client3.manager!.get(aid3);
-        const sigs3 = keeper3.sign(signify.b(serder3.raw));
+        const sigs3 = await keeper3.sign(signify.b(serder3.raw));
 
         const joinOperation = await client3
             .groups()

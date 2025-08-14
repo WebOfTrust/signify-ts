@@ -1,4 +1,4 @@
-import { EventResult, SignifyClient } from 'signify-ts';
+import { EventResult, InteractEventData, SignifyClient } from 'signify-ts';
 import {
     assertOperations,
     getOrCreateClients,
@@ -54,7 +54,7 @@ describe('singlesig-ixn', () => {
         // ixn
         const result: EventResult = await client1
             .identifiers()
-            .interact('name1', {});
+            .interact('name1', {} as InteractEventData);
         await waitOperation(client1, await result.op());
 
         // local keystate after ixn

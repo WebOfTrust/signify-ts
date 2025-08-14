@@ -1,5 +1,6 @@
+import { SignResult } from '../core/keeping.ts';
+import { Serder } from '../core/serder.ts';
 import { SignifyClient } from './clienting.ts';
-import { Dict } from '../core/core.ts';
 
 /**
  * Groups
@@ -39,7 +40,7 @@ export class Groups {
      */
     async sendRequest(
         name: string,
-        exn: Dict<any>,
+        exn: Record<string, unknown>,
         sigs: string[],
         atc: string
     ): Promise<any> {
@@ -68,8 +69,8 @@ export class Groups {
      */
     async join(
         name: string,
-        rot: any,
-        sigs: any, //string[],
+        rot: Serder,
+        sigs: SignResult,
         gid: string,
         smids: string[],
         rmids: string[]

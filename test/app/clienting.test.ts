@@ -87,9 +87,9 @@ describe('SignifyClient', () => {
             client.agent!.said,
             'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
         );
-        assert(client.agent!.state.s, '0');
+        assert(client.agent!.state!.s, '0');
         assert(
-            client.agent!.state.d,
+            client.agent!.state!.d,
             'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
         );
 
