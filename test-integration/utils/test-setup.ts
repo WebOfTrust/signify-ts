@@ -2,12 +2,12 @@ import {
     CreateIdentiferArgs,
     EventResult,
     SignifyClient,
+    Tier,
     randomPasscode,
     ready,
 } from 'signify-ts';
 import { resolveEnvironment } from './resolve-env.ts';
 import { waitOperation } from './test-util.ts';
-import { Tier } from '../../src/types/keria-api-schema.ts';
 
 /**
  * Connect or boot a SignifyClient instance

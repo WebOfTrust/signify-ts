@@ -7,6 +7,8 @@ import { Tier } from '../../types/keria-api-schema.ts';
 
 export { Tier } from '../../types/keria-api-schema.ts';
 
+export { Tier } from '../../types/keria-api-schema.ts';
+
 interface SalterArgs {
     raw?: Uint8Array | undefined;
     code?: string;
