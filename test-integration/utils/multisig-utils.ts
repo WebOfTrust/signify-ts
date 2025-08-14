@@ -8,6 +8,10 @@ import signify, {
     d,
     messagize,
     HabState,
+    SaltyHabState,
+    GroupHabState,
+    ExternHabState,
+    RandyHabState,
 } from 'signify-ts';
 import { getStates, waitAndMarkNotification } from './test-util.ts';
 import assert from 'assert';
@@ -85,7 +89,7 @@ export async function acceptMultisigIncept(
 export async function addEndRoleMultisig(
     client: SignifyClient,
     groupName: string,
-    aid: HabState,
+    aid: SaltyHabState | GroupHabState | ExternHabState | RandyHabState,
     otherMembersAIDs: HabState[],
     multisigAID: HabState,
     timestamp: string,

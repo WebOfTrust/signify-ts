@@ -1,4 +1,4 @@
-import { Tier} from '../../types/keria-api-schema.ts';
+import { Tier } from '../core/salter.ts';
 import { Algos } from '../core/manager.ts';
 import { incept, interact, reply, rotate } from '../core/eventing.ts';
 import { b, Ilks, Serials, Vrsn_1_0 } from '../core/core.ts';

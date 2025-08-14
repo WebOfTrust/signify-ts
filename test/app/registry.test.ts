@@ -67,14 +67,18 @@ describe('registry', () => {
         const mockedClient = mock(SignifyClient);
         const mockedIdentifiers = mock(Identifier);
 
-        const hab = {
+        const hab = ({
             prefix: 'hab prefix',
             state: { s: 0, d: 'a digest', c: ['EO'] } as unknown as KeyState,
             name: 'a name',
             transferable: true,
             windexes: [],
             icp_dt: '2023-12-01T10:05:25.062609+00:00',
-        } as HabState;
+            randy: {
+                prxs: [],
+                nxts: [],
+            },
+        } as unknown) as HabState;
 
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(

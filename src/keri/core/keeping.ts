@@ -1,7 +1,7 @@
 import { Salter } from './salter.ts';
 import { Algos, SaltyCreator, RandyCreator } from './manager.ts';
 import { MtrDex } from './matter.ts';
-import { Tier} from '../../types/keria-api-schema.ts';
+import { Tier } from './salter.ts';
 import { Encrypter } from '../core/encrypter.ts';
 import { Decrypter } from './decrypter.ts';
 import { b } from './core.ts';
@@ -177,19 +177,25 @@ export class IdentifierManagerFactory {
      * @returns IdentifierManager instance
      */
     get(aid: HabState): IdentifierManager {
-        const algo = aid[Algos.salty]
-            ? Algos.salty
-            : aid[Algos.randy]
-              ? Algos.randy
-              : aid[Algos.group]
-                ? Algos.group
-                : aid[Algos.extern]
-                  ? Algos.extern
-                  : undefined;
-        if (!algo) {
+        let algo: Algos | undefined;
+        let kargs: any;
+
+        if (Algos.salty in aid) {
+            algo = Algos.salty;
+            kargs = aid.salty;
+        } else if (Algos.randy in aid) {
+            algo = Algos.randy;
+            kargs = aid.randy;
+        } else if (Algos.group in aid) {
+            algo = Algos.group;
+            kargs = aid.group;
+        } else if (Algos.extern in aid) {
+            algo = Algos.extern;
+            kargs = aid.extern;
+        } else {
             throw new Error('No algo specified');
         }
-        let kargs = aid[algo];
+
         if (!kargs) {
             throw new Error('No kargs found in HabState');
         }

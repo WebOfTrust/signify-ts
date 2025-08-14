@@ -1,7 +1,6 @@
 import { assert, describe, it, beforeAll, beforeEach } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
-import { Salter } from '../../src/keri/core/salter.ts';
-import { Tier } from '../../src/types/keria-api-schema.ts';
+import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { b } from '../../src/keri/core/core.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { designature, Signage, signature } from '../../src/keri/end/ending.ts';

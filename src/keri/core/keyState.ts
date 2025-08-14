@@ -34,4 +34,16 @@ export type ExternState = components['schemas']['ExternState'];
 /**
  * Defining properties of an identifier habitat, know as a Hab in KERIpy.
  */
-export type HabState = components['schemas']['Identifier'];
+// export type HabState = components['schemas']['Identifier'];
+
+export type HabStateBase = components['schemas']['HabState'];
+export type SaltyHabState = HabStateBase & SaltyKeyState;
+export type RandyHabState = HabStateBase & RandyKeyState;
+export type GroupHabState = HabStateBase & GroupKeyState;
+export type ExternHabState = HabStateBase & ExternState;
+export type HabState =
+    | SaltyHabState
+    | RandyHabState
+    | GroupHabState
+    | ExternHabState;
+

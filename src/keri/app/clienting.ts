@@ -1,7 +1,8 @@
-import { components, Tier } from '../../types/keria-api-schema.ts';
+import { components } from '../../types/keria-api-schema.ts';
 import { Authenticater } from '../core/authing.ts';
 import { HEADER_SIG_TIME } from '../core/httping.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
+import { Tier } from '../core/salter.ts';
 
 import { Identifier } from './aiding.ts';
 import { Contacts, Challenges } from './contacting.ts';

@@ -9,10 +9,10 @@ import {
     MtrDex,
     Salter,
     Serials,
+    Tier,
     Vrsn_1_0,
     incept,
 } from '../../src/index.ts';
-import { Tier } from '../../src/types/keria-api-schema.ts';
 import {
     EstablishmentState,
     HabState,
@@ -96,33 +96,141 @@ export async function createMockIdentifierState(
         ...(delpre ? { delpre } : {}),
     });
 
-    return {
-        name: name,
-        prefix: serder.pre,
-        [algo]: keeper.params(),
-        transferable,
-        windexes: [],
-        state: {
-            vn: [serder.version.major, serder.version.minor],
-            s: serder.sad.s,
-            d: serder.sad.d,
-            i: serder.pre,
-            ee: serder.sad as EstablishmentState,
-            kt: serder.sad.kt,
-            k: serder.sad.k,
-            nt: serder.sad.nt,
-            n: serder.sad.n,
-            bt: serder.sad.bt,
-            b: serder.sad.b,
-            p: serder.sad.p ?? '',
-            f: '',
-            dt: new Date().toISOString().replace('Z', '000+00:00'),
-            et: '',
-            c: [],
-            di: serder.sad.di ?? '',
-        } as KeyState,
-        icp_dt: '2023-12-01T10:05:25.062609+00:00',
-    };
+    // Mock for each algo type
+    if (algo === Algos.salty) {
+        return ({
+            name,
+            prefix: serder.pre,
+            salty: {
+                tier: tier ?? Tier.low,
+                sxlt: bran,
+                pidx: 0,
+                kidx: 0,
+                stem: 'signify:aid',
+                dcode: dcode,
+                icodes: ['A'],
+                ncodes: ['A'],
+                transferable,
+            },
+            transferable,
+            windexes: [],
+            state: {
+                vn: [serder.version.major, serder.version.minor],
+                s: serder.sad.s,
+                d: serder.sad.d,
+                i: serder.pre,
+                ee: serder.sad as EstablishmentState,
+                kt: serder.sad.kt,
+                k: serder.sad.k,
+                nt: serder.sad.nt,
+                n: serder.sad.n,
+                bt: serder.sad.bt,
+                b: serder.sad.b,
+                p: serder.sad.p ?? '',
+                f: '',
+                dt: new Date().toISOString().replace('Z', '000+00:00'),
+                et: '',
+                c: [],
+                di: serder.sad.di ?? '',
+            } as KeyState,
+            icp_dt: '2023-12-01T10:05:25.062609+00:00',
+        } as unknown) as HabState;
+    } else if (algo === Algos.randy) {
+        return ({
+            name,
+            prefix: serder.pre,
+            randy: {
+                prxs: prxs ?? [],
+                nxts: nxts ?? [],
+            },
+            transferable,
+            windexes: [],
+            state: {
+                vn: [serder.version.major, serder.version.minor],
+                s: serder.sad.s,
+                d: serder.sad.d,
+                i: serder.pre,
+                ee: serder.sad as EstablishmentState,
+                kt: serder.sad.kt,
+                k: serder.sad.k,
+                nt: serder.sad.nt,
+                n: serder.sad.n,
+                bt: serder.sad.bt,
+                b: serder.sad.b,
+                p: serder.sad.p ?? '',
+                f: '',
+                dt: new Date().toISOString().replace('Z', '000+00:00'),
+                et: '',
+                c: [],
+                di: serder.sad.di ?? '',
+            } as KeyState,
+            icp_dt: '2023-12-01T10:05:25.062609+00:00',
+        } as unknown) as HabState;
+    } else if (algo === Algos.group) {
+        return ({
+            name,
+            prefix: serder.pre,
+            group: {
+                mhab: mhab ?? {},
+                keys: _keys ?? [],
+                ndigs: _ndigs ?? [],
+            },
+            transferable,
+            windexes: [],
+            state: {
+                vn: [serder.version.major, serder.version.minor],
+                s: serder.sad.s,
+                d: serder.sad.d,
+                i: serder.pre,
+                ee: serder.sad as EstablishmentState,
+                kt: serder.sad.kt,
+                k: serder.sad.k,
+                nt: serder.sad.nt,
+                n: serder.sad.n,
+                bt: serder.sad.bt,
+                b: serder.sad.b,
+                p: serder.sad.p ?? '',
+                f: '',
+                dt: new Date().toISOString().replace('Z', '000+00:00'),
+                et: '',
+                c: [],
+                di: serder.sad.di ?? '',
+            } as KeyState,
+            icp_dt: '2023-12-01T10:05:25.062609+00:00',
+        } as unknown) as HabState;
+    } else if (algo === Algos.extern) {
+        return ({
+            name,
+            prefix: serder.pre,
+            extern: extern ?? {},
+            extern_type: extern_type ?? 'mock',
+            pidx: 0,
+            transferable,
+            windexes: [],
+            state: {
+                vn: [serder.version.major, serder.version.minor],
+                s: serder.sad.s,
+                d: serder.sad.d,
+                i: serder.pre,
+                ee: serder.sad as EstablishmentState,
+                kt: serder.sad.kt,
+                k: serder.sad.k,
+                nt: serder.sad.nt,
+                n: serder.sad.n,
+                bt: serder.sad.bt,
+                b: serder.sad.b,
+                p: serder.sad.p ?? '',
+                f: '',
+                dt: new Date().toISOString().replace('Z', '000+00:00'),
+                et: '',
+                c: [],
+                di: serder.sad.di ?? '',
+            } as KeyState,
+            icp_dt: '2023-12-01T10:05:25.062609+00:00',
+        } as unknown) as HabState;
+    } else {
+        throw new Error('Unknown algo type');
+    }
 }
 
 export const mockConnect = {
