@@ -8,7 +8,6 @@ import {
 } from './utils/test-util.ts';
 import { retry } from './utils/retry.ts';
 import { step } from './utils/test-step.ts';
-import { Tier } from '../src/types/keria-api-schema.ts';
 
 test('delegation', async () => {
     const [client1, client2] = await getOrCreateClients(2);
