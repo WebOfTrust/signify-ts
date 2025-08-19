@@ -101,17 +101,7 @@ export async function createMockIdentifierState(
         return ({
             name,
             prefix: serder.pre,
-            salty: {
-                tier: tier ?? Tier.low,
-                sxlt: bran,
-                pidx: 0,
-                kidx: 0,
-                stem: 'signify:aid',
-                dcode: dcode,
-                icodes: ['A'],
-                ncodes: ['A'],
-                transferable,
-            },
+            salty: keeper.params(),
             transferable,
             windexes: [],
             state: {
@@ -139,10 +129,7 @@ export async function createMockIdentifierState(
         return ({
             name,
             prefix: serder.pre,
-            randy: {
-                prxs: prxs ?? [],
-                nxts: nxts ?? [],
-            },
+            randy: keeper.params(),
             transferable,
             windexes: [],
             state: {
@@ -170,11 +157,7 @@ export async function createMockIdentifierState(
         return ({
             name,
             prefix: serder.pre,
-            group: {
-                mhab: mhab ?? {},
-                keys: _keys ?? [],
-                ndigs: _ndigs ?? [],
-            },
+            group: keeper.params(),
             transferable,
             windexes: [],
             state: {
