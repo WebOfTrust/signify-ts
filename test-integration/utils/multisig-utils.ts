@@ -8,10 +8,6 @@ import signify, {
     d,
     messagize,
     HabState,
-    SaltyHabState,
-    GroupHabState,
-    ExternHabState,
-    RandyHabState,
 } from 'signify-ts';
 import { getStates, waitAndMarkNotification } from './test-util.ts';
 import assert from 'assert';
@@ -89,7 +85,7 @@ export async function acceptMultisigIncept(
 export async function addEndRoleMultisig(
     client: SignifyClient,
     groupName: string,
-    aid: SaltyHabState | GroupHabState | ExternHabState | RandyHabState,
+    aid: HabState,
     otherMembersAIDs: HabState[],
     multisigAID: HabState,
     timestamp: string,
@@ -102,7 +98,11 @@ export async function addEndRoleMultisig(
     const signings = members['signing'];
 
     for (const signing of signings) {
-        const eid = Object.keys(signing.ends.agent)[0];
+        const agentEnds = signing.ends.agent;
+        if (!agentEnds) {
+            throw new Error('signing.ends.agent is null or undefined');
+        }
+        const eid = Object.keys(agentEnds)[0];
         const endRoleResult = await client
             .identifiers()
             .addEndRole(multisigAID.name, 'agent', eid, timestamp);

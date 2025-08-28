@@ -359,11 +359,9 @@ export interface components {
             i: string;
             /** @default 0 */
             s: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -382,11 +380,9 @@ export interface components {
             i: string;
             /** @default 0 */
             s: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -407,11 +403,9 @@ export interface components {
             s: string;
             /** @default  */
             p: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -432,11 +426,9 @@ export interface components {
             s: string;
             /** @default  */
             p: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -456,11 +448,9 @@ export interface components {
             i: string;
             /** @default 0 */
             s: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -481,11 +471,9 @@ export interface components {
             i: string;
             /** @default 0 */
             s: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -508,11 +496,9 @@ export interface components {
             s: string;
             /** @default  */
             p: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -533,11 +519,9 @@ export interface components {
             s: string;
             /** @default  */
             p: string;
-            /** @default 0 */
-            kt: string;
+            kt?: string | string[];
             k?: string[];
-            /** @default 0 */
-            nt: string;
+            nt?: string | string[];
             n?: string[];
             /** @default 0 */
             bt: string;
@@ -746,9 +730,10 @@ export interface components {
             authenticated?: boolean;
         };
         MemberEnds: {
+            /** @default null */
             agent: {
                 [key: string]: string;
-            };
+            } | null;
             /** @default null */
             controller: {
                 [key: string]: string;
