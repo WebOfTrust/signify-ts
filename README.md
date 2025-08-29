@@ -45,6 +45,12 @@ Typescript source files needs to be transpiled before running scripts or integra
     npm run build
     ```
 
+    To build and generate TypeScript types from KERIA OpenAPI docs dynamically
+    
+    ```
+    SPEC_URL=http://localhost:3902/spec.yaml npm run build
+    ```
+
 - ready() must be called before library is useable. Example minimum viable client code.
 
     ```javascript

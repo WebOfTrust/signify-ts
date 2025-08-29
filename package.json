@@ -31,7 +31,8 @@
   ],
   "scripts": {
     "start": "npm run build -- --watch",
-    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.json --noEmit",
+    "generate:types": "node scripts/generate-types.js",
+    "build": "npm run generate:types && tsc -p tsconfig.build.json && tsc -p tsconfig.json --noEmit",
     "test": "vitest",
     "prepare": "tsc -p tsconfig.build.json",
     "test:integration": "vitest -c vitest.integration.ts",
