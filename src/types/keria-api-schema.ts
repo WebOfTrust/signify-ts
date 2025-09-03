@@ -1,38 +1,5 @@
 // AUTO-GENERATED: Only components and enums retained from OpenAPI schema
 
-export enum IssEvtT {
-    iss = "iss",
-    bis = "bis"
-}
-
-export enum CredentialStateIssOrRevEt {
-    iss = "iss",
-    rev = "rev"
-}
-
-export enum CredentialStateBisOrBrvEt {
-    bis = "bis",
-    brv = "brv"
-}
-
-export enum Tier {
-    low = "low",
-    med = "med",
-    high = "high"
-}
-
-export enum OOBIRole {
-    controller = "controller",
-    witness = "witness",
-    registrar = "registrar",
-    watcher = "watcher",
-    judge = "judge",
-    juror = "juror",
-    peer = "peer",
-    mailbox = "mailbox",
-    agent = "agent"
-}
-
 export interface components {
     schemas: {
         ACDCAttributes: {
@@ -572,12 +539,6 @@ export interface components {
         GroupMember: {
             signing: components['schemas']['AidRecord'][];
             rotation: components['schemas']['AidRecord'][];
-        };
-        Registry: {
-            name: string;
-            regk: string;
-            pre: string;
-            state: components['schemas']['CredentialState'];
         };
     };
     responses: never;
