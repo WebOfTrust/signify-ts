@@ -67,7 +67,7 @@ describe('registry', () => {
         const mockedClient = mock(SignifyClient);
         const mockedIdentifiers = mock(Identifier);
 
-        const hab = ({
+        const hab = {
             prefix: 'hab prefix',
             state: { s: 0, d: 'a digest', c: ['EO'] } as unknown as KeyState,
             name: 'a name',
@@ -78,7 +78,7 @@ describe('registry', () => {
                 prxs: [],
                 nxts: [],
             },
-        } as unknown) as HabState;
+        };
 
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(

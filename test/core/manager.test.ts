@@ -26,7 +26,7 @@ import {
     Prefixer,
     RandyIdentifierManager,
 } from '../../src/index.ts';
-import { RandyKeyState, KeyState, RandyHabState, ExternHabState, HabState } from '../../src/keri/core/keyState.ts';
+import { RandyKeyState, KeyState, HabState } from '../../src/keri/core/keyState.ts';
 import { randomUUID } from 'node:crypto';
 
 describe('RandyCreator', () => {
@@ -727,7 +727,7 @@ describe('Manager', () => {
             transferable: false,
             windexes: [],
             icp_dt: '2023-12-01T10:05:25.062609+00:00',
-        } as unknown as RandyHabState);
+        });
 
         assert(keeper0 instanceof RandyIdentifierManager);
         assert(keeper1 instanceof RandyIdentifierManager);
@@ -828,7 +828,7 @@ describe('Manager', () => {
                 },
                 transferable: true,
                 icp_dt: '2023-12-01T10:05:25.062609+00:00',
-            } as unknown as ExternHabState);
+            });
 
             assert(keeper instanceof MockModule);
             expect(keeper.params()).toMatchObject({ param, pidx: 3 });
@@ -855,7 +855,7 @@ describe('Manager', () => {
                     },
                     transferable: true,
                     icp_dt: '2023-12-01T10:05:25.062609+00:00',
-                } as unknown as ExternHabState)
+                })
             ).toThrow('unsupported external module type mock');
         });
     });
