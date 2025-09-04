@@ -349,204 +349,155 @@ export interface components {
             state: components['schemas']['CredentialState'];
         };
         IcpV1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
             s: string;
             kt: string | string[] | string[][];
+            k: string[];
             nt: string | string[] | string[][];
+            n: string[];
             bt: string;
-            /** @default  */
-            v: string;
-            /** @default  */
-            t: string;
-            /** @default  */
-            d: string;
-            /** @default  */
-            i: string;
-            k?: string[];
-            n?: string[];
-            b?: string[];
-            c?: string[];
-            a?: unknown;
+            b: string[];
+            c: string[];
+            a: unknown;
         };
         IcpV2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
             s: string;
             kt: string | string[] | string[][];
+            k: string[];
             nt: string | string[] | string[][];
+            n: string[];
             bt: string;
-            /** @default  */
-            v: string;
-            /** @default  */
-            t: string;
-            /** @default  */
-            d: string;
-            /** @default  */
-            i: string;
-            k?: string[];
-            n?: string[];
-            b?: string[];
-            c?: string[];
-            a?: unknown;
+            b: string[];
+            c: string[];
+            a: unknown;
         };
         RotV1: {
-            s: string;
-            kt: string | string[] | string[][];
-            nt: string | string[] | string[][];
-            bt: string;
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             i: string;
-            /** @default  */
+            s: string;
             p: string;
-            k?: string[];
-            n?: string[];
-            br?: string[];
-            ba?: string[];
-            a?: unknown;
+            kt: string | string[] | string[][];
+            k: string[];
+            nt: string | string[] | string[][];
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            a: unknown;
         };
         RotV2: {
-            s: string;
-            kt: string | string[] | string[][];
-            nt: string | string[] | string[][];
-            bt: string;
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             i: string;
-            /** @default  */
+            s: string;
             p: string;
-            k?: string[];
-            n?: string[];
-            br?: string[];
-            ba?: string[];
-            c?: string[];
-            a?: unknown;
+            kt: string | string[] | string[][];
+            k: string[];
+            nt: string | string[] | string[][];
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            c: string[];
+            a: unknown;
         };
         DipV1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
             s: string;
             kt: string | string[] | string[][];
+            k: string[];
             nt: string | string[] | string[][];
+            n: string[];
             bt: string;
-            /** @default  */
-            v: string;
-            /** @default  */
-            t: string;
-            /** @default  */
-            d: string;
-            /** @default  */
-            i: string;
-            k?: string[];
-            n?: string[];
-            b?: string[];
-            c?: string[];
-            a?: unknown;
-            /** @default  */
+            b: string[];
+            c: string[];
+            a: unknown;
             di: string;
         };
         DipV2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
             s: string;
             kt: string | string[] | string[][];
+            k: string[];
             nt: string | string[] | string[][];
+            n: string[];
             bt: string;
-            /** @default  */
-            v: string;
-            /** @default  */
-            t: string;
-            /** @default  */
-            d: string;
-            /** @default  */
-            i: string;
-            k?: string[];
-            n?: string[];
-            b?: string[];
-            c?: string[];
-            a?: unknown;
-            /** @default  */
+            b: string[];
+            c: string[];
+            a: unknown;
             di: string;
         };
         DrtV1: {
-            s: string;
-            kt: string | string[] | string[][];
-            nt: string | string[] | string[][];
-            bt: string;
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             i: string;
-            /** @default  */
+            s: string;
             p: string;
-            k?: string[];
-            n?: string[];
-            br?: string[];
-            ba?: string[];
-            a?: unknown;
+            kt: string | string[] | string[][];
+            k: string[];
+            nt: string | string[] | string[][];
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            a: unknown;
         };
         DrtV2: {
-            s: string;
-            kt: string | string[] | string[][];
-            nt: string | string[] | string[][];
-            bt: string;
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             i: string;
-            /** @default  */
+            s: string;
             p: string;
-            k?: string[];
-            n?: string[];
-            br?: string[];
-            ba?: string[];
-            c?: string[];
-            a?: unknown;
+            kt: string | string[] | string[][];
+            k: string[];
+            nt: string | string[] | string[][];
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            c: string[];
+            a: unknown;
         };
         VcpV1: {
-            s: string;
-            bt: string;
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             i: string;
-            /** @default  */
             ii: string;
-            c?: string[];
-            b?: string[];
-            /** @default  */
+            s: string;
+            c: string[];
+            bt: string;
+            b: string[];
             n: string;
         };
         VrtV1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            p: string;
             s: string;
             bt: string;
-            /** @default  */
-            v: string;
-            /** @default  */
-            t: string;
-            /** @default  */
-            d: string;
-            /** @default  */
-            i: string;
-            /** @default  */
-            p: string;
-            br?: string[];
-            ba?: string[];
+            br: string[];
+            ba: string[];
         };
         StateEERecord: {
             /** @default 0 */
@@ -675,32 +626,21 @@ export interface components {
             eid: string;
         };
         RpyV1: {
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             dt: string;
-            /** @default  */
             r: string;
-            a?: unknown;
+            a: unknown;
         };
         RpyV2: {
-            /** @default  */
             v: string;
-            /** @default  */
             t: string;
-            /** @default  */
             d: string;
-            /** @default  */
             i: string;
-            /** @default  */
             dt: string;
-            /** @default  */
             r: string;
-            a?: unknown;
+            a: unknown;
         };
         Rpy: components["schemas"]["RpyV1"] | components["schemas"]["RpyV2"];
         Challenge: {
