@@ -39,16 +39,24 @@ The code is built using Typescript and running code locally requires a Mac or Li
 
 Typescript source files needs to be transpiled before running scripts or integration tests
 
+- Generate types:
+
+    To generate TypeScript types from KERIA OpenAPI docs dynamically
+    
+    ```
+    npm run generate:types
+    ```
+
+    We can specify KERIA spec url by this command:
+
+    ```
+    SPEC_URL=http://localhost:3902/spec.yaml npm run generate:types
+    ```
+
 - Build:
 
     ```bash
     npm run build
-    ```
-
-    To build and generate TypeScript types from KERIA OpenAPI docs dynamically
-    
-    ```
-    SPEC_URL=http://localhost:3902/spec.yaml npm run build
     ```
 
 - ready() must be called before library is useable. Example minimum viable client code.

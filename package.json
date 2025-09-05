@@ -32,12 +32,12 @@
   "scripts": {
     "start": "npm run build -- --watch",
     "generate:types": "node scripts/generate-types.js",
-    "build": "npm run generate:types && tsc -p tsconfig.build.json && tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.json --noEmit",
     "test": "vitest",
     "prepare": "tsc -p tsconfig.build.json",
     "test:integration": "vitest -c vitest.integration.ts",
     "lint": "eslint src test test-integration",
-    "generate-docs": "typedoc src/index.ts",
+    "generate:docs": "typedoc src/index.ts",
     "pretty": "prettier --write .",
     "pretty:check": "prettier --check ."
   },
