@@ -2,13 +2,8 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-const specUrl = process.env.SPEC_URL;
+const specUrl = process.env.SPEC_URL || 'http://localhost:3902/spec.yaml';
 const outputFile = path.resolve('src/types/keria-api-schema.ts');
-
-if (!specUrl) {
-    console.log('⚠️  Skipping OpenAPI type generation: SPEC_URL is not set.');
-    process.exit(0);
-}
 
 console.log(`📦 Generating types from ${specUrl}`);
 execSync(`npx openapi-typescript "${specUrl}" --output ${outputFile}`, {
