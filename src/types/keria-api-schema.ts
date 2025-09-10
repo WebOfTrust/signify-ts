@@ -15,7 +15,7 @@ export interface components {
             i: string;
             s: string;
             ri?: string;
-            a?: components["schemas"]["ACDCAttributes"];
+            a?: components['schemas']['ACDCAttributes'];
             u?: string;
             e?: unknown[];
             r?: unknown[];
@@ -23,7 +23,7 @@ export interface components {
         IssEvt: {
             v: string;
             /** @enum {unknown} */
-            t: "iss" | "bis";
+            t: 'iss' | 'bis';
             d: string;
             i: string;
             s: string;
@@ -57,7 +57,7 @@ export interface components {
             ra: {
                 [key: string]: unknown;
             };
-            a: components["schemas"]["StatusAnchor"];
+            a: components['schemas']['StatusAnchor'];
             dt: string;
             et: string;
         };
@@ -79,21 +79,21 @@ export interface components {
             s: string;
             p: string;
             di?: string;
-            a?: components["schemas"]["Seal"][];
+            a?: components['schemas']['Seal'][];
         };
         Credential: {
-            sad: components["schemas"]["ACDC"];
+            sad: components['schemas']['ACDC'];
             atc: string;
-            iss: components["schemas"]["IssEvt"];
+            iss: components['schemas']['IssEvt'];
             issatc: string;
             pre: string;
-            schema: components["schemas"]["Schema"];
+            schema: components['schemas']['Schema'];
             chains: {
                 [key: string]: unknown;
             }[];
-            status: components["schemas"]["CredentialState"];
-            anchor: components["schemas"]["Anchor"];
-            anc: components["schemas"]["ANC"];
+            status: components['schemas']['CredentialState'];
+            anchor: components['schemas']['Anchor'];
+            anc: components['schemas']['ANC'];
             ancatc: string;
         };
         OperationStatus: {
@@ -105,7 +105,7 @@ export interface components {
         };
         OperationBase: {
             name: string;
-            error?: components["schemas"]["OperationStatus"];
+            error?: components['schemas']['OperationStatus'];
             done?: boolean;
         };
         EmptyDict: Record<string, never>;
@@ -115,11 +115,11 @@ export interface components {
             s: string;
             d: string;
             ri: string;
-            a: components["schemas"]["Seal"];
+            a: components['schemas']['Seal'];
             dt: string;
             /** @enum {unknown} */
-            et: "iss" | "rev";
-            ra: components["schemas"]["EmptyDict"];
+            et: 'iss' | 'rev';
+            ra: components['schemas']['EmptyDict'];
         };
         RaFields: {
             i: string;
@@ -132,14 +132,16 @@ export interface components {
             s: string;
             d: string;
             ri: string;
-            a: components["schemas"]["Seal"];
+            a: components['schemas']['Seal'];
             dt: string;
             /** @enum {unknown} */
-            et: "bis" | "brv";
-            ra: components["schemas"]["RaFields"];
+            et: 'bis' | 'brv';
+            ra: components['schemas']['RaFields'];
         };
-        CredentialState: components["schemas"]["CredentialStateIssOrRev"] | components["schemas"]["CredentialStateBisOrBrv"];
-        Operation: components["schemas"]["OperationBase"] & {
+        CredentialState:
+            | components['schemas']['CredentialStateIssOrRev']
+            | components['schemas']['CredentialStateBisOrBrv'];
+        Operation: components['schemas']['OperationBase'] & {
             metadata?: Record<string, never>;
             response?: Record<string, never>;
         };
@@ -147,7 +149,7 @@ export interface components {
             name: string;
             regk: string;
             pre: string;
-            state: components["schemas"]["CredentialState"];
+            state: components['schemas']['CredentialState'];
         };
     };
     responses: never;

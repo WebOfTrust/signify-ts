@@ -609,7 +609,10 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(qviCredbyGAR1.sad.d, qviCredbyGAR2.sad.d);
     assert.equal(qviCredbyGAR1.sad.s, QVI_SCHEMA_SAID);
     assert.equal(qviCredbyGAR1.sad.i, aidGEDA.prefix);
-    assert(qviCredbyGAR1.sad.a !== undefined, "qviCredbyGAR1.sad.a is undefined");
+    assert(
+        qviCredbyGAR1.sad.a !== undefined,
+        'qviCredbyGAR1.sad.a is undefined'
+    );
     assert.equal(qviCredbyGAR1.sad.a.i, aidQVI.prefix);
     assert.equal(qviCredbyGAR1.status.s, '0');
     assert(qviCredbyGAR1.atc !== undefined);
@@ -987,7 +990,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(leCredbyQAR1.sad.d, leCredbyQAR3.sad.d);
     assert.equal(leCredbyQAR1.sad.s, LE_SCHEMA_SAID);
     assert.equal(leCredbyQAR1.sad.i, aidQVI.prefix);
-    assert(leCredbyQAR1.sad.a !== undefined, "leCredbyQAR1.sad.a is undefined");
+    assert(leCredbyQAR1.sad.a !== undefined, 'leCredbyQAR1.sad.a is undefined');
     assert.equal(leCredbyQAR1.sad.a.i, aidLE.prefix);
     assert.equal(leCredbyQAR1.status.s, '0');
     assert(leCredbyQAR1.atc !== undefined);
@@ -1236,7 +1239,10 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(ecrCredbyLAR1.sad.d, ecrCredbyLAR3.sad.d);
     assert.equal(ecrCredbyLAR1.sad.s, ECR_SCHEMA_SAID);
     assert.equal(ecrCredbyLAR1.sad.i, aidLE.prefix);
-    assert(ecrCredbyLAR1.sad.a !== undefined, "ecrCredbyLAR1.sad.a is undefined");
+    assert(
+        ecrCredbyLAR1.sad.a !== undefined,
+        'ecrCredbyLAR1.sad.a is undefined'
+    );
     assert.equal(ecrCredbyLAR1.sad.a.i, aidECR.prefix);
     assert.equal(ecrCredbyLAR1.status.s, '0');
     assert(ecrCredbyLAR1.atc !== undefined);
