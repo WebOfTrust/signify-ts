@@ -544,7 +544,7 @@ export interface components {
             name: string;
             regk: string;
             pre: string;
-            state: components["schemas"]["CredentialState"];
+            state: components['schemas']['CredentialState'];
         };
     };
     responses: never;
