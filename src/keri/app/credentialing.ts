@@ -431,7 +431,7 @@ export class Credentials {
         const dt =
             datetime ?? new Date().toISOString().replace('Z', '000+00:00');
 
-        const cred = (await this.get(said));
+        const cred = await this.get(said);
 
         // Create rev
         const _rev = {

@@ -42,7 +42,7 @@ Typescript source files needs to be transpiled before running scripts or integra
 - Generate types:
 
     To generate TypeScript types from KERIA OpenAPI docs dynamically
-    
+
     ```
     npm run generate:types
     ```
