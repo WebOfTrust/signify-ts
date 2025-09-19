@@ -12,14 +12,9 @@ export default tseslint.config(
     {
         // These are files with more lenient lint config because they have not been "fixed" yet
         // Once a directory here is fixed, it should be removed from here so the strict rules applies
-        files: [
-            'src/keri/app/**',
-            'src/keri/core/**',
-            'test-integration/**',
-            'scripts/*.js',
-        ],
+        files: ['src/keri/app/**', 'src/keri/core/**', 'test-integration/**'],
         languageOptions: {
-            globals: globals['node'],
+            globals: globals['shared-node-browser'],
         },
         rules: {
             'prefer-const': 'warn',
@@ -33,6 +28,12 @@ export default tseslint.config(
             '@typescript-eslint/no-namespace': 'warn',
             // '@typescript-eslint/ban-types': 'warn',
             '@typescript-eslint/no-unused-vars': 'warn',
+        },
+    },
+    {
+        files: ['scripts/*.js'],
+        languageOptions: {
+            globals: globals.node,
         },
     }
 );
