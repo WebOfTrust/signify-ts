@@ -44,23 +44,6 @@ export interface components {
             additionalProperties: boolean;
             required: string[];
         };
-        StatusAnchor: {
-            s: number;
-            d: string;
-        };
-        CredentialStatus: {
-            vn: number[];
-            i: string;
-            s: string;
-            d: string;
-            ri: string;
-            ra: {
-                [key: string]: unknown;
-            };
-            a: components['schemas']['StatusAnchor'];
-            dt: string;
-            et: string;
-        };
         Anchor: {
             pre: string;
             sn: number;
