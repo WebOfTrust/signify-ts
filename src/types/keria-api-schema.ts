@@ -9,18 +9,53 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        ACDC: {
-            v: string;
-            d: string;
-            i: string;
-            s: string;
-            ri?: string;
-            a?: components['schemas']['ACDCAttributes'];
-            u?: string;
-            e?: unknown[];
-            r?: unknown[];
-        };
-        IssEvt: {
+        ACDC_V_1:
+            | {
+                  v: string;
+                  d: string;
+                  i: string;
+                  s: string;
+                  u?: string;
+                  ri?: string;
+                  e?: string;
+                  r?: string;
+                  a?: components['schemas']['ACDCAttributes'];
+              }
+            | {
+                  v: string;
+                  d: string;
+                  i: string;
+                  s: string;
+                  u?: string;
+                  ri?: string;
+                  e?: string;
+                  r?: string;
+                  A?: string | unknown[];
+              };
+        ACDC_V_2:
+            | {
+                  v: string;
+                  d: string;
+                  i: string;
+                  s: string;
+                  u?: string;
+                  rd?: string;
+                  e?: string;
+                  r?: string;
+                  a?: components['schemas']['ACDCAttributes'];
+              }
+            | {
+                  v: string;
+                  d: string;
+                  i: string;
+                  s: string;
+                  u?: string;
+                  rd?: string;
+                  e?: string;
+                  r?: string;
+                  A?: string | unknown[];
+              };
+        IssEvent: {
             v: string;
             /** @enum {unknown} */
             t: 'iss' | 'bis';
@@ -54,20 +89,93 @@ export interface components {
             d: string;
             i?: string;
         };
-        ANC: {
+        IXN_V_1: {
             v: string;
             t: string;
             d: string;
             i: string;
             s: string;
             p: string;
-            di?: string;
-            a?: components['schemas']['Seal'][];
+            a: components['schemas']['Seal'][];
+        };
+        IXN_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            p: string;
+            a: components['schemas']['Seal'][];
+        };
+        ICP_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            b: string[];
+            c: string[];
+            a: unknown;
+        };
+        ICP_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            b: string[];
+            c: string[];
+            a: unknown;
+        };
+        ROT_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            p: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            a: unknown;
+        };
+        ROT_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            p: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            c: string[];
+            a: unknown;
         };
         Credential: {
-            sad: components['schemas']['ACDC'];
+            sad:
+                | components['schemas']['ACDC_V_1']
+                | components['schemas']['ACDC_V_2'];
             atc: string;
-            iss: components['schemas']['IssEvt'];
+            iss: components['schemas']['IssEvent'];
             issatc: string;
             pre: string;
             schema: components['schemas']['Schema'];
@@ -76,7 +184,13 @@ export interface components {
             }[];
             status: components['schemas']['CredentialState'];
             anchor: components['schemas']['Anchor'];
-            anc: components['schemas']['ANC'];
+            anc:
+                | components['schemas']['IXN_V_1']
+                | components['schemas']['IXN_V_2']
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['ROT_V_2'];
             ancatc: string;
         };
         OperationStatus: {
@@ -86,10 +200,12 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
-        OperationBase: {
+        Operation: {
             name: string;
             error?: components['schemas']['OperationStatus'];
             done?: boolean;
+            metadata?: Record<string, never>;
+            response?: Record<string, never>;
         };
         EmptyDict: Record<string, never>;
         CredentialStateIssOrRev: {
@@ -124,10 +240,6 @@ export interface components {
         CredentialState:
             | components['schemas']['CredentialStateIssOrRev']
             | components['schemas']['CredentialStateBisOrBrv'];
-        Operation: components['schemas']['OperationBase'] & {
-            metadata?: Record<string, never>;
-            response?: Record<string, never>;
-        };
         Registry: {
             name: string;
             regk: string;

@@ -433,6 +433,15 @@ export class Credentials {
 
         const cred = await this.get(said);
 
+        let registryId: string;
+        if ('ri' in cred.sad && cred.sad.ri !== undefined) {
+            registryId = cred.sad.ri;
+        } else if ('rd' in cred.sad && cred.sad.rd !== undefined) {
+            registryId = cred.sad.rd;
+        } else {
+            throw new Error('Neither ri nor rd property found in credential');
+        }
+
         // Create rev
         const _rev = {
             v: vs,
@@ -440,7 +449,7 @@ export class Credentials {
             d: '',
             i: said,
             s: '1',
-            ri: cred.sad.ri,
+            ri: registryId,
             p: cred.status.d,
             dt: dt,
         };

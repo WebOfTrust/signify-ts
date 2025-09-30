@@ -4,8 +4,6 @@ import { Salter } from '../core/salter.ts';
 import { Matter, MtrDex } from '../core/matter.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
-type OperationBase = components['schemas']['OperationBase'];
-
 export function randomPasscode(): string {
     const raw = libsodium.randombytes_buf(16);
     const salter = new Salter({ raw: raw });
@@ -64,7 +62,11 @@ export class Oobis {
     }
 }
 
-export type Operation<T = unknown> = OperationBase & {
+// TODO: the generic will be replaced by specific overrides like IpexOperation
+export type Operation<T = unknown> = Omit<
+    components['schemas']['Operation'],
+    'response' | 'metadata'
+> & {
     response?: T;
     metadata?: {
         depends?: Operation;
