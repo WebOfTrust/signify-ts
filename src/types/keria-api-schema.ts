@@ -170,6 +170,71 @@ export interface components {
             c: string[];
             a: unknown;
         };
+        DIP_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            b: string[];
+            c: string[];
+            a: unknown;
+            di: string;
+        };
+        DIP_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            b: string[];
+            c: string[];
+            a: unknown;
+            di: string;
+        };
+        DRT_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            p: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            a: unknown;
+        };
+        DRT_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            s: string;
+            p: string;
+            kt: string;
+            k: string[];
+            nt: string;
+            n: string[];
+            bt: string;
+            br: string[];
+            ba: string[];
+            c: string[];
+            a: unknown;
+        };
         Credential: {
             sad:
                 | components['schemas']['ACDC_V_1']
@@ -190,7 +255,11 @@ export interface components {
                 | components['schemas']['ICP_V_1']
                 | components['schemas']['ICP_V_2']
                 | components['schemas']['ROT_V_1']
-                | components['schemas']['ROT_V_2'];
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['DIP_V_1']
+                | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_1']
+                | components['schemas']['DRT_V_2'];
             ancatc: string;
         };
         OperationStatus: {
