@@ -26,7 +26,11 @@ import {
     Prefixer,
     RandyIdentifierManager,
 } from '../../src/index.ts';
-import { RandyKeyState, KeyState, HabState } from '../../src/keri/core/keyState.ts';
+import {
+    RandyKeyState,
+    KeyState,
+    HabState,
+} from '../../src/keri/core/keyState.ts';
 import { randomUUID } from 'node:crypto';
 
 describe('RandyCreator', () => {

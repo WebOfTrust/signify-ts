@@ -1,37 +1,4 @@
-// AUTO-GENERATED: Only components and enums retained from OpenAPI schema
-
-export enum IssEvtT {
-    iss = "iss",
-    bis = "bis"
-}
-
-export enum CredentialStateIssOrRevEt {
-    iss = "iss",
-    rev = "rev"
-}
-
-export enum CredentialStateBisOrBrvEt {
-    bis = "bis",
-    brv = "brv"
-}
-
-export enum Tier {
-    low = "low",
-    med = "med",
-    high = "high"
-}
-
-export enum OOBIRole {
-    controller = "controller",
-    witness = "witness",
-    registrar = "registrar",
-    watcher = "watcher",
-    judge = "judge",
-    juror = "juror",
-    peer = "peer",
-    mailbox = "mailbox",
-    agent = "agent"
-}
+// AUTO-GENERATED: Only components retained from OpenAPI schema
 
 export interface components {
     schemas: {
@@ -91,7 +58,7 @@ export interface components {
         IssEvent: {
             v: string;
             /** @enum {unknown} */
-            t: 'iss' | 'bis';
+            t: IssEventT;
             d: string;
             i: string;
             s: string;
@@ -146,9 +113,9 @@ export interface components {
             d: string;
             i: string;
             s: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             b: string[];
@@ -161,9 +128,9 @@ export interface components {
             d: string;
             i: string;
             s: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             b: string[];
@@ -177,9 +144,9 @@ export interface components {
             i: string;
             s: string;
             p: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             br: string[];
@@ -193,9 +160,9 @@ export interface components {
             i: string;
             s: string;
             p: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             br: string[];
@@ -209,9 +176,9 @@ export interface components {
             d: string;
             i: string;
             s: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             b: string[];
@@ -225,9 +192,9 @@ export interface components {
             d: string;
             i: string;
             s: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             b: string[];
@@ -242,9 +209,9 @@ export interface components {
             i: string;
             s: string;
             p: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             br: string[];
@@ -258,14 +225,54 @@ export interface components {
             i: string;
             s: string;
             p: string;
-            kt: string;
+            kt: string | string[] | string[][];
             k: string[];
-            nt: string;
+            nt: string | string[] | string[][];
             n: string[];
             bt: string;
             br: string[];
             ba: string[];
             c: string[];
+            a: unknown;
+        };
+        VCP_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            ii: string;
+            s: string;
+            c: string[];
+            bt: string;
+            b: string[];
+            n: string;
+        };
+        VRT_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            p: string;
+            s: string;
+            bt: string;
+            br: string[];
+            ba: string[];
+        };
+        RPY_V_1: {
+            v: string;
+            t: string;
+            d: string;
+            dt: string;
+            r: string;
+            a: unknown;
+        };
+        RPY_V_2: {
+            v: string;
+            t: string;
+            d: string;
+            i: string;
+            dt: string;
+            r: string;
             a: unknown;
         };
         Credential: {
@@ -319,7 +326,7 @@ export interface components {
             a: components['schemas']['Seal'];
             dt: string;
             /** @enum {unknown} */
-            et: 'iss' | 'rev';
+            et: CredentialStateIssOrRevEt;
             ra: components['schemas']['EmptyDict'];
         };
         RaFields: {
@@ -336,7 +343,7 @@ export interface components {
             a: components['schemas']['Seal'];
             dt: string;
             /** @enum {unknown} */
-            et: 'bis' | 'brv';
+            et: CredentialStateBisOrBrvEt;
             ra: components['schemas']['RaFields'];
         };
         CredentialState:
@@ -347,157 +354,6 @@ export interface components {
             regk: string;
             pre: string;
             state: components['schemas']['CredentialState'];
-        };
-        IcpV1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            b: string[];
-            c: string[];
-            a: unknown;
-        };
-        IcpV2: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            b: string[];
-            c: string[];
-            a: unknown;
-        };
-        RotV1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            p: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            br: string[];
-            ba: string[];
-            a: unknown;
-        };
-        RotV2: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            p: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            br: string[];
-            ba: string[];
-            c: string[];
-            a: unknown;
-        };
-        DipV1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            b: string[];
-            c: string[];
-            a: unknown;
-            di: string;
-        };
-        DipV2: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            b: string[];
-            c: string[];
-            a: unknown;
-            di: string;
-        };
-        DrtV1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            p: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            br: string[];
-            ba: string[];
-            a: unknown;
-        };
-        DrtV2: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            s: string;
-            p: string;
-            kt: string | string[] | string[][];
-            k: string[];
-            nt: string | string[] | string[][];
-            n: string[];
-            bt: string;
-            br: string[];
-            ba: string[];
-            c: string[];
-            a: unknown;
-        };
-        VcpV1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            ii: string;
-            s: string;
-            c: string[];
-            bt: string;
-            b: string[];
-            n: string;
-        };
-        VrtV1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            p: string;
-            s: string;
-            bt: string;
-            br: string[];
-            ba: string[];
         };
         StateEERecord: {
             /** @default 0 */
@@ -533,17 +389,27 @@ export interface components {
             bt: string;
             b: string[];
             c: string[];
-            ee: components["schemas"]["StateEERecord"];
+            ee: components['schemas']['StateEERecord'];
             /** @default  */
             di: string;
         };
         Controller: {
-            state: components["schemas"]["KeyStateRecord"];
-            ee: components["schemas"]["IcpV1"] | components["schemas"]["IcpV2"] | components["schemas"]["RotV1"] | components["schemas"]["RotV2"] | components["schemas"]["DipV1"] | components["schemas"]["DipV2"] | components["schemas"]["DrtV1"] | components["schemas"]["DrtV2"] | components["schemas"]["VcpV1"] | components["schemas"]["VrtV1"];
+            state: components['schemas']['KeyStateRecord'];
+            ee:
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['DIP_V_1']
+                | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_1']
+                | components['schemas']['DRT_V_2']
+                | components['schemas']['VCP_V_1']
+                | components['schemas']['VRT_V_1'];
         };
         AgentResourceResult: {
-            agent: components["schemas"]["KeyStateRecord"];
-            controller: components["schemas"]["Controller"];
+            agent: components['schemas']['KeyStateRecord'];
+            controller: components['schemas']['Controller'];
             pidx: number;
             /** @default null */
             ridx: number | null;
@@ -551,7 +417,7 @@ export interface components {
             sxlt: string | null;
         };
         SaltyState: {
-            tier: components["schemas"]["Tier"];
+            tier: components['schemas']['Tier'];
             /** @default  */
             sxlt: string;
             /** @default 0 */
@@ -575,14 +441,14 @@ export interface components {
             name: string;
             prefix: string;
             icp_dt: string;
-            state: components["schemas"]["KeyStateRecord"];
+            state: components['schemas']['KeyStateRecord'];
             /** @default null */
             transferable: boolean | null;
             /** @default null */
             windexes: string[] | null;
         };
         GroupKeyState: {
-            mhab: components["schemas"]["Identifier"];
+            mhab: components['schemas']['Identifier'];
             keys: string[];
             ndigs: string[];
         };
@@ -596,20 +462,25 @@ export interface components {
             name: string;
             prefix: string;
             icp_dt: string;
-            state: components["schemas"]["KeyStateRecord"];
+            state: components['schemas']['KeyStateRecord'];
             /** @default null */
             transferable: boolean | null;
             /** @default null */
             windexes: string[] | null;
-        } & ({
-            salty: components["schemas"]["SaltyState"];
-        } | {
-            randy: components["schemas"]["RandyKeyState"];
-        } | {
-            group: components["schemas"]["GroupKeyState"];
-        } | {
-            extern: components["schemas"]["ExternState"];
-        });
+        } & (
+            | {
+                  salty: components['schemas']['SaltyState'];
+              }
+            | {
+                  randy: components['schemas']['RandyKeyState'];
+              }
+            | {
+                  group: components['schemas']['GroupKeyState'];
+              }
+            | {
+                  extern: components['schemas']['ExternState'];
+              }
+        );
         /**
          * @description Tier of key material
          * @enum {string}
@@ -625,24 +496,9 @@ export interface components {
             role: string;
             eid: string;
         };
-        RpyV1: {
-            v: string;
-            t: string;
-            d: string;
-            dt: string;
-            r: string;
-            a: unknown;
-        };
-        RpyV2: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            dt: string;
-            r: string;
-            a: unknown;
-        };
-        Rpy: components["schemas"]["RpyV1"] | components["schemas"]["RpyV2"];
+        Rpy:
+            | components['schemas']['RPY_V_1']
+            | components['schemas']['RPY_V_2'];
         Challenge: {
             words: string[];
             dt?: string;
@@ -695,19 +551,19 @@ export interface components {
             id: string;
             alias: string;
             oobi: string;
-            end?: components["schemas"]["MemberEnds"];
-            challenges?: components["schemas"]["Challenge"][];
-            wellKnowns?: components["schemas"]["WellKnown"][];
+            end?: components['schemas']['MemberEnds'];
+            challenges?: components['schemas']['Challenge'][];
+            wellKnowns?: components['schemas']['WellKnown'][];
         } & {
             [key: string]: unknown;
         };
         AidRecord: {
             aid: string;
-            ends: components["schemas"]["MemberEnds"];
+            ends: components['schemas']['MemberEnds'];
         };
         GroupMember: {
-            signing: components["schemas"]["AidRecord"][];
-            rotation: components["schemas"]["AidRecord"][];
+            signing: components['schemas']['AidRecord'][];
+            rotation: components['schemas']['AidRecord'][];
         };
     };
     responses: never;
@@ -715,4 +571,32 @@ export interface components {
     requestBodies: never;
     headers: never;
     pathItems: never;
+}
+export enum IssEventT {
+    iss = 'iss',
+    bis = 'bis',
+}
+export enum CredentialStateIssOrRevEt {
+    iss = 'iss',
+    rev = 'rev',
+}
+export enum CredentialStateBisOrBrvEt {
+    bis = 'bis',
+    brv = 'brv',
+}
+export enum Tier {
+    low = 'low',
+    med = 'med',
+    high = 'high',
+}
+export enum OOBIRole {
+    controller = 'controller',
+    witness = 'witness',
+    registrar = 'registrar',
+    watcher = 'watcher',
+    judge = 'judge',
+    juror = 'juror',
+    peer = 'peer',
+    mailbox = 'mailbox',
+    agent = 'agent',
 }

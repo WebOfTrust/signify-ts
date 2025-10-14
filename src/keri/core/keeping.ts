@@ -182,22 +182,22 @@ export class IdentifierManagerFactory {
 
         if (Algos.salty in aid) {
             return new SaltyIdentifierManager(
-                    this.salter,
-                    aid.salty.pidx,
-                    aid.salty.kidx,
-                    aid.salty.tier,
-                    aid.salty.transferable,
-                    aid.salty.stem,
-                    undefined,
-                    undefined,
-                    aid.salty.icodes,
-                    undefined,
-                    undefined,
-                    aid.salty.ncodes,
-                    aid.salty.dcode,
-                    undefined,
-                    aid.salty.sxlt
-                );
+                this.salter,
+                aid.salty.pidx,
+                aid.salty.kidx,
+                aid.salty.tier,
+                aid.salty.transferable,
+                aid.salty.stem,
+                undefined,
+                undefined,
+                aid.salty.icodes,
+                undefined,
+                undefined,
+                aid.salty.ncodes,
+                aid.salty.dcode,
+                undefined,
+                aid.salty.sxlt
+            );
         } else if (Algos.randy in aid) {
             return new RandyIdentifierManager(
                 this.salter,

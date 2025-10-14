@@ -1,7 +1,6 @@
 import { SignifyClient } from './clienting.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
-
 export type Rpy = components['schemas']['Rpy'];
 /**
  * Escrows

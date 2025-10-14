@@ -2,7 +2,6 @@ import { SignifyClient } from './clienting.ts';
 import { Operation } from './coring.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
-
 export type Contact = components['schemas']['Contact'];
 
 export interface ContactInfo {
