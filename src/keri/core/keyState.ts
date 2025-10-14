@@ -34,4 +34,3 @@ export type ExternState = components['schemas']['ExternState'];
  * Defining properties of an identifier habitat, know as a Hab in KERIpy.
  */
 export type HabState = components['schemas']['Identifier'];
-
