@@ -1,6 +1,6 @@
 {
   "name": "signify-ts",
-  "version": "0.3.0-rc1",
+  "version": "0.3.0-rc2",
   "description": "Signing at the edge for KERI, ACDC, and KERIA",
   "keywords": [
     "keri",
