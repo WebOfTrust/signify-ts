@@ -235,29 +235,6 @@ export interface components {
             c: string[];
             a: unknown;
         };
-        VCP_V_1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            ii: string;
-            s: string;
-            c: string[];
-            bt: string;
-            b: string[];
-            n: string;
-        };
-        VRT_V_1: {
-            v: string;
-            t: string;
-            d: string;
-            i: string;
-            p: string;
-            s: string;
-            bt: string;
-            br: string[];
-            ba: string[];
-        };
         RPY_V_1: {
             v: string;
             t: string;
@@ -403,9 +380,7 @@ export interface components {
                 | components['schemas']['DIP_V_1']
                 | components['schemas']['DIP_V_2']
                 | components['schemas']['DRT_V_1']
-                | components['schemas']['DRT_V_2']
-                | components['schemas']['VCP_V_1']
-                | components['schemas']['VRT_V_1'];
+                | components['schemas']['DRT_V_2'];
         };
         AgentResourceResult: {
             agent: components['schemas']['KeyStateRecord'];
@@ -549,9 +524,9 @@ export interface components {
         };
         Contact: {
             id: string;
-            alias: string;
-            oobi: string;
-            end?: components['schemas']['MemberEnds'];
+            alias?: string;
+            oobi?: string;
+            ends?: components['schemas']['MemberEnds'];
             challenges?: components['schemas']['Challenge'][];
             wellKnowns?: components['schemas']['WellKnown'][];
         } & {
