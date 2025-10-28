@@ -177,9 +177,6 @@ export class IdentifierManagerFactory {
      * @returns IdentifierManager instance
      */
     get(aid: HabState): IdentifierManager {
-        let algo: Algos | undefined;
-        let kargs: any;
-
         if (Algos.salty in aid) {
             return new SaltyIdentifierManager(
                 this.salter,

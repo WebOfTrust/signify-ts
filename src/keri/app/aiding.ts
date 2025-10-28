@@ -74,7 +74,7 @@ export interface IdentifierInfo {
     name: string;
 }
 
-export type GroupMember = components['schemas']['GroupMember'];
+export type GroupMembers = components['schemas']['GroupMember'];
 
 /** Identifier */
 export class Identifier {
@@ -490,9 +490,9 @@ export class Identifier {
      * Get the members of a group identifier
      * @async
      * @param {string} name - Name or alias of the identifier
-     * @returns {Promise<GroupMember>} - A promise to the list of members
+     * @returns {Promise<GroupMembers>} - A promise to the list of members
      */
-    async members(name: string): Promise<GroupMember> {
+    async members(name: string): Promise<GroupMembers> {
         const res = await this.client.fetch(
             '/identifiers/' + name + '/members',
             'GET',

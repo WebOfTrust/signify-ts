@@ -66,10 +66,32 @@ describe('registry', () => {
         await libsodium.ready;
         const mockedClient = mock(SignifyClient);
         const mockedIdentifiers = mock(Identifier);
-
+        const keystate: KeyState = {
+            s: '0',
+            d: 'a digest',
+            i: '',
+            p: '',
+            f: '',
+            dt: '',
+            et: '',
+            kt: '',
+            k: [],
+            nt: '',
+            n: [],
+            bt: '',
+            b: [],
+            c: ['EO'],
+            ee: {
+                s: '',
+                d: '',
+                br: [],
+                ba: [],
+            },
+            di: '',
+        };
         const hab = {
             prefix: 'hab prefix',
-            state: { s: 0, d: 'a digest', c: ['EO'] } as unknown as KeyState,
+            state: keystate,
             name: 'a name',
             transferable: true,
             windexes: [],
