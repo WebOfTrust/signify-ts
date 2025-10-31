@@ -16,7 +16,7 @@ const WES = 'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX';
 export function resolveEnvironment(
     input?: TestEnvironmentPreset
 ): TestEnvironment {
-    const preset = input ?? process.env.TEST_ENVIRONMENT ?? 'docker';
+    const preset = input ?? process.env.TEST_ENVIRONMENT ?? 'local';
 
     const url = 'http://127.0.0.1:3901';
     const bootUrl = 'http://127.0.0.1:3903';

@@ -540,6 +540,23 @@ export interface components {
             signing: components['schemas']['AidRecord'][];
             rotation: components['schemas']['AidRecord'][];
         };
+        KeyEventRecord: {
+            ked:
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['IXN_V_1']
+                | components['schemas']['DIP_V_1']
+                | components['schemas']['DRT_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['IXN_V_2']
+                | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_2'];
+            atc: string;
+        };
+        AgentConfig: {
+            iurls?: string[];
+        };
     };
     responses: never;
     parameters: never;
