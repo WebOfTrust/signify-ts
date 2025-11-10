@@ -10,6 +10,9 @@ import {
     messagize,
     b,
     d,
+    Icp,
+    CredentialData,
+    ExnEmbeds,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -136,8 +139,8 @@ test('multisig', async function run() {
     let icpResult1 = await client1.identifiers().create('multisig', {
         algo: Algos.group,
         mhab: aid1,
-        isith: 3,
-        nsith: 3,
+        isith: '3',
+        nsith: '3',
         toad: aid1.state.b.length,
         wits: aid1.state.b,
         states: states,
@@ -183,7 +186,7 @@ test('multisig', async function run() {
             'exn.e.icp is missing from the group inception request'
         );
     }
-    let icp = exn.e.icp as MultisigInceptEmbeds['icp'];
+    let icp = exn.e.icp as Icp;
 
     let icpResult2 = await client2.identifiers().create('multisig', {
         algo: Algos.group,
@@ -233,7 +236,7 @@ test('multisig', async function run() {
             'exn.e.icp is missing from the group inception request'
         );
     }
-    icp = exn.e.icp as MultisigInceptEmbeds['icp'];
+    icp = exn.e.icp as Icp;
     let icpResult3 = await client3.identifiers().create('multisig', {
         algo: Algos.group,
         mhab: aid3,
@@ -259,7 +262,8 @@ test('multisig', async function run() {
         exn.a &&
         typeof exn.a === 'object' &&
         exn.a !== null &&
-        Array.isArray((exn.a as any).smids)
+        'smids' in exn.a &&
+        Array.isArray((exn.a as { smids: unknown }).smids)
             ? (exn.a as { smids: string[] }).smids
             : [];
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
@@ -392,7 +396,7 @@ test('multisig', async function run() {
         typeof exn.e.rpy === 'object' &&
         exn.e.rpy !== null &&
         'a' in (exn.e.rpy as Record<string, unknown>) &&
-        (exn.e.rpy as any).a
+        (exn.e.rpy as { a?: unknown }).a
     ) {
         type RpyA = { role: string; eid: string };
         const rpyObj = exn.e.rpy as { a?: unknown; dt?: string };
@@ -453,7 +457,7 @@ test('multisig', async function run() {
         typeof exn.e.rpy === 'object' &&
         exn.e.rpy !== null &&
         'a' in (exn.e.rpy as Record<string, unknown>) &&
-        (exn.e.rpy as any).a
+        (exn.e.rpy as { a?: unknown }).a
     ) {
         type RpyA = { role: string; eid: string };
         const rpyObj = exn.e.rpy as { a?: unknown; dt?: string };
@@ -554,20 +558,18 @@ test('multisig', async function run() {
         'Member2 received exchange message to join the interaction event'
     );
     res = await client2.groups().getRequest(msgSaid);
+
     exn = res[0].exn;
-    if (
-        !('e' in exn) ||
-        !exn.e ||
-        !('ixn' in exn.e) ||
-        !exn.e.ixn ||
-        typeof exn.e.ixn !== 'object' ||
-        (exn.e.ixn as any).a == null
-    ) {
-        throw new Error(
-            'exn.e.ixn.a is missing from the group interaction event'
-        );
+    if (!('e' in exn) || !exn.e) {
+        throw new Error('exn.e is missing from the group request');
     }
-    let ixn1 = exn.e.ixn as { a: { i: string; s: string; d: string } };
+
+    let embeds1 = exn.e as ExnEmbeds;
+    if (!('ixn' in embeds1) || !embeds1.ixn) {
+        throw new Error('ixn is missing from embeds');
+    }
+
+    let ixn1 = embeds1.ixn as { a: { i: string; s: string; d: string } };
     data = ixn1.a;
 
     icpResult2 = await client2.identifiers().interact('multisig', data);
@@ -606,22 +608,21 @@ test('multisig', async function run() {
     console.log(
         'Member3 received exchange message to join the interaction event'
     );
+
     res = await client3.groups().getRequest(msgSaid);
+
     exn = res[0].exn;
-    if (
-        !('e' in exn) ||
-        !exn.e ||
-        !('ixn' in exn.e) ||
-        !exn.e.ixn ||
-        typeof exn.e.ixn !== 'object' ||
-        (exn.e.ixn as any).a == null
-    ) {
-        throw new Error(
-            'exn.e.ixn.a is missing from the group interaction event'
-        );
+    if (!('e' in exn) || !exn.e) {
+        throw new Error('exn.e is missing from the group request');
     }
-    let ixn2 = exn.e.ixn as { a: { i: string; s: string; d: string } };
-    data = ixn2.a;
+
+    const embeds2 = exn.e as ExnEmbeds;
+    if (!('ixn' in embeds2) || !embeds2.ixn) {
+        throw new Error('ixn is missing from embeds');
+    }
+
+    const ixn = embeds2.ixn;
+    data = ixn.a as { i: string; s: string; d: string };
 
     icpResult3 = await client3.identifiers().interact('multisig', data);
     op3 = await icpResult3.op();

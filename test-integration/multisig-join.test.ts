@@ -1,4 +1,4 @@
-import signify, { KeyState, Serder, SignifyClient } from 'signify-ts';
+import signify, { KeyState, Serder, SignifyClient, Icp } from 'signify-ts';
 import {
     getOrCreateClient,
     getOrCreateIdentifier,
@@ -57,8 +57,8 @@ describe('multisig-join', () => {
         const icpResult = await client1.identifiers().create(nameMultisig, {
             algo: signify.Algos.group,
             mhab: aid1,
-            isith: 1,
-            nsith: 1,
+            isith: '1',
+            nsith: '1',
             toad: aid1.state.b.length,
             wits: aid1.state.b,
             states: states,
@@ -102,7 +102,7 @@ describe('multisig-join', () => {
                 'exn.e.icp is missing from the group inception response'
             );
         }
-        const icp = exn.e.icp;
+        const icp = exn.e.icp as Icp;
 
         const icpResult2 = await client2.identifiers().create(nameMultisig, {
             algo: signify.Algos.group,
@@ -357,23 +357,17 @@ describe('multisig-join', () => {
                 'exn3.e.rot is missing from the group rotation response'
             );
         }
-        if (!exn3.a || typeof (exn3.a as any).gid !== 'string') {
+        if (!exn3.a || typeof (exn3.a as { gid?: string }).gid !== 'string') {
             throw new Error('exn3.a.gid is missing or not a string');
         }
         const serder3 = new Serder(exn3.e.rot);
         const keeper3 = await client3.manager!.get(aid3);
         const sigs3 = keeper3.sign(signify.b(serder3.raw));
 
+        const exnA = exn3.a as { gid: string };
         const joinOperation = await client3
             .groups()
-            .join(
-                nameMultisig,
-                serder3,
-                sigs3,
-                (exn3.a as { gid: string }).gid,
-                smids,
-                rmids
-            );
+            .join(nameMultisig, serder3, sigs3, exnA.gid, smids, rmids);
 
         await waitOperation(client3, joinOperation);
 

@@ -96,7 +96,7 @@ export interface components {
             i: string;
             s: string;
             p: string;
-            a: components['schemas']['Seal'][];
+            a: unknown;
         };
         IXN_V_2: {
             v: string;
@@ -105,7 +105,7 @@ export interface components {
             i: string;
             s: string;
             p: string;
-            a: components['schemas']['Seal'][];
+            a: unknown;
         };
         ICP_V_1: {
             v: string;

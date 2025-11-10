@@ -8,8 +8,8 @@ import signify, {
     d,
     messagize,
     HabState,
-    Icp,
-    MultisigExnEmbeds,
+    Dip,
+    ExnEmbeds,
 } from 'signify-ts';
 import { getStates, waitAndMarkNotification } from './test-util.ts';
 import assert from 'assert';
@@ -24,8 +24,8 @@ export interface StartMultisigInceptArgs {
     groupName: string;
     localMemberName: string;
     participants: string[];
-    isith?: number | string | string[];
-    nsith?: number | string | string[];
+    isith?: string | string[] | string[][];
+    nsith?: string | string[] | string[][];
     toad?: number;
     wits?: string[];
     delpre?: string;
@@ -46,7 +46,7 @@ export async function acceptMultisigIncept(
         );
     }
 
-    const icp = exn.e.icp as Icp;
+    const icp = exn.e.icp as Dip;
     const smids = (exn.a as { smids: string[] }).smids;
     const rmids = (exn.a as { rmids: string[] }).rmids;
     const states = await getStates(client2, smids);
@@ -306,14 +306,20 @@ export async function delegateMultisig(
         console.log(
             `${aid.name}(${aid.prefix}) received exchange message to join the interaction event`
         );
+
         const res = await client.groups().getRequest(msgSaid);
         const exn = res[0].exn;
         if (!('e' in exn) || !exn.e) {
             throw new Error('exn.e is missing from the group request');
         }
-        const embeds = exn.e as MultisigExnEmbeds;
-        const ixn = (embeds as any).ixn;
-        anchor = ixn.a[0];
+
+        const embeds = exn.e as ExnEmbeds;
+        if (!('ixn' in embeds) || !embeds.ixn) {
+            throw new Error('ixn is missing from embeds');
+        }
+
+        const ixn = embeds.ixn;
+        anchor = (ixn.a as Array<{ i: string; s: string; d: string }>)[0];
     }
 
     // const {delResult, delOp} = await retry(async () => {

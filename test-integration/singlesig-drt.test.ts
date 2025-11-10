@@ -1,5 +1,9 @@
 import { afterAll, assert, beforeAll, describe, test } from 'vitest';
-import { CreateIdentiferArgs, SignifyClient } from 'signify-ts';
+import {
+    CreateIdentiferArgs,
+    RotateIdentifierArgs,
+    SignifyClient,
+} from 'signify-ts';
 import {
     assertOperations,
     getOrCreateClients,
@@ -53,8 +57,8 @@ describe('singlesig-drt', () => {
             waitOperation(delegate, op2),
         ]);
 
-        kargs = {};
-        result = await delegate.identifiers().rotate('delegate1', kargs);
+        let rotate_kargs = {} as RotateIdentifierArgs;
+        result = await delegate.identifiers().rotate('delegate1', rotate_kargs);
         op = await result.op();
         assert.equal(op.name, `delegation.${result.serder.sad.d}`);
 

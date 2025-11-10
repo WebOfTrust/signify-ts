@@ -270,9 +270,9 @@ export function ample(n: number, f?: number, weak = true) {
 
 export interface InceptArgs {
     keys: Array<string>;
-    isith?: number | string | Array<string>;
+    isith?: string | string[] | string[][];
     ndigs?: Array<string>;
-    nsith?: number | string | Array<string>;
+    nsith?: string | string[] | string[][];
     toad?: number | string;
     wits?: Array<string>;
     cnfg?: Array<string>;
@@ -304,7 +304,7 @@ export function incept({
     const sner = new CesrNumber({}, 0);
 
     if (isith == undefined) {
-        isith = Math.max(1, Math.ceil(keys.length / 2));
+        isith = Math.max(1, Math.ceil(keys.length / 2)).toString();
     }
 
     const tholder = new Tholder({ sith: isith });
@@ -320,7 +320,7 @@ export function incept({
     }
 
     if (nsith == undefined) {
-        nsith = Math.max(0, Math.ceil(ndigs.length / 2));
+        nsith = Math.max(0, Math.ceil(ndigs.length / 2)).toString();
     }
 
     const ntholder = new Tholder({ sith: nsith });

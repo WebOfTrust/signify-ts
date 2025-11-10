@@ -80,8 +80,8 @@ test('multisig', async function run() {
     op1 = await startMultisigIncept(client1, {
         groupName: 'holder',
         localMemberName: aid1.name,
-        isith: 2,
-        nsith: 2,
+        isith: '2',
+        nsith: '2',
         toad: aid1.state.b.length,
         wits: aid1.state.b,
         participants: [aid1.prefix, aid2.prefix],
@@ -389,9 +389,17 @@ test('multisig', async function run() {
         recp
     );
 
-    if (exnRes.exn && 'e' in exnRes.exn && (exnRes.exn as any).e?.acdc?.d) {
+    const exn1 = exnRes.exn;
+    if (!('e' in exn1) || !exn1.e) {
+        throw new Error('exn1.e is missing from the exchange result');
+    }
+
+    const acdcEmbeds1 = exn1.e as { acdc: { d: string } };
+    const credentialSaid1 = acdcEmbeds1.acdc?.d;
+
+    if (credentialSaid1) {
         console.log(
-            `Member1 admitted credential with SAID : ${(exnRes.exn as any).e.acdc.d}`
+            `Member1 admitted credential with SAID : ${credentialSaid1}`
         );
     } else {
         throw new Error('Expected property "e.acdc.d" not found on exnRes.exn');
@@ -419,12 +427,23 @@ test('multisig', async function run() {
         exnRes.exn.i,
         recp2
     );
-    if (exnRes.exn && 'e' in exnRes.exn && (exnRes.exn as any).e?.acdc?.d) {
+
+    const exn2 = exnRes.exn;
+    if (!('e' in exn2) || !exn2.e) {
+        throw new Error('exn2.e is missing from the exchange result');
+    }
+
+    const acdcEmbeds = exn2.e as { acdc: { d: string } };
+    const credentialSaid = acdcEmbeds.acdc?.d;
+
+    if (credentialSaid) {
         console.log(
-            `Member2 admitted credential with SAID : ${(exnRes.exn as any).e.acdc.d}`
+            `Member2 admitted credential with SAID : ${credentialSaid}`
         );
     } else {
-        throw new Error('Expected property "e.acdc.d" not found on exnRes.exn');
+        throw new Error(
+            'Expected property "e.acdc.d" not found on exnRes2.exn'
+        );
     }
 
     await waitOperation(client1, op1);

@@ -476,8 +476,8 @@ describe('Aiding', () => {
         it('CreateIdentiferArgs', () => {
             let args: CreateIdentiferArgs;
             args = {
-                isith: 1,
-                nsith: 1,
+                isith: '1',
+                nsith: '1',
             };
             args = {
                 isith: '1',

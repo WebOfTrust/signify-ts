@@ -13,8 +13,8 @@ import { components } from '../../types/keria-api-schema.ts';
 /** Arguments required to create an identfier */
 export interface CreateIdentiferArgs {
     transferable?: boolean;
-    isith?: string | number | string[];
-    nsith?: string | number | string[];
+    isith?: string | string[] | string[][];
+    nsith?: string | string[] | string[][];
     wits?: string[];
     toad?: number;
     proxy?: string;

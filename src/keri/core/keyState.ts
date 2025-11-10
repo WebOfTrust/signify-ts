@@ -44,7 +44,8 @@ export type Ixn =
 export type ExnV1 =
     | components['schemas']['EXN_V_1']
     | components['schemas']['EXN_V_2'];
-export type MultisigExnEmbeds = components['schemas']['MultisigExnEmbeds'];
-export type MultisigInceptEmbeds =
-    components['schemas']['MultisigInceptEmbeds'];
+export type Dip =
+    | components['schemas']['DIP_V_1']
+    | components['schemas']['DIP_V_2'];
+export type ExnEmbeds = components['schemas']['ExnEmbeds'];
 export type MultisigRpyEmbeds = components['schemas']['MultisigRpyEmbeds'];

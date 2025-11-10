@@ -344,9 +344,13 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const apply = await holderClient.exchanges().get(holderApplyNote.a.d);
         applySaid = apply.exn.d;
 
-        const filter: { [x: string]: any } = { '-s': (apply.exn.a as any).s };
-        for (const key in (apply.exn.a as any).a) {
-            filter[`-a-${key}`] = (apply.exn.a as any).a[key];
+        const exnA = apply.exn.a as Record<string, unknown>;
+        const filter: { [x: string]: unknown } = { '-s': exnA.s };
+        const attributes = exnA.a as Record<string, unknown>;
+        if (typeof attributes === 'object' && attributes !== null) {
+            for (const key in attributes) {
+                filter[`-a-${key}`] = attributes[key];
+            }
         }
 
         const matchingCreds = await holderClient.credentials().list({ filter });

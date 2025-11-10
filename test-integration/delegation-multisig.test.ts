@@ -105,8 +105,8 @@ test('delegation-multisig', async () => {
                 groupName: delegatorGroupName,
                 localMemberName: delegator1Aid.name,
                 participants: [delegator1Aid.prefix, delegator2Aid.prefix],
-                isith: 2,
-                nsith: 2,
+                isith: '2',
+                nsith: '2',
                 toad: 2,
                 wits: [
                     'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
@@ -226,8 +226,8 @@ test('delegation-multisig', async () => {
                 groupName: delegateeGroupName,
                 localMemberName: delegatee1Aid.name,
                 participants: [delegatee1Aid.prefix, delegatee2Aid.prefix],
-                isith: 2,
-                nsith: 2,
+                isith: '2',
+                nsith: '2',
                 toad: 2,
                 delpre: torpre,
                 wits: [
