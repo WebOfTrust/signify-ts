@@ -1,17 +1,17 @@
-import { randomNonce } from '../app/coring';
-import { TraitDex } from '../app/habery';
+import { randomNonce } from '../app/coring.ts';
+import { TraitDex } from '../app/habery.ts';
 import {
     Serials,
-    Versionage,
+    Vrsn_1_0,
     Version,
-    Ident,
+    Protocols,
     versify,
     Ilks,
-} from '../core/core';
-import { ample } from './eventing';
-import { MtrDex } from './matter';
-import { Prefixer } from './prefixer';
-import { Serder } from './serder';
+} from '../core/core.ts';
+import { ample } from './eventing.ts';
+import { MtrDex } from './matter.ts';
+import { Prefixer } from './prefixer.ts';
+import { Serder } from './serder.ts';
 
 namespace vdr {
     export interface VDRInceptArgs {
@@ -31,11 +31,11 @@ namespace vdr {
         nonce = randomNonce(),
         baks = [],
         cnfg = [],
-        version = Versionage,
+        version = Vrsn_1_0,
         kind = Serials.JSON,
         code = MtrDex.Blake3_256,
     }: VDRInceptArgs): Serder {
-        const vs = versify(Ident.KERI, version, kind, 0);
+        const vs = versify(Protocols.KERI, version, kind, 0);
         const isn = 0;
         const ilk = Ilks.vcp;
 
@@ -70,7 +70,7 @@ namespace vdr {
             }
         }
 
-        const ked = {
+        const sad = {
             v: vs,
             t: ilk,
             d: '',
@@ -83,11 +83,11 @@ namespace vdr {
             n: nonce,
         };
 
-        const prefixer = new Prefixer({ code }, ked);
-        ked.i = prefixer.qb64;
-        ked.d = prefixer.qb64;
+        const prefixer = new Prefixer({ code }, sad);
+        sad.i = prefixer.qb64;
+        sad.d = prefixer.qb64;
 
-        return new Serder(ked);
+        return new Serder(sad);
     }
 }
 

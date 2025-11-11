@@ -1,7 +1,6 @@
-import { EmptyMaterialError } from './kering';
-import { b, b64ToInt, d, intToB64, readInt } from './core';
-import { Buffer } from 'buffer';
-import { decodeBase64Url, encodeBase64Url } from './base64';
+import { EmptyMaterialError } from './kering.ts';
+import { b, b64ToInt, d, intToB64, readInt } from './core.ts';
+import { decodeBase64Url, encodeBase64Url } from './base64.ts';
 
 export class IndexerCodex {
     Ed25519_Sig: string = 'A'; // Ed25519 sig appears same in both lists if any.
@@ -398,8 +397,7 @@ export class Indexer {
             bytes[odx] = raw[i];
         }
 
-        const full =
-            both + encodeBase64Url(Buffer.from(bytes)).slice(ps - xizage.ls);
+        const full = both + encodeBase64Url(bytes).slice(ps - xizage.ls);
         if (full.length != xizage.fs) {
             throw new Error(`Invalid code=${both} for raw size=${raw.length}.`);
         }

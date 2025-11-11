@@ -1,11 +1,11 @@
-import { SignifyClient } from './clienting';
-import { b, d, Dict, Ident, Ilks, Serials, versify } from '../core/core';
-import { Serder } from '../core/serder';
-import { nowUTC } from '../core/utils';
-import { Pather } from '../core/pather';
-import { Counter, CtrDex } from '../core/counter';
-import { Saider } from '../core/saider';
-import { HabState } from '../core/state';
+import { SignifyClient } from './clienting.ts';
+import { b, d, Dict, Protocols, Ilks, Serials, versify } from '../core/core.ts';
+import { Serder } from '../core/serder.ts';
+import { nowUTC } from '../core/utils.ts';
+import { Pather } from '../core/pather.ts';
+import { Counter, CtrDex } from '../core/counter.ts';
+import { Saider } from '../core/saider.ts';
+import { HabState } from '../core/keyState.ts';
 
 /**
  * Exchanges
@@ -121,7 +121,7 @@ export class Exchanges {
         const method = 'POST';
         const data: any = {
             tpc: topic,
-            exn: exn.ked,
+            exn: exn.sad,
             sigs: sigs,
             atc: atc,
             rec: recipients,
@@ -155,7 +155,7 @@ export function exchange(
     modifiers?: Dict<any>,
     embeds?: Dict<any>
 ): [Serder, Uint8Array] {
-    const vs = versify(Ident.KERI, undefined, Serials.JSON, 0);
+    const vs = versify(Protocols.KERI, undefined, Serials.JSON, 0);
     const ilk = Ilks.exn;
     const dt =
         date !== undefined
@@ -170,7 +170,7 @@ export function exchange(
     Object.entries(ems).forEach(([key, value]) => {
         const serder = value[0];
         const atc = value[1];
-        e[key] = serder.ked;
+        e[key] = serder.sad;
 
         if (atc == undefined) {
             return;
@@ -202,7 +202,7 @@ export function exchange(
         ...payload,
     };
 
-    const _ked = {
+    const _sad = {
         v: vs,
         t: ilk,
         d: '',
@@ -215,9 +215,9 @@ export function exchange(
         a: a,
         e: e,
     };
-    const [, ked] = Saider.saidify(_ked);
+    const [, sad] = Saider.saidify(_sad);
 
-    const exn = new Serder(ked);
+    const exn = new Serder(sad);
 
     return [exn, b(end)];
 }

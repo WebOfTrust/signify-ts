@@ -1,9 +1,9 @@
-import { Habery } from '../../src/keri/app/habery';
-import { strict as assert } from 'assert';
+import { Habery } from '../../src/keri/app/habery.ts';
+import { assert, describe, it } from 'vitest';
 import libsodium from 'libsodium-wrappers-sumo';
-import { Salter } from '../../src/keri/core/salter';
-import { b } from '../../src/keri/core/core';
-import { MtrDex } from '../../src/keri/core/matter';
+import { Salter } from '../../src/keri/core/salter.ts';
+import { b } from '../../src/keri/core/core.ts';
+import { MtrDex } from '../../src/keri/core/matter.ts';
 
 describe('Habery', () => {
     it('should manage AID creation and rotation', async () => {
@@ -22,10 +22,10 @@ describe('Habery', () => {
 
         const hab = hby.makeHab('test', {});
 
-        assert.deepStrictEqual(hab.serder.ked['k'], [
+        assert.deepStrictEqual(hab.serder.sad['k'], [
             'DAQVURvW74OJH1Q0C6YLim_tdBYoXABwg6GsAlPaUJXE',
         ]);
-        assert.deepStrictEqual(hab.serder.ked['n'], [
+        assert.deepStrictEqual(hab.serder.sad['n'], [
             'ENBWnU8wNHqq9oqJIimWhxUtNDHReUXtiCwwtjg9zKY0',
         ]);
     });

@@ -1,5 +1,5 @@
-import { SignifyClient } from './clienting';
-import { Dict } from '../core/core';
+import { SignifyClient } from './clienting.ts';
+import { Dict } from '../core/core.ts';
 
 /**
  * Groups
@@ -78,7 +78,7 @@ export class Groups {
         const method = 'POST';
         const data = {
             tpc: 'multisig',
-            rot: rot.ked,
+            rot: rot.sad,
             sigs: sigs,
             gid: gid,
             smids: smids,

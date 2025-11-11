@@ -1,35 +1,40 @@
-import assert from 'node:assert';
-import { decodeBase64Url, encodeBase64Url } from '../../src/keri/core/base64';
+import { assert, test } from 'vitest';
+import {
+    decodeBase64Url,
+    encodeBase64Url,
+} from '../../src/keri/core/base64.ts';
 
 test('encode', () => {
-    assert.equal(encodeBase64Url(Buffer.from('f')), 'Zg');
-    assert.equal(encodeBase64Url(Buffer.from('fi')), 'Zmk');
-    assert.equal(encodeBase64Url(Buffer.from('fis')), 'Zmlz');
-    assert.equal(encodeBase64Url(Buffer.from('fish')), 'ZmlzaA');
-    assert.equal(encodeBase64Url(Buffer.from([248])), '-A');
-    assert.equal(encodeBase64Url(Buffer.from([252])), '_A');
+    assert.equal(encodeBase64Url(Uint8Array.from([102])), 'Zg');
+    assert.equal(encodeBase64Url(Uint8Array.from([102, 105])), 'Zmk');
+    assert.equal(encodeBase64Url(Uint8Array.from([102, 105, 115])), 'Zmlz');
+    assert.equal(
+        encodeBase64Url(Uint8Array.from([102, 105, 115, 104])),
+        'ZmlzaA'
+    );
+    assert.equal(encodeBase64Url(Uint8Array.from([248])), '-A');
+    assert.equal(encodeBase64Url(Uint8Array.from([252])), '_A');
 });
 
 test('decode', () => {
-    assert.equal(decodeBase64Url('Zg').toString(), 'f');
-    assert.equal(decodeBase64Url('Zmk').toString(), 'fi');
-    assert.equal(decodeBase64Url('Zmlz').toString(), 'fis');
-    assert.equal(decodeBase64Url('ZmlzaA').toString(), 'fish');
-    assert.equal(Buffer.from([248]).buffer, decodeBase64Url('-A').buffer);
-    assert.equal(Buffer.from([252]).buffer, decodeBase64Url('_A').buffer);
+    assert.deepEqual(decodeBase64Url('Zg'), Uint8Array.from([102]));
+    assert.deepEqual(decodeBase64Url('Zmk'), Uint8Array.from([102, 105]));
+    assert.deepEqual(decodeBase64Url('Zmlz'), Uint8Array.from([102, 105, 115]));
+    assert.deepEqual(
+        decodeBase64Url('ZmlzaA'),
+        Uint8Array.from([102, 105, 115, 104])
+    );
+    assert.deepEqual(Uint8Array.from([248]), decodeBase64Url('-A'));
+    assert.deepEqual(Uint8Array.from([252]), decodeBase64Url('_A'));
 });
 
 test('Test encode / decode compare with built in node Buffer', () => {
     const text = '🏳️🏳️';
     const b64url = '8J-Ps--4j_Cfj7PvuI8';
+    const data = Uint8Array.from([
+        240, 159, 143, 179, 239, 184, 143, 240, 159, 143, 179, 239, 184, 143,
+    ]);
 
-    assert.equal(
-        Buffer.from(text).toString('base64url'),
-        encodeBase64Url(Buffer.from(text))
-    );
-
-    assert.equal(
-        Buffer.from(b64url, 'base64url').buffer,
-        decodeBase64Url(b64url).buffer
-    );
+    assert.deepEqual(b64url, encodeBase64Url(new TextEncoder().encode(text)));
+    assert.deepEqual(data, decodeBase64Url(b64url));
 });

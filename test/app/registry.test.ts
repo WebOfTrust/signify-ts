@@ -1,24 +1,57 @@
-import { SignifyClient } from '../../src/keri/app/clienting';
+import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { anyOfClass, anything, instance, mock, when } from 'ts-mockito';
 import libsodium from 'libsodium-wrappers-sumo';
-import 'whatwg-fetch';
-import { Registries } from '../../src/keri/app/credentialing';
-import { Identifier, KeyManager, SaltyKeeper } from '../../src';
-import { strict as assert } from 'assert';
-import { HabState, State } from '../../src/keri/core/state';
+import { Registries } from '../../src/keri/app/credentialing.ts';
+import {
+    Identifier,
+    IdentifierManagerFactory,
+    SaltyIdentifierManager,
+} from '../../src/index.ts';
+import { assert, describe, expect, it } from 'vitest';
+import { HabState, KeyState } from '../../src/keri/core/keyState.ts';
 
+const keystate: KeyState = {
+    s: '0',
+    d: 'a digest',
+    i: '',
+    p: '',
+    f: '',
+    dt: '',
+    et: '',
+    kt: '',
+    k: [],
+    nt: '',
+    n: [],
+    bt: '',
+    b: [],
+    c: [],
+    ee: {
+        s: '',
+        d: '',
+        br: [],
+        ba: [],
+    },
+    di: '',
+};
 describe('registry', () => {
     it('should create a registry', async () => {
         await libsodium.ready;
         const mockedClient = mock(SignifyClient);
         const mockedIdentifiers = mock(Identifier);
-        const mockedKeyManager = mock(KeyManager);
-        const mockedKeeper = mock(SaltyKeeper);
-
-        const hab = {
+        const mockedKeyManager = mock(IdentifierManagerFactory);
+        const mockedKeeper = mock(SaltyIdentifierManager);
+        const hab: HabState = {
+            name: 'test-hab',
             prefix: 'hab prefix',
-            state: { s: '0', d: 'a digest' } as State,
-        } as HabState;
+            icp_dt: '2023-12-01T10:05:25.062609+00:00',
+            state: keystate,
+            transferable: false,
+            windexes: [],
+            randy: {
+                prxs: [],
+                nxts: [],
+            },
+        };
 
         when(mockedClient.manager).thenReturn(instance(mockedKeyManager));
         when(mockedKeyManager.get(hab)).thenReturn(instance(mockedKeeper));
@@ -64,14 +97,19 @@ describe('registry', () => {
         const mockedClient = mock(SignifyClient);
         const mockedIdentifiers = mock(Identifier);
 
-        const hab = {
+        keystate.c = ['EO'];
+        const hab: HabState = {
             prefix: 'hab prefix',
-            state: { s: 0, d: 'a digest', c: ['EO'] } as unknown as State,
+            state: keystate,
             name: 'a name',
             transferable: true,
             windexes: [],
             icp_dt: '2023-12-01T10:05:25.062609+00:00',
-        } as HabState;
+            randy: {
+                prxs: [],
+                nxts: [],
+            },
+        };
 
         when(mockedIdentifiers.get('a name')).thenResolve(hab);
         when(mockedClient.identifiers()).thenReturn(
@@ -80,18 +118,12 @@ describe('registry', () => {
 
         const registries = new Registries(instance(mockedClient));
 
-        await assert.rejects(
-            async () => {
-                await registries.create({
-                    name: 'a name',
-                    registryName: 'a registry name',
-                    nonce: '',
-                });
-            },
-            {
-                name: 'Error',
-                message: 'establishment only not implemented',
-            }
-        );
+        await expect(async () => {
+            await registries.create({
+                name: 'a name',
+                registryName: 'a registry name',
+                nonce: '',
+            });
+        }).rejects.toThrowError('establishment only not implemented');
     });
 });

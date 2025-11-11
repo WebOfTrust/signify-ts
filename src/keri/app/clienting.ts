@@ -1,20 +1,24 @@
-import { Authenticater } from '../core/authing';
-import { HEADER_SIG_TIME } from '../core/httping';
-import { ExternalModule, KeyManager } from '../core/keeping';
-import { Tier } from '../core/salter';
+import { components } from '../../types/keria-api-schema.ts';
+import { Authenticater } from '../core/authing.ts';
+import { HEADER_SIG_TIME } from '../core/httping.ts';
+import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
+import { Tier } from '../core/salter.ts';
 
-import { Identifier } from './aiding';
-import { Contacts, Challenges } from './contacting';
-import { Agent, Controller } from './controller';
-import { Oobis, Operations, KeyEvents, KeyStates, Config } from './coring';
-import { Credentials, Ipex, Registries, Schemas } from './credentialing';
-import { Delegations } from './delegating';
-import { Escrows } from './escrowing';
-import { Exchanges } from './exchanging';
-import { Groups } from './grouping';
-import { Notifications } from './notifying';
+import { Identifier } from './aiding.ts';
+import { Contacts, Challenges } from './contacting.ts';
+import { Agent, Controller } from './controller.ts';
+import { Oobis, Operations, KeyEvents, KeyStates, Config } from './coring.ts';
+import { Credentials, Ipex, Registries, Schemas } from './credentialing.ts';
+import { Delegations } from './delegating.ts';
+import { Escrows } from './escrowing.ts';
+import { Exchanges } from './exchanging.ts';
+import { Groups } from './grouping.ts';
+import { Notifications } from './notifying.ts';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
+
+// Export type outside the class
+export type AgentResourceResult = components['schemas']['AgentResourceResult'];
 
 class State {
     agent: any | null;
@@ -30,7 +34,10 @@ class State {
     }
 }
 
-/** SignifyClient */
+/**
+ * An in-memory key manager that can connect to a KERIA Agent and use it to
+ * receive messages and act as a proxy for multi-signature operations and delegation operations.
+ */
 export class SignifyClient {
     public controller: Controller;
     public url: string;
@@ -38,10 +45,27 @@ export class SignifyClient {
     public pidx: number;
     public agent: Agent | null;
     public authn: Authenticater | null;
-    public manager: KeyManager | null;
+    public manager: IdentifierManagerFactory | null;
     public tier: Tier;
     public bootUrl: string;
     public exteralModules: ExternalModule[];
+    private _identifiers = new Identifier(this);
+    private _operations = new Operations(this);
+    private _keyEvents = new KeyEvents(this);
+    private _keyStates = new KeyStates(this);
+    private _oobis = new Oobis(this);
+    private _config = new Config(this);
+    private _delegations = new Delegations(this);
+    private _exchanges = new Exchanges(this);
+    private _groups = new Groups(this);
+    private _escrows = new Escrows(this);
+    private _credentials = new Credentials(this);
+    private _registries = new Registries(this);
+    private _ipex = new Ipex(this);
+    private _notifications = new Notifications(this);
+    private _contacts = new Contacts(this);
+    private _challenges = new Challenges(this);
+    private _schemas = new Schemas(this);
 
     /**
      * SignifyClient constructor
@@ -85,7 +109,7 @@ export class SignifyClient {
     async boot(): Promise<Response> {
         const [evt, sign] = this.controller?.event ?? [];
         const data = {
-            icp: evt.ked,
+            icp: evt.sad,
             sig: sign.qb64,
             stem: this.controller?.stem,
             pidx: 1,
@@ -114,7 +138,7 @@ export class SignifyClient {
             throw new Error(`agent does not exist for controller ${caid}`);
         }
 
-        const data = await res.json();
+        const data = (await res.json()) as AgentResourceResult;
         const state = new State();
         state.agent = data.agent ?? {};
         state.controller = data.controller ?? {};
@@ -144,10 +168,10 @@ export class SignifyClient {
                 'commitment to controller AID missing in agent inception event'
             );
         }
-        if (this.controller.serder.ked.s == 0) {
+        if (this.controller.serder.sad.s == 0) {
             await this.approveDelegation();
         }
-        this.manager = new KeyManager(
+        this.manager = new IdentifierManagerFactory(
             this.controller.salter,
             this.exteralModules
         );
@@ -284,7 +308,7 @@ export class SignifyClient {
         const sigs = this.controller.approveDelegation(this.agent!);
 
         const data = {
-            ixn: this.controller.serder.ked,
+            ixn: this.controller.serder.sad,
             sigs: sigs,
         };
 
@@ -356,7 +380,7 @@ export class SignifyClient {
      * @returns {Identifier}
      */
     identifiers(): Identifier {
-        return new Identifier(this);
+        return this._identifiers;
     }
 
     /**
@@ -364,7 +388,7 @@ export class SignifyClient {
      * @returns {Oobis}
      */
     oobis(): Oobis {
-        return new Oobis(this);
+        return this._oobis;
     }
 
     /**
@@ -372,7 +396,7 @@ export class SignifyClient {
      * @returns {Operations}
      */
     operations(): Operations {
-        return new Operations(this);
+        return this._operations;
     }
 
     /**
@@ -380,7 +404,7 @@ export class SignifyClient {
      * @returns {KeyEvents}
      */
     keyEvents(): KeyEvents {
-        return new KeyEvents(this);
+        return this._keyEvents;
     }
 
     /**
@@ -388,7 +412,7 @@ export class SignifyClient {
      * @returns {KeyStates}
      */
     keyStates(): KeyStates {
-        return new KeyStates(this);
+        return this._keyStates;
     }
 
     /**
@@ -396,7 +420,7 @@ export class SignifyClient {
      * @returns {Credentials}
      */
     credentials(): Credentials {
-        return new Credentials(this);
+        return this._credentials;
     }
 
     /**
@@ -404,7 +428,7 @@ export class SignifyClient {
      * @returns {Ipex}
      */
     ipex(): Ipex {
-        return new Ipex(this);
+        return this._ipex;
     }
 
     /**
@@ -412,7 +436,7 @@ export class SignifyClient {
      * @returns {Registries}
      */
     registries(): Registries {
-        return new Registries(this);
+        return this._registries;
     }
 
     /**
@@ -420,7 +444,7 @@ export class SignifyClient {
      * @returns {Schemas}
      */
     schemas(): Schemas {
-        return new Schemas(this);
+        return this._schemas;
     }
 
     /**
@@ -428,7 +452,7 @@ export class SignifyClient {
      * @returns {Challenges}
      */
     challenges(): Challenges {
-        return new Challenges(this);
+        return this._challenges;
     }
 
     /**
@@ -436,7 +460,7 @@ export class SignifyClient {
      * @returns {Contacts}
      */
     contacts(): Contacts {
-        return new Contacts(this);
+        return this._contacts;
     }
 
     /**
@@ -444,7 +468,7 @@ export class SignifyClient {
      * @returns {Notifications}
      */
     notifications(): Notifications {
-        return new Notifications(this);
+        return this._notifications;
     }
 
     /**
@@ -452,7 +476,7 @@ export class SignifyClient {
      * @returns {Escrows}
      */
     escrows(): Escrows {
-        return new Escrows(this);
+        return this._escrows;
     }
 
     /**
@@ -460,7 +484,7 @@ export class SignifyClient {
      * @returns {Groups}
      */
     groups(): Groups {
-        return new Groups(this);
+        return this._groups;
     }
 
     /**
@@ -468,7 +492,7 @@ export class SignifyClient {
      * @returns {Exchanges}
      */
     exchanges(): Exchanges {
-        return new Exchanges(this);
+        return this._exchanges;
     }
 
     /**
@@ -476,7 +500,7 @@ export class SignifyClient {
      * @returns {Delegations}
      */
     delegations(): Delegations {
-        return new Delegations(this);
+        return this._delegations;
     }
 
     /**
@@ -484,6 +508,6 @@ export class SignifyClient {
      * @returns {Config}
      */
     config(): Config {
-        return new Config(this);
+        return this._config;
     }
 }

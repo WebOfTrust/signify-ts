@@ -1,13 +1,14 @@
-import { Tier } from '../core/salter';
-import { Algos } from '../core/manager';
-import { incept, interact, reply, rotate } from '../core/eventing';
-import { b, Ilks, Serials, Versionage } from '../core/core';
-import { Tholder } from '../core/tholder';
-import { MtrDex } from '../core/matter';
-import { Serder } from '../core/serder';
-import { parseRangeHeaders } from '../core/httping';
-import { KeyManager } from '../core/keeping';
-import { HabState } from '../core/state';
+import { Tier } from '../core/salter.ts';
+import { Algos } from '../core/manager.ts';
+import { incept, interact, reply, rotate } from '../core/eventing.ts';
+import { b, Ilks, Serials, Vrsn_1_0 } from '../core/core.ts';
+import { Tholder } from '../core/tholder.ts';
+import { MtrDex } from '../core/matter.ts';
+import { Serder } from '../core/serder.ts';
+import { parseRangeHeaders } from '../core/httping.ts';
+import { IdentifierManagerFactory } from '../core/keeping.ts';
+import { HabState } from '../core/keyState.ts';
+import { components } from '../../types/keria-api-schema.ts';
 
 /** Arguments required to create an identfier */
 export interface CreateIdentiferArgs {
@@ -63,7 +64,7 @@ export interface IdentifierDeps {
         headers?: Headers
     ): Promise<Response>;
     pidx: number;
-    manager: KeyManager | null;
+    manager: IdentifierManagerFactory | null;
 }
 
 /**
@@ -79,6 +80,8 @@ export interface LocSchemeArgs {
     eid?: string;
     stamp?: string;
 }
+
+export type GroupMembers = components['schemas']['GroupMember'];
 
 /** Identifier */
 export class Identifier {
@@ -232,7 +235,7 @@ export class Identifier {
                 wits: wits,
                 cnfg: [],
                 data: data,
-                version: Versionage,
+                version: Vrsn_1_0,
                 kind: Serials.JSON,
                 code: dcode,
                 intive: false,
@@ -247,7 +250,7 @@ export class Identifier {
                 wits: wits,
                 cnfg: [],
                 data: data,
-                version: Versionage,
+                version: Vrsn_1_0,
                 kind: Serials.JSON,
                 code: dcode,
                 intive: false,
@@ -258,7 +261,7 @@ export class Identifier {
         const sigs = await keeper!.sign(b(serder.raw));
         const jsondata: any = {
             name: name,
-            icp: serder.ked,
+            icp: serder.sad,
             sigs: sigs,
             proxy: proxy,
             smids:
@@ -285,7 +288,10 @@ export class Identifier {
      * @returns {Promise<EventResult>} A promise to the interaction event result
      */
     async interact(name: string, data?: any): Promise<EventResult> {
-        let { serder, sigs, jsondata } = await this.createInteract(name, data);
+        const { serder, sigs, jsondata } = await this.createInteract(
+            name,
+            data
+        );
 
         const res = await this.client.fetch(
             '/identifiers/' + name + '/events',
@@ -320,7 +326,7 @@ export class Identifier {
         const sigs = await keeper.sign(b(serder.raw));
 
         const jsondata: any = {
-            ixn: serder.ked,
+            ixn: serder.sad,
             sigs: sigs,
         };
         jsondata[keeper.algo] = keeper.params();
@@ -404,7 +410,7 @@ export class Identifier {
         const sigs = await keeper.sign(b(serder.raw));
 
         const jsondata: any = {
-            rot: serder.ked,
+            rot: serder.sad,
             sigs: sigs,
             smids:
                 states != undefined
@@ -450,7 +456,7 @@ export class Identifier {
         const sigs = await keeper.sign(b(rpy.raw));
 
         const jsondata = {
-            rpy: rpy.ked,
+            rpy: rpy.sad,
             sigs: sigs,
         };
 
@@ -518,7 +524,7 @@ export class Identifier {
         const sigs = await keeper.sign(b(rpy.raw));
 
         const jsondata = {
-            rpy: rpy.ked,
+            rpy: rpy.sad,
             sigs: sigs,
         };
         const res = await this.client.fetch(
@@ -533,9 +539,9 @@ export class Identifier {
      * Get the members of a group identifier
      * @async
      * @param {string} name - Name or alias of the identifier
-     * @returns {Promise<any>} - A promise to the list of members
+     * @returns {Promise<GroupMembers>} - A promise to the list of members
      */
-    async members(name: string): Promise<any> {
+    async members(name: string): Promise<GroupMembers> {
         const res = await this.client.fetch(
             '/identifiers/' + name + '/members',
             'GET',

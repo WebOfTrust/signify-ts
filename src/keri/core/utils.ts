@@ -1,9 +1,9 @@
-import { Counter, CtrDex } from './counter';
-import { Seqner } from './seqner';
-import { Prefixer } from './prefixer';
-import { Saider } from './saider';
-import { Serder } from './serder';
-import { b } from './core';
+import { Counter, CtrDex } from './counter.ts';
+import { Seqner } from './seqner.ts';
+import { Prefixer } from './prefixer.ts';
+import { Saider } from './saider.ts';
+import { Serder } from './serder.ts';
+import { b } from './core.ts';
 
 export function pad(n: any, width = 3, z = 0) {
     return (String(z).repeat(width) + String(n)).slice(String(n).length);
@@ -118,7 +118,7 @@ export function bytesToInt(ar: Uint8Array): number {
 export function serializeACDCAttachment(anc: Serder): Uint8Array {
     const prefixer = new Prefixer({ qb64: anc.pre });
     const seqner = new Seqner({ sn: anc.sn });
-    const saider = new Saider({ qb64: anc.ked['d'] });
+    const saider = new Saider({ qb64: anc.sad['d'] });
     const craw = new Uint8Array();
     const ctr = new Counter({ code: CtrDex.SealSourceTriples, count: 1 }).qb64b;
     const prefix = prefixer.qb64b;
@@ -137,7 +137,7 @@ export function serializeACDCAttachment(anc: Serder): Uint8Array {
 
 export function serializeIssExnAttachment(anc: Serder): Uint8Array {
     const seqner = new Seqner({ sn: anc.sn });
-    const ancSaider = new Saider({ qb64: anc.ked['d'] });
+    const ancSaider = new Saider({ qb64: anc.sad['d'] });
     const coupleArray = new Uint8Array(
         seqner.qb64b.length + ancSaider.qb64b.length
     );

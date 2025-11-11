@@ -8,4 +8,3 @@ dist
 .idea
 coverage/*
 
-examples/signify-react-ts/.cache

@@ -1,26 +1,32 @@
-import { SignifyClient } from './clienting';
-import { interact, messagize } from '../core/eventing';
-import { vdr } from '../core/vdring';
+import { SignifyClient } from './clienting.ts';
+import { interact, messagize } from '../core/eventing.ts';
+import { vdr } from '../core/vdring.ts';
 import {
     b,
     d,
     Dict,
-    Ident,
+    Protocols,
     Ilks,
     Serials,
     versify,
-    Versionage,
-} from '../core/core';
-import { Saider } from '../core/saider';
-import { Serder } from '../core/serder';
-import { Siger } from '../core/siger';
-import { TraitDex } from './habery';
+    Vrsn_1_0,
+} from '../core/core.ts';
+import { Saider } from '../core/saider.ts';
+import { Serder } from '../core/serder.ts';
+import { Siger } from '../core/siger.ts';
+import { TraitDex } from './habery.ts';
 import {
     serializeACDCAttachment,
     serializeIssExnAttachment,
-} from '../core/utils';
-import { Operation } from './coring';
-import { HabState } from '../core/state';
+} from '../core/utils.ts';
+import { Operation } from './coring.ts';
+import { HabState } from '../core/keyState.ts';
+
+import { components } from '../../types/keria-api-schema.ts';
+
+export type CredentialResult = components['schemas']['Credential'];
+export type Registry = components['schemas']['Registry'];
+export type Schema = components['schemas']['Schema'];
 
 /** Types of credentials */
 export class CredentialTypes {
@@ -229,25 +235,7 @@ export interface IpexAdmitArgs {
     datetime?: string;
 }
 
-export type CredentialState = {
-    vn: [number, number];
-    i: string;
-    s: string;
-    d: string;
-    ri: string;
-    a: { s: number; d: string };
-    dt: string;
-    et: string;
-} & (
-    | {
-          et: 'iss' | 'rev';
-          ra: Record<string, never>;
-      }
-    | {
-          et: 'bis' | 'brv';
-          ra: { i: string; s: string; d: string };
-      }
-);
+export type CredentialState = components['schemas']['CredentialState'];
 
 /**
  * Credentials
@@ -266,9 +254,9 @@ export class Credentials {
      * List credentials
      * @async
      * @param {CredentialFilter} [kargs] Optional parameters to filter the credentials
-     * @returns {Promise<any>} A promise to the list of credentials
+     * @returns {Promise<CredentialResult[]>} A promise to the list of credentials
      */
-    async list(kargs: CredentialFilter = {}): Promise<any> {
+    async list(kargs: CredentialFilter = {}): Promise<CredentialResult[]> {
         const path = `/credentials/query`;
         const filtr = kargs.filter === undefined ? {} : kargs.filter;
         const sort = kargs.sort === undefined ? [] : kargs.sort;
@@ -292,9 +280,15 @@ export class Credentials {
      * @async
      * @param {string} said - SAID of the credential
      * @param {boolean} [includeCESR=false] - Optional flag export the credential in CESR format
-     * @returns {Promise<any>} A promise to the credential
+     * @returns {Promise<CredentialResult | string>} A promise to the credential
      */
-    async get(said: string, includeCESR: boolean = false): Promise<any> {
+    async get(said: string): Promise<CredentialResult>;
+    async get(said: string, includeCESR: false): Promise<CredentialResult>;
+    async get(said: string, includeCESR: true): Promise<string>;
+    async get(
+        said: string,
+        includeCESR: boolean = false
+    ): Promise<CredentialResult | string> {
         const path = `/credentials/${said}`;
         const method = 'GET';
         const headers = includeCESR
@@ -332,7 +326,7 @@ export class Credentials {
     }
 
     /**
-     * Issue a credential
+     * Creates a credential in the specified registry to be GRANTed with IPEX to the intended recipient
      */
     async issue(
         name: string,
@@ -357,7 +351,7 @@ export class Credentials {
         });
 
         const [, acdc] = Saider.saidify({
-            v: versify(Ident.ACDC, undefined, Serials.JSON, 0),
+            v: versify(Protocols.ACDC, undefined, Serials.JSON, 0),
             d: '',
             u: args.u,
             i: args.i ?? hab.prefix,
@@ -369,7 +363,7 @@ export class Credentials {
         });
 
         const [, iss] = Saider.saidify({
-            v: versify(Ident.KERI, undefined, Serials.JSON, 0),
+            v: versify(Protocols.KERI, undefined, Serials.JSON, 0),
             t: Ilks.iss,
             d: '',
             i: acdc.d,
@@ -401,16 +395,12 @@ export class Credentials {
         const body = {
             acdc: acdc,
             iss: iss,
-            ixn: anc.ked,
+            ixn: anc.sad,
             sigs,
             [keeper.algo]: keeper.params(),
         };
 
-        const headers = new Headers({
-            Accept: 'application/json+cesr',
-        });
-
-        const res = await this.client.fetch(path, method, body, headers);
+        const res = await this.client.fetch(path, method, body);
         const op = await res.json();
 
         return {
@@ -427,7 +417,7 @@ export class Credentials {
      * @param {string} name Name or alias of the identifier
      * @param {string} said SAID of the credential
      * @param {string} datetime date time of revocation
-     * @returns {Promise<any>} A promise to the long-running operation
+     * @returns {Promise<RevokeCredentialResult>} A promise to the long-running operation
      */
     async revoke(
         name: string,
@@ -437,11 +427,20 @@ export class Credentials {
         const hab = await this.client.identifiers().get(name);
         const pre: string = hab.prefix;
 
-        const vs = versify(Ident.KERI, undefined, Serials.JSON, 0);
+        const vs = versify(Protocols.KERI, undefined, Serials.JSON, 0);
         const dt =
             datetime ?? new Date().toISOString().replace('Z', '000+00:00');
 
         const cred = await this.get(said);
+
+        let registryId: string;
+        if ('ri' in cred.sad && cred.sad.ri !== undefined) {
+            registryId = cred.sad.ri;
+        } else if ('rd' in cred.sad && cred.sad.rd !== undefined) {
+            registryId = cred.sad.rd;
+        } else {
+            throw new Error('Neither ri nor rd property found in credential');
+        }
 
         // Create rev
         const _rev = {
@@ -450,7 +449,7 @@ export class Credentials {
             d: '',
             i: said,
             s: '1',
-            ri: cred.sad.ri,
+            ri: registryId,
             p: cred.status.d,
             dt: dt,
         };
@@ -494,7 +493,7 @@ export class Credentials {
                 kind: undefined,
             });
             sigs = await keeper.sign(b(serder.raw));
-            ixn = serder.ked;
+            ixn = serder.sad;
         }
 
         const body = {
@@ -506,10 +505,7 @@ export class Credentials {
 
         const path = `/identifiers/${name}/credentials/${said}`;
         const method = 'DELETE';
-        const headers = new Headers({
-            Accept: 'application/json+cesr',
-        });
-        const res = await this.client.fetch(path, method, body, headers);
+        const res = await this.client.fetch(path, method, body);
         const op = await res.json();
 
         return {
@@ -559,7 +555,7 @@ export class RegistryResult {
         return this._sigs;
     }
 
-    async op(): Promise<any> {
+    async op(): Promise<Registry> {
         const res = await this.promise;
         return await res.json();
     }
@@ -582,9 +578,9 @@ export class Registries {
      * List registries
      * @async
      * @param {string} name Name or alias of the identifier
-     * @returns {Promise<any>} A promise to the list of registries
+     * @returns {Promise<Registry[]>} A promise to the list of registries
      */
-    async list(name: string): Promise<any> {
+    async list(name: string): Promise<Registry[]> {
         const path = `/identifiers/${name}/registries`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
@@ -641,7 +637,7 @@ export class Registries {
                 sn: sn + 1,
                 data: data,
                 dig: dig,
-                version: Versionage,
+                version: Vrsn_1_0,
                 kind: Serials.JSON,
             });
             const keeper = this.client.manager!.get(hab);
@@ -650,8 +646,8 @@ export class Registries {
                 hab,
                 name,
                 registryName,
-                regser.ked,
-                serder.ked,
+                regser.sad,
+                serder.sad,
                 sigs
             );
             return new RegistryResult(regser, serder, sigs, res);
@@ -687,13 +683,13 @@ export class Registries {
      * @param {string} name Name or alias of the identifier
      * @param {string} registryName Current registry name
      * @param {string} newName New registry name
-     * @returns {Promise<any>} A promise to the registry record
+     * @returns {Promise<Registry>} A promise to the registry record
      */
     async rename(
         name: string,
         registryName: string,
         newName: string
-    ): Promise<any> {
+    ): Promise<Registry> {
         const path = `/identifiers/${name}/registries/${registryName}`;
         const method = 'PUT';
         const data = {
@@ -720,9 +716,9 @@ export class Schemas {
      * Get a schema
      * @async
      * @param {string} said SAID of the schema
-     * @returns {Promise<any>} A promise to the schema
+     * @returns {Promise<Schema>} A promise to the schema
      */
-    async get(said: string): Promise<any> {
+    async get(said: string): Promise<Schema> {
         const path = `/schema/${said}`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
@@ -732,9 +728,9 @@ export class Schemas {
     /**
      * List schemas
      * @async
-     * @returns {Promise<any>} A promise to the list of schemas
+     * @returns {Promise<Schema[]>} A promise to the list of schemas
      */
-    async list(): Promise<any> {
+    async list(): Promise<Schema[]> {
         const path = `/schema`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
@@ -787,7 +783,7 @@ export class Ipex {
         recp: string[]
     ): Promise<any> {
         const body = {
-            exn: exn.ked,
+            exn: exn.sad,
             sigs,
             rec: recp,
         };
@@ -831,7 +827,7 @@ export class Ipex {
         recp: string[]
     ): Promise<any> {
         const body = {
-            exn: exn.ked,
+            exn: exn.sad,
             sigs,
             atc,
             rec: recp,
@@ -875,7 +871,7 @@ export class Ipex {
         recp: string[]
     ): Promise<any> {
         const body = {
-            exn: exn.ked,
+            exn: exn.sad,
             sigs,
             rec: recp,
         };
@@ -943,7 +939,7 @@ export class Ipex {
         recp: string[]
     ): Promise<any> {
         const body = {
-            exn: exn.ked,
+            exn: exn.sad,
             sigs: sigs,
             atc: atc,
             rec: recp,
@@ -988,7 +984,7 @@ export class Ipex {
         recp: string[]
     ): Promise<any> {
         const body = {
-            exn: exn.ked,
+            exn: exn.sad,
             sigs: sigs,
             atc: atc,
             rec: recp,

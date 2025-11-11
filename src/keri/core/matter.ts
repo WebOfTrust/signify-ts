@@ -1,9 +1,8 @@
-import { EmptyMaterialError } from './kering';
+import { EmptyMaterialError } from './kering.ts';
 
-import { intToB64, readInt } from './core';
-import { b, d } from './core';
-import { Buffer } from 'buffer';
-import { decodeBase64Url, encodeBase64Url } from './base64';
+import { intToB64, readInt } from './core.ts';
+import { b, d } from './core.ts';
+import { decodeBase64Url, encodeBase64Url } from './base64.ts';
 
 export class Codex {
     has(prop: string): boolean {
@@ -421,7 +420,7 @@ export class Matter {
                 bytes[odx] = raw[i];
             }
 
-            return both + encodeBase64Url(Buffer.from(bytes));
+            return both + encodeBase64Url(bytes);
         } else {
             const both = code;
             const cs = both.length;
@@ -443,7 +442,7 @@ export class Matter {
                 bytes[odx] = raw[i];
             }
 
-            return both + encodeBase64Url(Buffer.from(bytes)).slice(cs % 4);
+            return both + encodeBase64Url(bytes).slice(cs % 4);
         }
     }
 
@@ -487,7 +486,7 @@ export class Matter {
         let raw;
         if (ps != 0) {
             const base = new Array(ps + 1).join('A') + qb64.slice(cs);
-            const paw = decodeBase64Url(base); // decode base to leave prepadded raw
+            const paw = Uint8Array.from(decodeBase64Url(base)); // decode base to leave prepadded raw
             const pi = readInt(paw.subarray(0, ps)); // prepad as int
             if (pi & (2 ** pbs - 1)) {
                 // masked pad bits non-zero
@@ -498,7 +497,7 @@ export class Matter {
             raw = paw.subarray(ps); // strip off ps prepad paw bytes
         } else {
             const base = qb64.slice(cs);
-            const paw = decodeBase64Url(base);
+            const paw = Uint8Array.from(decodeBase64Url(base));
             const li = readInt(paw.subarray(0, sizage!.ls));
             if (li != 0) {
                 if (li == 1) {

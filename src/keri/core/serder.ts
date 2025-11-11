@@ -1,53 +1,53 @@
-import { MtrDex } from './matter';
+import { MtrDex } from './matter.ts';
 import {
     deversify,
     Dict,
-    Ident,
+    Protocols,
     Serials,
     versify,
     Version,
-    Versionage,
-} from './core';
-import { Verfer } from './verfer';
-import { Diger } from './diger';
-import { CesrNumber } from './number';
+    Vrsn_1_0,
+} from './core.ts';
+import { Verfer } from './verfer.ts';
+import { Diger } from './diger.ts';
+import { CesrNumber } from './number.ts';
 
 export class Serder {
     private _kind: Serials;
     private _raw: string = '';
-    private _ked: Dict<any> = {};
-    private _ident: Ident = Ident.KERI;
+    private _sad: Dict<any> = {};
+    private _proto: Protocols = Protocols.KERI;
     private _size: number = 0;
-    private _version: Version = Versionage;
+    private _version: Version = Vrsn_1_0;
     private readonly _code: string;
 
+    /**
+     * Creates a new Serder object from a self-addressing data dictionary.
+     * @param sad self-addressing data dictionary.
+     * @param kind serialization type to produce
+     * @param code derivation code for the prefix
+     */
     constructor(
-        ked: Dict<any>,
+        sad: Dict<any>,
         kind: Serials = Serials.JSON,
         code: string = MtrDex.Blake3_256
     ) {
+        const [raw, proto, eKind, eSad, version] = this._exhale(sad, kind);
+        this._raw = raw;
+        this._sad = eSad;
+        this._proto = proto;
+        this._version = version;
         this._code = code;
-        this._kind = kind;
-        this.ked = ked;
+        this._kind = eKind;
+        this._size = raw.length;
     }
 
-    set ked(ked: Dict<any>) {
-        const [raw, ident, kind, kd, version] = this._exhale(ked, this._kind);
-        const size = raw.length;
-        this._raw = raw;
-        this._ident = ident;
-        this._ked = kd;
-        this._kind = kind;
-        this._size = size;
-        this._version = version;
+    get sad(): Dict<any> {
+        return this._sad;
     }
 
     get pre(): string {
-        return this._ked['i'];
-    }
-
-    get ked(): Dict<any> {
-        return this._ked;
+        return this._sad['i'];
     }
 
     get code(): string {
@@ -58,8 +58,12 @@ export class Serder {
         return this._raw;
     }
 
+    get said(): string {
+        return this._sad['d'];
+    }
+
     get sner(): CesrNumber {
-        return new CesrNumber({}, this.ked['s']);
+        return new CesrNumber({}, this.sad['s']);
     }
 
     get sn(): number {
@@ -70,15 +74,22 @@ export class Serder {
         return this._kind;
     }
 
+    /**
+     * Serializes a self-addressing data dictionary from the dictionary passed in
+     * using the specified serialization type.
+     * @param sad self-addressing data dictionary.
+     * @param kind serialization type to produce
+     * @private
+     */
     private _exhale(
-        ked: Dict<any>,
+        sad: Dict<any>,
         kind: Serials
-    ): [string, Ident, Serials, Dict<any>, Version] {
-        return sizeify(ked, kind);
+    ): [string, Protocols, Serials, Dict<any>, Version] {
+        return sizeify(sad, kind);
     }
 
-    get ident(): Ident {
-        return this._ident;
+    get proto(): Protocols {
+        return this._proto;
     }
 
     get size(): number {
@@ -90,9 +101,9 @@ export class Serder {
     }
     get verfers(): Verfer[] {
         let keys: any = [];
-        if ('k' in this._ked) {
+        if ('k' in this._sad) {
             // establishment event
-            keys = this._ked['k'];
+            keys = this._sad['k'];
         } else {
             // non-establishment event
             keys = [];
@@ -107,9 +118,9 @@ export class Serder {
 
     get digers(): Diger[] {
         let keys: any = [];
-        if ('n' in this._ked) {
+        if ('n' in this._sad) {
             // establishment event
-            keys = this._ked['n'];
+            keys = this._sad['n'];
         } else {
             // non-establishment event
             keys = [];
@@ -123,13 +134,13 @@ export class Serder {
     }
 
     pretty() {
-        return JSON.stringify(this._ked, undefined, 2);
+        return JSON.stringify(this._sad, undefined, 2);
     }
 }
 
-export function dumps(ked: Object, kind: Serials.JSON): string {
+export function dumps(sad: object, kind: Serials.JSON): string {
     if (kind == Serials.JSON) {
-        return JSON.stringify(ked);
+        return JSON.stringify(sad);
     } else {
         throw new Error('unsupported event encoding');
     }
@@ -138,13 +149,13 @@ export function dumps(ked: Object, kind: Serials.JSON): string {
 export function sizeify(
     ked: Dict<any>,
     kind?: Serials
-): [string, Ident, Serials, Dict<any>, Version] {
+): [string, Protocols, Serials, Dict<any>, Version] {
     if (!('v' in ked)) {
         throw new Error('Missing or empty version string');
     }
 
-    const [ident, knd, version] = deversify(ked['v'] as string);
-    if (version != Versionage) {
+    const [proto, knd, version] = deversify(ked['v'] as string);
+    if (version != Vrsn_1_0) {
         throw new Error(`unsupported version ${version.toString()}`);
     }
 
@@ -155,9 +166,9 @@ export function sizeify(
     let raw = dumps(ked, kind);
     const size = new TextEncoder().encode(raw).length;
 
-    ked['v'] = versify(ident, version, kind, size);
+    ked['v'] = versify(proto, version, kind, size);
 
     raw = dumps(ked, kind);
 
-    return [raw, ident, kind, ked, version];
+    return [raw, proto, kind, ked, version];
 }

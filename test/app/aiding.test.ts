@@ -1,34 +1,33 @@
-import { strict as assert } from 'assert';
+import { assert, describe, it, expect, beforeEach, vitest } from 'vitest';
 import {
     CreateIdentiferArgs,
     RotateIdentifierArgs,
-} from '../../src/keri/app/aiding';
-import { Algos } from '../../src/keri/core/manager';
+} from '../../src/keri/app/aiding.ts';
+import { Algos } from '../../src/keri/core/manager.ts';
 import libsodium from 'libsodium-wrappers-sumo';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import {
     Controller,
     Identifier,
     IdentifierDeps,
-    KeyManager,
-    Tier,
+    IdentifierManagerFactory,
     randomPasscode,
-} from '../../src';
-import { createMockIdentifierState } from './test-utils';
+    Tier,
+} from '../../src/index.ts';
+import { createMockIdentifierState } from './test-utils.ts';
 
 const bran = '0123456789abcdefghijk';
 
 export class MockClient implements IdentifierDeps {
-    manager: KeyManager;
+    manager: IdentifierManagerFactory;
     controller: Controller;
     pidx = 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    fetch = jest.fn<Promise<Response>, [string, string, any]>();
+    fetch = vitest.fn();
 
     constructor(bran: string) {
         this.controller = new Controller(bran, Tier.low);
-        this.manager = new KeyManager(this.controller.salter);
+        this.manager = new IdentifierManagerFactory(this.controller.salter);
     }
 
     identifiers() {
@@ -57,8 +56,8 @@ describe('Aiding', () => {
         client.fetch.mockResolvedValue(Response.json({}));
         await client.identifiers().list();
         const lastCall = client.getLastMockRequest();
-        expect(lastCall.path).toEqual('/identifiers');
-        expect(lastCall.method).toEqual('GET');
+        assert.equal(lastCall.path, '/identifiers');
+        assert.equal(lastCall.method, 'GET');
     });
 
     it('Can create salty identifiers', async () => {
@@ -289,8 +288,8 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
 
-        expect(lastCall.path).toEqual('/identifiers/aid1/events');
-        expect(lastCall.method).toEqual('POST');
+        assert.equal(lastCall.path, '/identifiers/aid1/events');
+        assert.equal(lastCall.method, 'POST');
         expect(lastCall.body.ixn).toMatchObject({
             v: 'KERI10JSON000138_',
             t: 'ixn',
@@ -331,8 +330,8 @@ describe('Aiding', () => {
 
         const lastCall = client.getLastMockRequest();
 
-        expect(lastCall.path).toEqual('/identifiers/aid1/events');
-        expect(lastCall.method).toEqual('POST');
+        assert.equal(lastCall.path, '/identifiers/aid1/events');
+        assert.equal(lastCall.method, 'POST');
         expect(lastCall.body.ixn).toMatchObject({
             s: 'b',
             a: data,
@@ -532,6 +531,7 @@ describe('Aiding', () => {
                 isith: ['1'],
                 nsith: ['1'],
             };
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             args !== null; // avoids TS6133
         });
 
@@ -546,6 +546,7 @@ describe('Aiding', () => {
             args = {
                 nsith: ['1'],
             };
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             args !== null; // avoids TS6133
         });
     });
