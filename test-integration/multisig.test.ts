@@ -1,8 +1,15 @@
 import { assert, test } from 'vitest';
-import signify, {
+import {
     SignifyClient,
     Serder,
     IssueCredentialResult,
+    KeyState,
+    Algos,
+    Siger,
+    ready,
+    messagize,
+    b,
+    d,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -25,7 +32,7 @@ const SCHEMA_SAID = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
 const SCHEMA_OOBI = `${vleiServerUrl}/oobi/${SCHEMA_SAID}`;
 
 test('multisig', async function run() {
-    await signify.ready();
+    await ready();
     // Boot Four clients
     const [client1, client2, client3, client4] = await Promise.all([
         getOrCreateClient(),
@@ -108,22 +115,26 @@ test('multisig', async function run() {
     op1 = await client1.challenges().verify(aid2.prefix, words);
     op1 = await waitOperation(client1, op1);
     console.log('Member1 verified challenge response from member2');
-    let exnwords = new Serder(op1.response.exn);
-    op1 = await client1.challenges().responded(aid2.prefix, exnwords.sad.d);
+    let exnwords = new Serder((op1.response as any)?.exn);
+    let res1 = await client1
+        .challenges()
+        .responded(aid2.prefix, exnwords.sad.d);
+    assert.equal(res1.status, 202);
     console.log('Member1 marked challenge response as accepted');
 
     op1 = await client1.challenges().verify(aid3.prefix, words);
     op1 = await waitOperation(client1, op1);
     console.log('Member1 verified challenge response from member3');
-    exnwords = new Serder(op1.response.exn);
-    op1 = await client1.challenges().responded(aid3.prefix, exnwords.sad.d);
+    exnwords = new Serder((op1.response as any)?.exn);
+    res1 = await client1.challenges().responded(aid3.prefix, exnwords.sad.d);
+    assert.equal(res1.status, 202);
     console.log('Member1 marked challenge response as accepted');
 
     // First member start the creation of a multisig identifier
     let rstates = [aid1['state'], aid2['state'], aid3['state']];
     let states = rstates;
     let icpResult1 = await client1.identifiers().create('multisig', {
-        algo: signify.Algos.group,
+        algo: Algos.group,
         mhab: aid1,
         isith: 3,
         nsith: 3,
@@ -136,9 +147,9 @@ test('multisig', async function run() {
     let serder = icpResult1.serder;
 
     let sigs = icpResult1.sigs;
-    let sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    let sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    let ims = signify.d(signify.messagize(serder, sigers));
+    let ims = d(messagize(serder, sigers));
     let atc = ims.substring(serder.size);
     let embeds = {
         icp: [serder, atc],
@@ -170,7 +181,7 @@ test('multisig', async function run() {
     let icp = exn.e.icp;
 
     let icpResult2 = await client2.identifiers().create('multisig', {
-        algo: signify.Algos.group,
+        algo: Algos.group,
         mhab: aid2,
         isith: icp.kt,
         nsith: icp.nt,
@@ -182,9 +193,9 @@ test('multisig', async function run() {
     op2 = await icpResult2.op();
     serder = icpResult2.serder;
     sigs = icpResult2.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     embeds = {
         icp: [serder, atc],
@@ -214,7 +225,7 @@ test('multisig', async function run() {
     exn = res[0].exn;
     icp = exn.e.icp;
     let icpResult3 = await client3.identifiers().create('multisig', {
-        algo: signify.Algos.group,
+        algo: Algos.group,
         mhab: aid3,
         isith: icp.kt,
         nsith: icp.nt,
@@ -226,9 +237,9 @@ test('multisig', async function run() {
     op3 = await icpResult3.op();
     serder = icpResult3.serder;
     sigs = icpResult3.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     embeds = {
         icp: [serder, atc],
@@ -327,10 +338,8 @@ test('multisig', async function run() {
         'SealEvent',
         { i: hab['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
-    let roleims = signify.d(
-        signify.messagize(rpy, sigers, seal, undefined, undefined, false)
-    );
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
+    let roleims = d(messagize(rpy, sigers, seal, undefined, undefined, false));
     atc = roleims.substring(rpy.size);
     let roleembeds = {
         rpy: [rpy, atc],
@@ -375,10 +384,8 @@ test('multisig', async function run() {
         'SealEvent',
         { i: hab['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
-    roleims = signify.d(
-        signify.messagize(rpy, sigers, seal, undefined, undefined, false)
-    );
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
+    roleims = d(messagize(rpy, sigers, seal, undefined, undefined, false));
     atc = roleims.substring(rpy.size);
     roleembeds = {
         rpy: [rpy, atc],
@@ -422,10 +429,8 @@ test('multisig', async function run() {
         'SealEvent',
         { i: hab['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
-    roleims = signify.d(
-        signify.messagize(rpy, sigers, seal, undefined, undefined, false)
-    );
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
+    roleims = d(messagize(rpy, sigers, seal, undefined, undefined, false));
     atc = roleims.substring(rpy.size);
     roleembeds = {
         rpy: [rpy, atc],
@@ -470,9 +475,9 @@ test('multisig', async function run() {
     op1 = await eventResponse1.op();
     serder = eventResponse1.serder;
     sigs = eventResponse1.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     let xembeds = {
         ixn: [serder, atc],
@@ -510,9 +515,9 @@ test('multisig', async function run() {
     op2 = await icpResult2.op();
     serder = icpResult2.serder;
     sigs = icpResult2.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     xembeds = {
         ixn: [serder, atc],
@@ -548,9 +553,9 @@ test('multisig', async function run() {
     op3 = await icpResult3.op();
     serder = icpResult3.serder;
     sigs = icpResult3.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     xembeds = {
         ixn: [serder, atc],
@@ -600,16 +605,16 @@ test('multisig', async function run() {
     // Update new key states
     op1 = await client1.keyStates().query(aid2.prefix, '1');
     op1 = await waitOperation(client1, op1);
-    const aid2State = op1['response'];
+    const aid2State = op1['response'] as KeyState;
     op1 = await client1.keyStates().query(aid3.prefix, '1');
     op1 = await waitOperation(client1, op1);
-    const aid3State = op1['response'];
+    const aid3State = op1['response'] as KeyState;
 
     op2 = await client2.keyStates().query(aid3.prefix, '1');
     op2 = await waitOperation(client2, op2);
     op2 = await client2.keyStates().query(aid1.prefix, '1');
     op2 = await waitOperation(client2, op2);
-    const aid1State = op2['response'];
+    const aid1State = op2['response'] as KeyState;
 
     op3 = await client3.keyStates().query(aid1.prefix, '1');
     op3 = await waitOperation(client3, op3);
@@ -635,9 +640,9 @@ test('multisig', async function run() {
     op1 = await eventResponse1.op();
     serder = eventResponse1.serder;
     sigs = eventResponse1.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     let rembeds = {
         rot: [serder, atc],
@@ -675,9 +680,9 @@ test('multisig', async function run() {
     op2 = await icpResult2.op();
     serder = icpResult2.serder;
     sigs = icpResult2.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     rembeds = {
         rot: [serder, atc],
@@ -711,9 +716,9 @@ test('multisig', async function run() {
     op3 = await icpResult3.op();
     serder = icpResult3.serder;
     sigs = icpResult3.sigs;
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(serder, sigers));
+    ims = d(messagize(serder, sigers));
     atc = ims.substring(serder.size);
     rembeds = {
         rot: [serder, atc],
@@ -762,9 +767,9 @@ test('multisig', async function run() {
     let anc = vcpRes1.serder;
     sigs = vcpRes1.sigs;
 
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(anc, sigers));
+    ims = d(messagize(anc, sigers));
     atc = ims.substring(anc.size);
     let regbeds = {
         vcp: [serder, ''],
@@ -804,9 +809,9 @@ test('multisig', async function run() {
     anc = vcpRes2.serder;
     sigs = vcpRes2.sigs;
 
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(anc, sigers));
+    ims = d(messagize(anc, sigers));
     atc = ims.substring(anc.size);
     regbeds = {
         vcp: [serder, ''],
@@ -846,9 +851,9 @@ test('multisig', async function run() {
     anc = vcpRes3.serder;
     sigs = vcpRes3.sigs;
 
-    sigers = sigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = sigs.map((sig) => new Siger({ qb64: sig }));
 
-    ims = signify.d(signify.messagize(anc, sigers));
+    ims = d(messagize(anc, sigers));
     atc = ims.substring(anc.size);
     regbeds = {
         vcp: [serder, ''],
@@ -968,9 +973,9 @@ test('multisig', async function run() {
         'SealEvent',
         { i: m['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },
     ];
-    sigers = gsigs.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = gsigs.map((sig) => new Siger({ qb64: sig }));
 
-    let gims = signify.d(signify.messagize(grant, sigers, seal));
+    let gims = d(messagize(grant, sigers, seal));
     atc = gims.substring(grant.size);
     atc += end;
     let gembeds = {
@@ -1011,9 +1016,9 @@ test('multisig', async function run() {
         .ipex()
         .submitGrant('multisig', grant2, gsigs2, end2, [holder]);
 
-    sigers = gsigs2.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = gsigs2.map((sig) => new Siger({ qb64: sig }));
 
-    gims = signify.d(signify.messagize(grant2, sigers, seal));
+    gims = d(messagize(grant2, sigers, seal));
     atc = gims.substring(grant2.size);
     atc += end2;
 
@@ -1053,9 +1058,9 @@ test('multisig', async function run() {
         .ipex()
         .submitGrant('multisig', grant3, gsigs3, end3, [holder]);
 
-    sigers = gsigs3.map((sig) => new signify.Siger({ qb64: sig }));
+    sigers = gsigs3.map((sig) => new Siger({ qb64: sig }));
 
-    gims = signify.d(signify.messagize(grant3, sigers, seal));
+    gims = d(messagize(grant3, sigers, seal));
     atc = gims.substring(grant3.size);
     atc += end3;
 
@@ -1197,9 +1202,9 @@ async function multisigIssue(
     const members = await client.identifiers().members(groupName);
 
     const keeper = client.manager!.get(groupHab);
-    const sigs = await keeper.sign(signify.b(result.anc.raw));
-    const sigers = sigs.map((sig: string) => new signify.Siger({ qb64: sig }));
-    const ims = signify.d(signify.messagize(result.anc, sigers));
+    const sigs = await keeper.sign(b(result.anc.raw));
+    const sigers = sigs.map((sig: string) => new Siger({ qb64: sig }));
+    const ims = d(messagize(result.anc, sigers));
     const atc = ims.substring(result.anc.size);
 
     const embeds = {
@@ -1237,9 +1242,9 @@ async function multisigRevoke(
     const members = await client.identifiers().members(groupName);
 
     const keeper = client.manager!.get(groupHab);
-    const sigs = await keeper.sign(signify.b(anc.raw));
-    const sigers = sigs.map((sig: string) => new signify.Siger({ qb64: sig }));
-    const ims = signify.d(signify.messagize(anc, sigers));
+    const sigs = await keeper.sign(b(anc.raw));
+    const sigers = sigs.map((sig: string) => new Siger({ qb64: sig }));
+    const ims = d(messagize(anc, sigers));
     const atc = ims.substring(anc.size);
 
     const embeds = {
