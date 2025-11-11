@@ -1,10 +1,11 @@
+import { beforeAll, describe, test } from 'vitest';
 import { strict as assert } from 'assert';
 import { SignifyClient } from 'signify-ts';
 import {
     getEndRoles,
     getOrCreateClient,
     waitOperation,
-} from './utils/test-util';
+} from './utils/test-util.ts';
 
 let client: SignifyClient;
 let cid: string;
