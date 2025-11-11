@@ -635,10 +635,9 @@ export interface components {
         };
         MultisigInceptEmbeds: {
             icp: components['schemas']['Icp'];
-            rot?: components['schemas']['Rot'];
         };
         MultisigRotateEmbeds: {
-            rot: unknown;
+            rot: components['schemas']['Rot'];
         };
         MultisigInteractEmbeds: {
             ixn: components['schemas']['Ixn'];
@@ -721,13 +720,13 @@ export interface components {
             paths: {
                 [key: string]: unknown;
             };
-            e: components['schemas']['ExnEmbeds'];
             /** @default null */
             groupName: string | null;
             /** @default null */
             memberName: string | null;
             /** @default null */
             sender: string | null;
+            e?: components['schemas']['ExnEmbeds'];
         };
     };
     responses: never;

@@ -24,8 +24,8 @@ export interface StartMultisigInceptArgs {
     groupName: string;
     localMemberName: string;
     participants: string[];
-    isith?: string | string[] | string[][];
-    nsith?: string | string[] | string[][];
+    isith?: string | number | string[] | string[][];
+    nsith?: string | number | string[] | string[][];
     toad?: number;
     wits?: string[];
     delpre?: string;

@@ -57,8 +57,8 @@ describe('multisig-join', () => {
         const icpResult = await client1.identifiers().create(nameMultisig, {
             algo: signify.Algos.group,
             mhab: aid1,
-            isith: '1',
-            nsith: '1',
+            isith: 1,
+            nsith: 1,
             toad: aid1.state.b.length,
             wits: aid1.state.b,
             states: states,

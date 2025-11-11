@@ -139,8 +139,8 @@ test('multisig', async function run() {
     let icpResult1 = await client1.identifiers().create('multisig', {
         algo: Algos.group,
         mhab: aid1,
-        isith: '3',
-        nsith: '3',
+        isith: 3,
+        nsith: 3,
         toad: aid1.state.b.length,
         wits: aid1.state.b,
         states: states,

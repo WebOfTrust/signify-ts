@@ -80,8 +80,8 @@ test('multisig', async function run() {
     op1 = await startMultisigIncept(client1, {
         groupName: 'holder',
         localMemberName: aid1.name,
-        isith: '2',
-        nsith: '2',
+        isith: 2,
+        nsith: 2,
         toad: aid1.state.b.length,
         wits: aid1.state.b,
         participants: [aid1.prefix, aid2.prefix],

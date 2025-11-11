@@ -42,8 +42,8 @@ test('multisig inception', async () => {
             localMemberName: 'member1',
             participants: [aid1, aid2],
             toad: 2,
-            isith: '2',
-            nsith: '2',
+            isith: 2,
+            nsith: 2,
             wits: [
                 'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
                 'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
@@ -97,8 +97,8 @@ test('multisig inception', async () => {
             localMemberName: 'member1',
             participants: [aid1, aid2],
             toad: 0,
-            isith: '2',
-            nsith: '2',
+            isith: 2,
+            nsith: 2,
             wits: [],
         });
         console.log(

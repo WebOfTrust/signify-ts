@@ -270,9 +270,9 @@ export function ample(n: number, f?: number, weak = true) {
 
 export interface InceptArgs {
     keys: Array<string>;
-    isith?: string | string[] | string[][];
+    isith?: string | number | string[] | string[][];
     ndigs?: Array<string>;
-    nsith?: string | string[] | string[][];
+    nsith?: string | number | string[] | string[][];
     toad?: number | string;
     wits?: Array<string>;
     cnfg?: Array<string>;
