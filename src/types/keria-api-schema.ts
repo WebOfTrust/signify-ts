@@ -694,11 +694,20 @@ export interface components {
         };
         MultisigRevokeEmbeds: {
             rev: components['schemas']['REV_V_1'];
-            anc: unknown;
+            anc:
+                | components['schemas']['IXN_V_1']
+                | components['schemas']['IXN_V_2']
+                | components['schemas']['ICP_V_1']
+                | components['schemas']['ICP_V_2']
+                | components['schemas']['ROT_V_1']
+                | components['schemas']['ROT_V_2']
+                | components['schemas']['DIP_V_1']
+                | components['schemas']['DIP_V_2']
+                | components['schemas']['DRT_V_1']
+                | components['schemas']['DRT_V_2'];
         };
         MultisigRpyEmbeds: {
             rpy: components['schemas']['Rpy'];
-            anc: unknown;
         };
         MultisigExnEmbeds: {
             exn: components['schemas']['Exn'];
@@ -726,7 +735,6 @@ export interface components {
             memberName: string | null;
             /** @default null */
             sender: string | null;
-            e?: components['schemas']['ExnEmbeds'];
         };
     };
     responses: never;

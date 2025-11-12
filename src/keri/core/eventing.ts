@@ -304,7 +304,7 @@ export function incept({
     const sner = new CesrNumber({}, 0);
 
     if (isith == undefined) {
-        isith = Math.max(1, Math.ceil(keys.length / 2)).toString();
+        isith = Math.max(1, Math.ceil(keys.length / 2));
     }
 
     const tholder = new Tholder({ sith: isith });
@@ -320,7 +320,7 @@ export function incept({
     }
 
     if (nsith == undefined) {
-        nsith = Math.max(0, Math.ceil(ndigs.length / 2)).toString();
+        nsith = Math.max(0, Math.ceil(ndigs.length / 2));
     }
 
     const ntholder = new Tholder({ sith: nsith });
