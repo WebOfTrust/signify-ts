@@ -399,11 +399,9 @@ export interface components {
             dt: string;
             /** @default  */
             et: string;
-            /** @default 0 */
-            kt: string;
+            kt: string | string[];
             k: string[];
-            /** @default 0 */
-            nt: string;
+            nt: string | string[];
             n: string[];
             /** @default 0 */
             bt: string;
