@@ -63,7 +63,7 @@ export class Serder {
     }
 
     get sner(): CesrNumber {
-        return new CesrNumber({}, this.sad['s']);
+        return new CesrNumber({}, undefined, this.sad['s']);
     }
 
     get sn(): number {
