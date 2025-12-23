@@ -4,20 +4,22 @@ import { bytesToInt, intToBytes } from './utils.ts';
 export class CesrNumber extends Matter {
     constructor(
         { raw, code, qb64b, qb64, qb2 }: MatterArgs,
-        num?: number | string,
-        numh?: string
+        num?: number | string
     ) {
-        let _num;
+        let _num: number | undefined;
         if (
             raw == undefined &&
             qb64 == undefined &&
             qb64b == undefined &&
             qb2 == undefined
         ) {
-            if (typeof num == 'number') {
+            if (typeof num === 'number') {
                 _num = num;
-            } else if (numh != undefined) {
-                _num = parseInt(numh, 16);
+            } else if (typeof num === 'string') {
+                _num = parseInt(num, 16);
+                if (Number.isNaN(_num)) {
+                    throw new Error(`Invalid hex string for num: ${num}`);
+                }
             } else {
                 _num = 0;
             }
