@@ -38,7 +38,7 @@ export class Agent {
     private parse(agent: Agent) {
         const [state, verfer] = this.event(agent);
 
-        this.sn = new CesrNumber({}, undefined, state['s']).num;
+        this.sn = new CesrNumber({}, state['s']).num;
         this.said = state['d'];
 
         if (state['et'] !== Ilks.dip) {
@@ -228,7 +228,7 @@ export class Controller {
     approveDelegation(_agent: Agent) {
         const seqner = new Seqner({ sn: _agent.sn });
         const anchor = { i: _agent.pre, s: seqner.snh, d: _agent.said };
-        const sn = new CesrNumber({}, undefined, this.serder.sad['s']).num + 1;
+        const sn = new CesrNumber({}, this.serder.sad['s']).num + 1;
         this.serder = interact({
             pre: this.serder.pre,
             dig: this.serder.sad['d'],

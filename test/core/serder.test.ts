@@ -6,7 +6,6 @@ import { Diger } from '../../src/keri/core/diger.ts';
 import { Serder } from '../../src/keri/core/serder.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Prefixer } from '../../src/keri/core/prefixer.ts';
-import { CesrNumber } from '../../src/keri/core/number.ts';
 
 describe('deversify', () => {
     it('should parse a KERI event version string', async () => {
@@ -73,8 +72,8 @@ describe('Serder', () => {
         assert.equal(
             serder.raw,
             '{"v":"KERI10JSON0000d3_","t":"icp","d":"","i":"","s":"0","kt":"1","k":' +
-            '["DAUDqkmn-hqlQKD8W-FAEa5JUvJC2I9yarEem-AAEg3e"],"nt":"1",' +
-            '"n":["EAKUR-LmLHWMwXTLWQ1QjxHrihBmwwrV2tYaSG7hOrWj"],"bt":"0","b":[],"c":[],"a":[]}'
+                '["DAUDqkmn-hqlQKD8W-FAEa5JUvJC2I9yarEem-AAEg3e"],"nt":"1",' +
+                '"n":["EAKUR-LmLHWMwXTLWQ1QjxHrihBmwwrV2tYaSG7hOrWj"],"bt":"0","b":[],"c":[],"a":[]}'
         );
         let aid0 = new Prefixer({ code: MtrDex.Ed25519 }, ked0);
         assert.equal(aid0.code, MtrDex.Ed25519);
@@ -101,16 +100,16 @@ describe('Serder', () => {
 
         const ked = {
             v: 'KERI10JSON00013b_',
-            t: Ilks.ixn,
-            d: 'EISfGQrKJscFXScIV_n2pMzvZuBiSZtMxP0E64sAq6p3',
-            i: 'ED88Jn6CnWpNbSYz6vp9DOSpJH2_Di5MSwWTf1l34JJm',
+            t: 'ixn',
+            d: 'EDMbT6cc2P4aPozDJhat1T_S-G98Gc7Jj8K0qxAL7EuC',
+            i: 'EDKLs7y-U4N_EIv_oqJqdmWOvR5Y-nSEHJPrprT1RLFb',
             s: '39',
-            p: 'EMF5t6OYToET4JD11FkU9Axtsp_w8Su2rtJ8Wbuev-6U',
+            p: 'EI696dhEGo9cDK7MpvSsPkNkVhF4pwwgof3GaRVVESXb',
             a: [
                 {
-                    i: 'EN9r-cXzNm72-rPyPUzLTgfsXQ6IJn_TvQGqANRFEo5_',
+                    i: 'EFMXIFSIyEL6JTCyZAbO3nHgSdOw5UbLH9fAr9zO8_LH',
                     s: '0',
-                    d: 'EGwYEisTlJiQUtiFJlQvbh_NC3YDrr8p8VvwgvEDozkT',
+                    d: 'EFMXIFSIyEL6JTCyZAbO3nHgSdOw5UbLH9fAr9zO8_LH',
                 },
             ],
         };
@@ -121,5 +120,4 @@ describe('Serder', () => {
         assert.equal(serder.sner.num, 57);
         assert.equal(serder.sner.numh, '39');
     });
-
 });
