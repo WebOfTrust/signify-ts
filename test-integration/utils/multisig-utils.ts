@@ -8,7 +8,6 @@ import signify, {
     d,
     messagize,
     HabState,
-    Dip,
     assertMultisigIcp,
     assertMultisigIxn,
 } from 'signify-ts';

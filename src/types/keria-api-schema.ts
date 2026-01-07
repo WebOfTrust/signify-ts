@@ -432,6 +432,27 @@ export interface components {
             /** @default null */
             sxlt: string | null;
         };
+        HabState: {
+            name: string;
+            prefix: string;
+            icp_dt: string;
+            state: components['schemas']['KeyStateRecord'];
+            transferable: boolean;
+            windexes: string[];
+        } & (
+            | {
+                  salty: components['schemas']['SaltyState'];
+              }
+            | {
+                  randy: components['schemas']['RandyKeyState'];
+              }
+            | {
+                  group: components['schemas']['GroupKeyState'];
+              }
+            | {
+                  extern: components['schemas']['ExternState'];
+              }
+        );
         SaltyState: {
             tier: components['schemas']['Tier'];
             /** @default  */
@@ -453,18 +474,8 @@ export interface components {
             prxs: string[];
             nxts: string[];
         };
-        HabState: {
-            name: string;
-            prefix: string;
-            icp_dt: string;
-            state: components['schemas']['KeyStateRecord'];
-            /** @default null */
-            transferable: boolean | null;
-            /** @default null */
-            windexes: string[] | null;
-        };
         GroupKeyState: {
-            mhab: components['schemas']['Identifier'];
+            mhab: components['schemas']['HabState'];
             keys: string[];
             ndigs: string[];
         };
@@ -474,15 +485,10 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        Identifier: {
+        HabStateBase: {
             name: string;
             prefix: string;
             icp_dt: string;
-            state: components['schemas']['KeyStateRecord'];
-            /** @default null */
-            transferable: boolean | null;
-            /** @default null */
-            windexes: string[] | null;
         } & (
             | {
                   salty: components['schemas']['SaltyState'];

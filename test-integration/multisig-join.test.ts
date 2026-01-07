@@ -2,7 +2,6 @@ import signify, {
     KeyState,
     Serder,
     SignifyClient,
-    Icp,
     assertMultisigIcp,
     assertMultisigRot,
 } from 'signify-ts';
