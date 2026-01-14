@@ -389,18 +389,6 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         offerSaid = offer.exn.d;
 
         assert.strictEqual(offer.exn.p, applySaid);
-        assert(
-            'e' in offer.exn &&
-                offer.exn.e &&
-                typeof offer.exn.e === 'object' &&
-                'acdc' in offer.exn.e &&
-                offer.exn.e.acdc &&
-                typeof offer.exn.e.acdc === 'object' &&
-                'a' in offer.exn.e.acdc &&
-                offer.exn.e.acdc.a &&
-                typeof offer.exn.e.acdc.a === 'object' &&
-                'LEI' in offer.exn.e.acdc.a
-        );
         assert.strictEqual(offer.exn.e.acdc.a.LEI, '5493001KJTIIGC8Y1R17');
 
         await markAndRemoveNotification(verifierClient, verifierOfferNote);

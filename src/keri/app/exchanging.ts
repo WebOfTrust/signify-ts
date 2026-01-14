@@ -5,11 +5,11 @@ import { nowUTC } from '../core/utils.ts';
 import { Pather } from '../core/pather.ts';
 import { Counter, CtrDex } from '../core/counter.ts';
 import { Saider } from '../core/saider.ts';
-import { HabState } from '../core/keyState.ts';
-import { Exn } from './grouping.ts';
+import { ExnV1, HabState } from '../core/keyState.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
 export type ExchangeResource = components['schemas']['ExchangeResource'];
+export type ExchangeResourceV1 = Omit<ExchangeResource, 'exn'> & { exn: ExnV1 };
 
 /**
  * Exchanges
@@ -141,7 +141,7 @@ export class Exchanges {
      * @returns A promise to the exn message
      * @param said The said of the exn message
      */
-    async get(said: string): Promise<ExchangeResource> {
+    async get(said: string): Promise<ExchangeResourceV1> {
         const path = `/exchanges/${said}`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
