@@ -9,7 +9,8 @@ import signify, {
     messagize,
     HabState,
     Dip,
-    ExnEmbeds,
+    assertMultisigIcp,
+    assertMultisigIxn,
 } from 'signify-ts';
 import { getStates, waitAndMarkNotification } from './test-util.ts';
 import assert from 'assert';
@@ -38,14 +39,8 @@ export async function acceptMultisigIncept(
     const memberHab = await client2.identifiers().get(localMemberName);
 
     const res = await client2.groups().getRequest(msgSaid);
-    const exn = res[0].exn;
-
-    if (!('e' in exn) || !exn.e || !('icp' in exn.e) || !exn.e.icp) {
-        throw new Error(
-            'exn.e.icp is missing from the group inception request'
-        );
-    }
-
+    const groupExn = assertMultisigIcp(res[0]);
+    const exn = groupExn.exn;
     const icp = exn.e.icp as Dip;
     const smids = (exn.a as { smids: string[] }).smids;
     const rmids = (exn.a as { rmids: string[] }).rmids;
@@ -308,17 +303,9 @@ export async function delegateMultisig(
         );
 
         const res = await client.groups().getRequest(msgSaid);
-        const exn = res[0].exn;
-        if (!('e' in exn) || !exn.e) {
-            throw new Error('exn.e is missing from the group request');
-        }
-
-        const embeds = exn.e as ExnEmbeds;
-        if (!('ixn' in embeds) || !embeds.ixn) {
-            throw new Error('ixn is missing from embeds');
-        }
-
-        const ixn = embeds.ixn;
+        const groupExn = assertMultisigIxn(res[0]);
+        const exn = groupExn.exn;
+        const ixn = exn.e.ixn;
         anchor = (ixn.a as Array<{ i: string; s: string; d: string }>)[0];
     }
 
@@ -333,10 +320,11 @@ export async function delegateMultisig(
         } with anchor ${JSON.stringify(anchor)}`
     );
 
-    assert.equal(
-        JSON.stringify(delResult.serder.sad.a[0]),
-        JSON.stringify(anchor)
-    );
+    const expectedAnchor = Array.isArray(delResult.serder.sad.a)
+        ? delResult.serder.sad.a[0]
+        : delResult.serder.sad.a;
+
+    assert.equal(JSON.stringify(expectedAnchor), JSON.stringify(anchor));
 
     const serder = delResult.serder;
     const sigs = delResult.sigs;

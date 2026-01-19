@@ -1,4 +1,10 @@
-import signify, { KeyState, Serder, SignifyClient, Icp } from 'signify-ts';
+import signify, {
+    KeyState,
+    Serder,
+    SignifyClient,
+    Icp,
+    assertMultisigIcp,
+} from 'signify-ts';
 import {
     getOrCreateClient,
     getOrCreateIdentifier,
@@ -96,13 +102,9 @@ describe('multisig-join', () => {
         const msgSaid = await waitAndMarkNotification(client2, '/multisig/icp');
 
         const response = await client2.groups().getRequest(msgSaid);
-        const exn = response[0].exn;
-        if (!('e' in exn) || !exn.e || !('icp' in exn.e) || !exn.e.icp) {
-            throw new Error(
-                'exn.e.icp is missing from the group inception response'
-            );
-        }
-        const icp = exn.e.icp as Icp;
+        const multisigIcpGroup = assertMultisigIcp(response[0]);
+        const exn = multisigIcpGroup.exn;
+        const icp = exn.e.icp;
 
         const icpResult2 = await client2.identifiers().create(nameMultisig, {
             algo: signify.Algos.group,

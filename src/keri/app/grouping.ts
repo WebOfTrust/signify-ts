@@ -2,9 +2,59 @@ import { SignifyClient } from './clienting.ts';
 import { Dict } from '../core/core.ts';
 import { Operation } from './coring.ts';
 import { components } from '../../types/keria-api-schema.ts';
+import {
+    MULTISIG_ICP_ROUTE,
+    MULTISIG_ROT_ROUTE,
+    MULTISIG_IXN_ROUTE,
+    MULTISIG_RPY_ROUTE,
+    MULTISIG_VCP_ROUTE,
+    MULTISIG_ISS_ROUTE,
+    MULTISIG_EXN_ROUTE,
+    MULTISIG_REV_ROUTE,
+    ExnMultisig,
+    MultisigIcpGroup,
+    MultisigRotGroup,
+    MultisigIxnGroup,
+    MultisigRpyGroup,
+    MultisigVcpGroup,
+    MultisigIssGroup,
+    MultisigExnGroup,
+    MultisigRevGroup,
+} from './exchanging.ts';
 
 export type Exn = components['schemas']['Exn'];
-export type ExnMultisig = components['schemas']['ExnMultisig'];
+
+export function isMultisigIcpGroup(msg: ExnMultisig): msg is MultisigIcpGroup {
+    return msg.exn.r === MULTISIG_ICP_ROUTE;
+}
+
+export function isMultisigRotGroup(msg: ExnMultisig): msg is MultisigRotGroup {
+    return msg.exn.r === MULTISIG_ROT_ROUTE;
+}
+
+export function isMultisigIxnGroup(msg: ExnMultisig): msg is MultisigIxnGroup {
+    return msg.exn.r === MULTISIG_IXN_ROUTE;
+}
+
+export function isMultisigRpyGroup(msg: ExnMultisig): msg is MultisigRpyGroup {
+    return msg.exn.r === MULTISIG_RPY_ROUTE;
+}
+
+export function isMultisigVcpGroup(msg: ExnMultisig): msg is MultisigVcpGroup {
+    return msg.exn.r === MULTISIG_VCP_ROUTE;
+}
+
+export function isMultisigIssGroup(msg: ExnMultisig): msg is MultisigIssGroup {
+    return msg.exn.r === MULTISIG_ISS_ROUTE;
+}
+
+export function isMultisigExnGroup(msg: ExnMultisig): msg is MultisigExnGroup {
+    return msg.exn.r === MULTISIG_EXN_ROUTE;
+}
+
+export function isMultisigRevGroup(msg: ExnMultisig): msg is MultisigRevGroup {
+    return msg.exn.r === MULTISIG_REV_ROUTE;
+}
 
 /**
  * Groups

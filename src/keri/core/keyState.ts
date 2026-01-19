@@ -41,9 +41,7 @@ export type Icp =
 export type Ixn =
     | components['schemas']['IXN_V_1']
     | components['schemas']['IXN_V_2'];
-export type ExnV1 = Omit<components['schemas']['EXN_V_1'], 'e'> & {
-    e: { [key: string]: any };
-};
+export type ExnV1 = components['schemas']['EXN_V_1'];
 export type Dip =
     | components['schemas']['DIP_V_1']
     | components['schemas']['DIP_V_2'];
