@@ -283,8 +283,7 @@ export class Credentials {
      * @returns {Promise<CredentialResult | string>} A promise to the credential
      */
     async get(said: string): Promise<CredentialResult>;
-    async get(said: string, includeCESR: false): Promise<CredentialResult>;
-    async get(said: string, includeCESR: true): Promise<string>;
+    async get(said: string, includeCESR: boolean): Promise<CredentialResult | string>;
     async get(
         said: string,
         includeCESR: boolean = false
