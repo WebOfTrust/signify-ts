@@ -287,6 +287,10 @@ export class Credentials {
     async get(said: string, includeCESR: true): Promise<string>;
     async get(
         said: string,
+        includeCESR: boolean
+    ): Promise<CredentialResult | string>;
+    async get(
+        said: string,
         includeCESR: boolean = false
     ): Promise<CredentialResult | string> {
         const path = `/credentials/${said}`;
