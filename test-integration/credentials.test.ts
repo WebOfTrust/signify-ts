@@ -1,5 +1,11 @@
 import { assert, beforeAll, afterAll, test, expect } from 'vitest';
-import { Ilks, Saider, Serder, SignifyClient } from 'signify-ts';
+import {
+    assertIpexOffer,
+    Ilks,
+    Saider,
+    Serder,
+    SignifyClient,
+} from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertNotifications,
@@ -15,7 +21,6 @@ import {
 import { retry } from './utils/retry.ts';
 import { randomUUID } from 'node:crypto';
 import { step } from './utils/test-step.ts';
-import { CredentialResult } from '../src/keri/app/credentialing.ts';
 const { vleiServerUrl } = resolveEnvironment();
 
 const QVI_SCHEMA_SAID = 'EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao';
@@ -344,9 +349,13 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const apply = await holderClient.exchanges().get(holderApplyNote.a.d);
         applySaid = apply.exn.d;
 
-        const filter: { [x: string]: any } = { '-s': apply.exn.a.s };
-        for (const key in apply.exn.a.a) {
-            filter[`-a-${key}`] = apply.exn.a.a[key];
+        const exnA = apply.exn.a as Record<string, unknown>;
+        const filter: { [x: string]: unknown } = { '-s': exnA.s };
+        const attributes = exnA.a as Record<string, unknown>;
+        if (typeof attributes === 'object' && attributes !== null) {
+            for (const key in attributes) {
+                filter[`-a-${key}`] = attributes[key];
+            }
         }
 
         const matchingCreds = await holderClient.credentials().list({ filter });
@@ -379,13 +388,13 @@ test('single signature credentials', { timeout: 90000 }, async () => {
         const verifierOfferNote = verifierNotifications[0];
         assert(verifierOfferNote.a.d);
 
-        const offer = await verifierClient
-            .exchanges()
-            .get(verifierOfferNote.a.d);
+        const offer = assertIpexOffer(
+            await verifierClient.exchanges().get(verifierOfferNote.a.d)
+        );
         offerSaid = offer.exn.d;
 
         assert.strictEqual(offer.exn.p, applySaid);
-        assert.strictEqual(offer.exn.e.acdc.a.LEI, '5493001KJTIIGC8Y1R17');
+        assert.strictEqual(offer.exn.e.acdc.d, qviCredentialId);
 
         await markAndRemoveNotification(verifierClient, verifierOfferNote);
 
