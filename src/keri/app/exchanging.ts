@@ -195,21 +195,21 @@ export type IpexOfferExchange = ExchangeResourceV1 & {
 export type IpexApplyExchange = ExchangeResourceV1 & {
     exn: ExnV1 & {
         r: typeof IPEX_APPLY_ROUTE;
-        e: {};
+        e: object;
     };
 };
 
 export type IpexAgreeExchange = ExchangeResourceV1 & {
     exn: ExnV1 & {
         r: typeof IPEX_AGREE_ROUTE;
-        e: {};
+        e: object;
     };
 };
 
 export type IpexAdmitExchange = ExchangeResourceV1 & {
     exn: ExnV1 & {
         r: typeof IPEX_ADMIT_ROUTE;
-        e: {};
+        e: object;
     };
 };
 
