@@ -42,8 +42,8 @@ export async function acceptMultisigIncept(
     const groupExn = assertMultisigIcp(res[0]);
     const exn = groupExn.exn;
     const icp = exn.e.icp as Dip;
-    const smids = (exn.a as { smids: string[] }).smids;
-    const rmids = (exn.a as { rmids: string[] }).rmids;
+    const smids = exn.a.smids;
+    const rmids = exn.a.rmids ?? smids;
     const states = await getStates(client2, smids);
     const rstates = await getStates(client2, rmids);
 

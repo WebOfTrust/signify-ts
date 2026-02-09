@@ -4,6 +4,7 @@ import signify, {
     SignifyClient,
     Icp,
     assertMultisigIcp,
+    assertMultisigRot,
 } from 'signify-ts';
 import {
     getOrCreateClient,
@@ -352,21 +353,13 @@ describe('multisig-join', () => {
         const response = await client3
             .groups()
             .getRequest(rotationNotification3);
-
-        const exn3 = response[0].exn;
-        if (!('e' in exn3) || !exn3.e || !('rot' in exn3.e) || !exn3.e.rot) {
-            throw new Error(
-                'exn3.e.rot is missing from the group rotation response'
-            );
-        }
-        if (!exn3.a || typeof (exn3.a as { gid?: string }).gid !== 'string') {
-            throw new Error('exn3.a.gid is missing or not a string');
-        }
+        const multisigRotGroup = assertMultisigRot(response[0]);
+        const exn3 = multisigRotGroup.exn;
         const serder3 = new Serder(exn3.e.rot);
         const keeper3 = await client3.manager!.get(aid3);
         const sigs3 = keeper3.sign(signify.b(serder3.raw));
 
-        const exnA = exn3.a as { gid: string };
+        const exnA = exn3.a;
         const joinOperation = await client3
             .groups()
             .join(nameMultisig, serder3, sigs3, exnA.gid, smids, rmids);

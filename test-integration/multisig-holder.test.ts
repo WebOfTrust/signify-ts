@@ -419,18 +419,6 @@ test('multisig', async function run() {
         recp2
     );
 
-    const credentialSaid = exnRes.exn.e.acdc.d;
-
-    if (credentialSaid) {
-        console.log(
-            `Member2 admitted credential with SAID : ${credentialSaid}`
-        );
-    } else {
-        throw new Error(
-            'Expected property "e.acdc.d" not found on exnRes2.exn'
-        );
-    }
-
     await waitOperation(client1, op1);
     await waitOperation(client2, op2);
 

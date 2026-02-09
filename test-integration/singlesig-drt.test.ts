@@ -57,8 +57,7 @@ describe('singlesig-drt', () => {
             waitOperation(delegate, op2),
         ]);
 
-        let rotate_kargs = {} as RotateIdentifierArgs;
-        result = await delegate.identifiers().rotate('delegate1', rotate_kargs);
+        result = await delegate.identifiers().rotate('delegate1', {});
         op = await result.op();
         assert.equal(op.name, `delegation.${result.serder.sad.d}`);
 

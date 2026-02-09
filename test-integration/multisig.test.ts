@@ -208,7 +208,7 @@ test('multisig', async function run() {
         icp: [serder, atc],
     };
 
-    smids = (exn.a! as { smids: string[] }).smids;
+    smids = exn.a.smids;
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
 
     await client2
@@ -253,14 +253,7 @@ test('multisig', async function run() {
         icp: [serder, atc],
     };
 
-    smids =
-        exn.a &&
-        typeof exn.a === 'object' &&
-        exn.a !== null &&
-        'smids' in exn.a &&
-        Array.isArray((exn.a as { smids: unknown }).smids)
-            ? (exn.a as { smids: string[] }).smids
-            : [];
+    smids = exn.a.smids;
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
 
     await client3
@@ -547,10 +540,7 @@ test('multisig', async function run() {
         ixn: [serder, atc],
     };
 
-    if (!exn.a) {
-        throw new Error('exn.a is missing from the group interaction event');
-    }
-    smids = (exn.a as { smids: string[] }).smids;
+    smids = exn.a.smids;
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
 
     await client2
@@ -577,10 +567,10 @@ test('multisig', async function run() {
     const ixnGroup2 = assertMultisigIxn(res[0]);
     const ixnExn2 = ixnGroup2.exn;
 
-    const ixn2 = ixnExn2.e.ixn as { a: { i: string; s: string; d: string } };
-    data = ixn2.a;
+    const ixn2 = ixnExn2.e.ixn;
+    const interactData = ixn2.a;
 
-    icpResult3 = await client3.identifiers().interact('multisig', data);
+    icpResult3 = await client3.identifiers().interact('multisig', interactData);
     op3 = await icpResult3.op();
     serder = icpResult3.serder;
     sigs = icpResult3.sigs;
@@ -592,7 +582,7 @@ test('multisig', async function run() {
         ixn: [serder, atc],
     };
 
-    smids = (exn.a as { smids: string[] }).smids;
+    smids = exn.a.smids;
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
 
     await client3
@@ -720,7 +710,7 @@ test('multisig', async function run() {
         rot: [serder, atc],
     };
 
-    smids = (rotExn.a as { smids: string[] }).smids;
+    smids = rotExn.a.smids;
     recp = [aid1State, aid3State].map((state) => state['i']);
 
     await client2
@@ -757,7 +747,7 @@ test('multisig', async function run() {
         rot: [serder, atc],
     };
 
-    smids = (rotExn2.a as { smids: string[] }).smids;
+    smids = rotExn2.a.smids;
     recp = [aid1State, aid2State].map((state) => state['i']);
 
     await client3
@@ -944,14 +934,11 @@ test('multisig', async function run() {
     const issGroup = assertMultisigIss(res[0]);
     const issExn = issGroup.exn;
 
-    const acdc = issExn.e.acdc as CredentialData;
-    if (!acdc.d) {
-        throw new Error(
-            'Credential SAID (acdc.d) is missing from the credential event'
-        );
-    }
-    const credentialSaid: string = acdc.d;
-    const credRes2 = await client2.credentials().issue('multisig', acdc);
+    const acdc = issExn.e.acdc;
+    const credentialSaid = acdc.d;
+    const credRes2 = await client2
+        .credentials()
+        .issue('multisig', acdc as CredentialData);
 
     op2 = credRes2.op;
     await multisigIssue(client2, 'member2', 'multisig', credRes2);
