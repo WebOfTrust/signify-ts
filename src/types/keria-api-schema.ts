@@ -729,12 +729,9 @@ export interface components {
             paths: {
                 [key: string]: unknown;
             };
-            /** @default null */
-            groupName: string | null;
-            /** @default null */
-            memberName: string | null;
-            /** @default null */
-            sender: string | null;
+            groupName?: string;
+            memberName?: string;
+            sender?: string;
         };
     };
     responses: never;

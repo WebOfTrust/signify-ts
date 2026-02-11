@@ -41,11 +41,12 @@ export async function acceptMultisigIncept(
     const res = await client2.groups().getRequest(msgSaid);
     const groupExn = assertMultisigIcp(res[0]);
     const exn = groupExn.exn;
-    const icp = exn.e.icp as Dip;
+    const icp = exn.e.icp;
     const smids = exn.a.smids;
     const rmids = exn.a.rmids ?? smids;
     const states = await getStates(client2, smids);
     const rstates = await getStates(client2, rmids);
+    const delpre = 'di' in icp ? icp.di : undefined;
 
     const icpResult2 = await client2.identifiers().create(groupName, {
         algo: Algos.group,
@@ -56,7 +57,7 @@ export async function acceptMultisigIncept(
         wits: icp.b,
         states: states,
         rstates: rstates,
-        delpre: icp.di,
+        delpre: delpre,
     });
     const op2 = await icpResult2.op();
     const serder = icpResult2.serder;

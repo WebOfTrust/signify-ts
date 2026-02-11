@@ -5,7 +5,7 @@ import { nowUTC } from '../core/utils.ts';
 import { Pather } from '../core/pather.ts';
 import { Counter, CtrDex } from '../core/counter.ts';
 import { Saider } from '../core/saider.ts';
-import { ExnV1, HabState, Icp, Ixn } from '../core/keyState.ts';
+import { Dip, ExnV1, HabState, Icp, Ixn } from '../core/keyState.ts';
 import { Rpy } from './escrowing.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
@@ -37,7 +37,7 @@ export type MultisigIcpExchange = ExchangeResourceV1 & {
     exn: ExnV1 & {
         r: typeof MULTISIG_ICP_ROUTE;
         e: {
-            icp: Icp;
+            icp: Icp | Dip;
             d?: string;
         };
         a: {
