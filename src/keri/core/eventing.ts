@@ -53,8 +53,8 @@ export function rotate({
     ndigs = undefined,
     nsith = undefined,
     wits = undefined,
-    cuts = undefined,
-    adds = undefined,
+    cuts = [],
+    adds = [],
     toad = undefined,
     data = undefined,
     version = undefined,
@@ -125,24 +125,12 @@ export function rotate({
         throw new Error(`Invalid wits = ${wits}, has duplicates.`);
     }
 
-    let _cuts: Array<string>;
-    if (cuts === undefined) {
-        _cuts = [];
-    } else {
-        _cuts = cuts;
-    }
-    const cutset = new Set(_cuts);
-    if (cutset.size != _cuts.length) {
+    const cutset = new Set(cuts);
+    if (cutset.size != cuts.length) {
         throw new Error(`Invalid cuts = ${cuts}, has duplicates.`);
     }
 
-    let _adds: Array<string>;
-    if (adds === undefined) {
-        _adds = [];
-    } else {
-        _adds = adds;
-    }
-    const addset = new Set(_adds);
+    const addset = new Set(adds);
 
     //non empty intersection of witset and addset
     const witaddset = new Set([...witset].filter((x) => addset.has(x)));
@@ -161,7 +149,7 @@ export function rotate({
     }
 
     const newitsetdiff = new Set(_wits);
-    _cuts.forEach(function (v) {
+    cuts.forEach(function (v) {
         newitsetdiff.delete(v);
     });
     const newitset = new Set(
