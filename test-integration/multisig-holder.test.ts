@@ -4,6 +4,7 @@ import signify, {
     Operation,
     CredentialData,
     assertIpexGrant,
+    assertMultisigRpy,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -197,12 +198,15 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    let exn = res[0].exn;
+    const rpyResponse1 = await client2.groups().getRequest(msgSaid);
+    const rpyExchange1 = assertMultisigRpy(rpyResponse1[0]);
     // stamp, eid and role are provided in the exn message
-    let rpystamp = exn.e.rpy.dt;
-    let rpyrole = exn.e.rpy.a.role;
-    let rpyeid = exn.e.rpy.a.eid;
+    type RpyA = { role: string; eid: string };
+    const rpy1 = rpyExchange1.exn.e.rpy;
+    const rpyA1 = rpy1.a as RpyA;
+    let rpystamp = rpyExchange1.exn.e.rpy.dt;
+    let rpyrole = rpyA1.role;
+    let rpyeid = rpyA1.eid;
 
     endRoleRes = await client2
         .identifiers()
@@ -297,12 +301,14 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const rpyResponse2 = await client2.groups().getRequest(msgSaid);
+    const rpyExchange2 = assertMultisigRpy(rpyResponse2[0]);
     // stamp, eid and role are provided in the exn message
-    rpystamp = exn.e.rpy.dt;
-    rpyrole = exn.e.rpy.a.role;
-    rpyeid = exn.e.rpy.a.eid;
+    const rpy2 = rpyExchange2.exn.e.rpy;
+    const rpyA2 = rpy2.a as RpyA;
+    rpystamp = rpy2.dt;
+    rpyrole = rpyA2.role;
+    rpyeid = rpyA2.eid;
     endRoleRes = await client2
         .identifiers()
         .addEndRole('holder', rpyrole, rpyeid, rpystamp);

@@ -353,7 +353,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -373,8 +373,8 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    const rpyGroup = assertMultisigRpy(res[0]);
+    const rpyResponse = await client2.groups().getRequest(msgSaid);
+    const rpyGroup = assertMultisigRpy(rpyResponse[0]);
     const rpyExn = rpyGroup.exn;
     // stamp, eid and role are provided in the exn message
     type RpyA = { role: string; eid: string };
@@ -403,7 +403,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
-    res = await client2
+    await client2
         .exchanges()
         .send(
             'member2',
@@ -451,7 +451,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
-    res = await client3
+    await client3
         .exchanges()
         .send(
             'member3',
@@ -800,7 +800,7 @@ test('multisig', async function run() {
     };
 
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -819,7 +819,7 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the create registry event'
     );
-    res = await client2.groups().getRequest(msgSaid);
+    await client2.groups().getRequest(msgSaid);
 
     const vcpRes2 = await client2.registries().create({
         name: 'multisig',

@@ -8,6 +8,7 @@ import { Saider } from '../core/saider.ts';
 import { Dip, ExnV1, HabState, Icp, Ixn } from '../core/keyState.ts';
 import { Rpy } from './escrowing.ts';
 import { components } from '../../types/keria-api-schema.ts';
+import { Exn } from './grouping.ts';
 
 export type ExchangeResource = components['schemas']['ExchangeResource'];
 export type ExchangeResourceV1 = Omit<ExchangeResource, 'exn'> & { exn: ExnV1 };
@@ -442,7 +443,7 @@ export class Exchanges {
     /**
      * Send exn messages to list of recipients
      * @async
-     * @returns {Promise<any>} A promise to the list of replay messages
+     * @returns {Promise<Exn>} A promise to the list of replay messages
      * @param name
      * @param topic
      * @param sender
@@ -459,7 +460,7 @@ export class Exchanges {
         payload: Dict<any>,
         embeds: Dict<any>,
         recipients: string[]
-    ): Promise<any> {
+    ): Promise<Exn> {
         for (const recipient of recipients) {
             const [exn, sigs, atc] = await this.createExchangeMessage(
                 sender,
@@ -477,10 +478,12 @@ export class Exchanges {
                 recipients
             );
         }
+
+        throw new Error('recipients list was empty');
     }
 
     /**
-     * Send exn messaget to list of recipients
+     * Send exn message to list of recipients
      * @async
      * @returns {Promise<Exn>} A promise to the list of replay messages
      * @param name
@@ -497,7 +500,7 @@ export class Exchanges {
         sigs: string[],
         atc: string,
         recipients: string[]
-    ): Promise<any> {
+    ): Promise<Exn> {
         const path = `/identifiers/${name}/exchanges`;
         const method = 'POST';
         const data: any = {
