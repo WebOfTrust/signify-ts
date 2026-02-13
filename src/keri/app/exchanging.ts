@@ -8,8 +8,8 @@ import { Saider } from '../core/saider.ts';
 import { Dip, ExnV1, HabState, Icp, Ixn } from '../core/keyState.ts';
 import { Rpy } from './escrowing.ts';
 import { components } from '../../types/keria-api-schema.ts';
-import { Exn } from './grouping.ts';
 
+export type Exn = components['schemas']['Exn'];
 export type ExchangeResource = components['schemas']['ExchangeResource'];
 export type ExchangeResourceV1 = Omit<ExchangeResource, 'exn'> & { exn: ExnV1 };
 export type ExnMultisig = components['schemas']['ExnMultisig'];

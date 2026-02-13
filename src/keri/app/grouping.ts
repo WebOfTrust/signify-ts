@@ -1,10 +1,8 @@
 import { SignifyClient } from './clienting.ts';
 import { Dict } from '../core/core.ts';
 import { Operation } from './coring.ts';
-import { components } from '../../types/keria-api-schema.ts';
 import { ExnMultisig } from './exchanging.ts';
-
-export type Exn = components['schemas']['Exn'];
+import { Exn } from './exchanging.ts';
 
 /**
  * Groups
