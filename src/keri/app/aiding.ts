@@ -74,6 +74,13 @@ export interface IdentifierInfo {
     name: string;
 }
 
+export interface LocSchemeArgs {
+    url: string;
+    scheme?: string;
+    eid?: string;
+    stamp?: string;
+}
+
 export type GroupMembers = components['schemas']['GroupMember'];
 
 /** Identifier */
@@ -484,6 +491,48 @@ export class Identifier {
         }
         const route = '/end/role/add';
         return reply(route, data, stamp, undefined, Serials.JSON);
+    }
+
+    /**
+     * Authorises a new location scheme (endpoint) for a particular endpoint identifier.
+     * @param {LocSchemeArgs} args
+     * @param name Name or alias of the identifier to sign reply message
+     * @param args Arguments to create authorising reply message from
+     * @returns A promise to the result of the authorization
+     */
+    async addLocScheme(
+        name: string,
+        args: LocSchemeArgs
+    ): Promise<EventResult> {
+        const { url, scheme, eid, stamp } = args;
+        const hab = await this.get(name);
+
+        const rpyData = {
+            eid: eid ?? hab.prefix,
+            url,
+            scheme: scheme ?? 'http',
+        };
+        const rpy = reply(
+            '/loc/scheme',
+            rpyData,
+            stamp,
+            undefined,
+            Serials.JSON
+        );
+
+        const keeper = this.client.manager!.get(hab);
+        const sigs = await keeper.sign(b(rpy.raw));
+
+        const jsondata = {
+            rpy: rpy.sad,
+            sigs: sigs,
+        };
+        const res = await this.client.fetch(
+            '/identifiers/' + name + '/locschemes',
+            'POST',
+            jsondata
+        );
+        return new EventResult(rpy, sigs, res);
     }
 
     /**

@@ -363,6 +363,50 @@ describe('Aiding', () => {
         ).rejects.toThrow(error);
     });
 
+    it('Can authorise location/endpoint for an endpoint identifier', async () => {
+        const aid1 = await createMockIdentifierState('aid1', bran, {});
+        client.fetch.mockResolvedValueOnce(Response.json(aid1));
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+
+        await client.identifiers().addLocScheme('aid1', {
+            url: 'https://test.com',
+            scheme: 'https',
+            eid: 'EHgwVwQT15OJvilVvW57HE4w0-GPs_Stj2OFoAHZSysY',
+            stamp: '2021-06-27T21:26:21.233257+00:00',
+        });
+        const lastCall = client.getLastMockRequest();
+        assert.equal(lastCall.path, '/identifiers/aid1/locschemes');
+        assert.equal(lastCall.method, 'POST');
+        assert.equal(lastCall.body.rpy.t, 'rpy');
+        assert.equal(lastCall.body.rpy.r, '/loc/scheme');
+        assert.equal(lastCall.body.rpy.dt, '2021-06-27T21:26:21.233257+00:00');
+        assert.deepEqual(lastCall.body.rpy.a, {
+            url: 'https://test.com',
+            scheme: 'https',
+            eid: 'EHgwVwQT15OJvilVvW57HE4w0-GPs_Stj2OFoAHZSysY',
+        });
+    });
+
+    it('Can authorise location/endpoint for own identifier as default', async () => {
+        const aid1 = await createMockIdentifierState('aid1', bran, {});
+        client.fetch.mockResolvedValueOnce(Response.json(aid1));
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+
+        await client.identifiers().addLocScheme('aid1', {
+            url: 'http://test.com',
+        });
+        const lastCall = client.getLastMockRequest();
+        assert.equal(lastCall.path, '/identifiers/aid1/locschemes');
+        assert.equal(lastCall.method, 'POST');
+        assert.equal(lastCall.body.rpy.t, 'rpy');
+        assert.equal(lastCall.body.rpy.r, '/loc/scheme');
+        assert.deepEqual(lastCall.body.rpy.a, {
+            url: 'http://test.com',
+            scheme: 'http',
+            eid: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
+        });
+    });
+
     it('Can get members', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
         await client.identifiers().members('aid1');
