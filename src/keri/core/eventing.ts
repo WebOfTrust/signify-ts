@@ -131,6 +131,9 @@ export function rotate({
     }
 
     const addset = new Set(adds);
+    if (addset.size != adds.length) {
+        throw new Error(`Invalid adds = ${adds}, has duplicates.`);
+    }
 
     //non empty intersection of witset and addset
     const witaddset = new Set([...witset].filter((x) => addset.has(x)));
