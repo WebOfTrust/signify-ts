@@ -1,6 +1,6 @@
 import libsodium from 'libsodium-wrappers-sumo';
 import { Signer } from '../../src/keri/core/signer.ts';
-import { assert, describe, it } from 'vitest';
+import { assert, beforeAll, describe, it } from 'vitest';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { incept, messagize, rotate } from '../../src/keri/core/eventing.ts';
 import { Saider } from '../../src/keri/core/saider.ts';
@@ -8,10 +8,26 @@ import { Diger } from '../../src/keri/core/diger.ts';
 import { b, d, Ilks } from '../../src/keri/core/core.ts';
 import { Siger } from '../../src/keri/core/siger.ts';
 
+beforeAll(async () => {
+    await libsodium.ready;
+});
+
+function createIdentifier() {
+    const signer0 = new Signer({ transferable: true });
+    const signer1 = new Signer({ transferable: true });
+    const keys0 = [signer0.verfer.qb64];
+    const ndigs = [new Diger({}, signer1.verfer.qb64b).qb64];
+    const icp = incept({ keys: keys0, ndigs });
+    return icp;
+}
+
+function createWitness() {
+    // We just need the non-transferable public key
+    return new Signer({ transferable: false }).verfer.qb64;
+}
+
 describe('key event function', () => {
     it('incept should create inception events', async () => {
-        await libsodium.ready;
-
         const seed = new Uint8Array([
             159, 123, 168, 167, 168, 67, 57, 150, 38, 250, 177, 153, 235, 170,
             32, 196, 27, 71, 17, 196, 174, 83, 65, 82, 201, 189, 4, 157, 133,
@@ -191,29 +207,69 @@ describe('key event function', () => {
         );
     });
 
-    it('Rotate should create rotation event with hex sequence number', async () => {
-        await libsodium.ready;
+    describe('rotate', () => {
+        const icp = createIdentifier();
 
-        const signer0 = new Signer({ transferable: true });
-        const signer1 = new Signer({ transferable: true });
-        const keys0 = [signer0.verfer.qb64];
-        const ndigs = [new Diger({}, signer1.verfer.qb64b).qb64];
-        const serder = incept({ keys: keys0, ndigs });
+        it('should create rotation event with hex sequence number', async () => {
+            function createRotation(sn: number) {
+                return rotate({
+                    keys: icp.sad.k,
+                    dig: icp.sad.d,
+                    pre: icp.sad.i,
+                    ndigs: icp.sad.n,
+                    sn,
+                    isith: 1,
+                    nsith: 1,
+                });
+            }
 
-        function createRotation(sn: number) {
-            return rotate({
-                keys: keys0,
-                pre: serder.sad.i,
-                ndigs: serder.sad.n,
-                sn,
-                isith: 1,
-                nsith: 1,
-            }).sad['s'];
-        }
+            assert.equal(createRotation(1).sad.s, '1');
+            assert.equal(createRotation(10).sad.s, 'a');
+            assert.equal(createRotation(14).sad.s, 'e');
+            assert.equal(createRotation(255).sad.s, 'ff');
+        });
 
-        assert.equal(createRotation(1), '1');
-        assert.equal(createRotation(10), 'a');
-        assert.equal(createRotation(14), 'e');
-        assert.equal(createRotation(255), 'ff');
+        it('should throw if witness cuts have duplicates', async () => {
+            const wit = createWitness();
+
+            assert.throws(() => {
+                rotate({
+                    keys: icp.sad.k,
+                    dig: icp.sad.d,
+                    pre: icp.sad.i,
+                    ndigs: icp.sad.n,
+                    cuts: [wit, wit],
+                });
+            }, `Invalid cuts = ${wit},${wit}, has duplicates`);
+        });
+
+        it('should include witness additions', async () => {
+            const wit = createWitness();
+
+            const rot = rotate({
+                keys: icp.sad.k,
+                dig: icp.sad.d,
+                pre: icp.sad.i,
+                ndigs: icp.sad.n,
+                adds: [wit],
+            });
+
+            assert.equal(rot.sad.ba.length, 1);
+            assert.equal(rot.sad.ba[0], wit);
+        });
+
+        it('should throw if witness additions have duplicates', async () => {
+            const wit = createWitness();
+
+            assert.throws(() => {
+                rotate({
+                    keys: icp.sad.k,
+                    dig: icp.sad.d,
+                    pre: icp.sad.i,
+                    ndigs: icp.sad.n,
+                    adds: [wit, wit],
+                });
+            }, `Invalid adds = ${wit},${wit}, has duplicates`);
+        });
     });
 });

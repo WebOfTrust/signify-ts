@@ -221,7 +221,7 @@ describe('SignifyClient', () => {
         assert.deepEqual(lastBody.rot.kt, ['1', '0']);
         assert.equal(
             lastBody.rot.d,
-            'EGFi9pCcRaLK8dPh5S7JP9Em62fBMiR1l4gW1ZazuuAO'
+            'ELobtadHilfWa-N-oA38MIoVBrutviEMyqBzNRkr7zvu'
         );
 
         const heads = new Headers();
