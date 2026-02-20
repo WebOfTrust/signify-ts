@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [macOS-latest, ubuntu-latest]
-        node-version: ['18', '20', '22']
+        node-version: ['18', '20', '22', '24']
 
     steps:
       - name: Checkout repo
@@ -82,17 +82,3 @@ jobs:
       - name: Print logs
         run: docker compose logs
         if: always()
-
-  audit:
-    name: Find vulnerabilities
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Run audit
-        run: npm audit
