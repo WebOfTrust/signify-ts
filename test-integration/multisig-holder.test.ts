@@ -1,5 +1,11 @@
 import { assert, test } from 'vitest';
-import signify, { SignifyClient, Operation, CredentialData } from 'signify-ts';
+import signify, {
+    SignifyClient,
+    Operation,
+    CredentialData,
+    assertIpexGrant,
+    assertMultisigRpy,
+} from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     assertOperations,
@@ -192,12 +198,15 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    let exn = res[0].exn;
+    const rpyResponse1 = await client2.groups().getRequest(msgSaid);
+    const rpyExchange1 = assertMultisigRpy(rpyResponse1[0]);
     // stamp, eid and role are provided in the exn message
-    let rpystamp = exn.e.rpy.dt;
-    let rpyrole = exn.e.rpy.a.role;
-    let rpyeid = exn.e.rpy.a.eid;
+    type RpyA = { role: string; eid: string };
+    const rpy1 = rpyExchange1.exn.e.rpy;
+    const rpyA1 = rpy1.a as RpyA;
+    let rpystamp = rpyExchange1.exn.e.rpy.dt;
+    let rpyrole = rpyA1.role;
+    let rpyeid = rpyA1.eid;
 
     endRoleRes = await client2
         .identifiers()
@@ -292,12 +301,14 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const rpyResponse2 = await client2.groups().getRequest(msgSaid);
+    const rpyExchange2 = assertMultisigRpy(rpyResponse2[0]);
     // stamp, eid and role are provided in the exn message
-    rpystamp = exn.e.rpy.dt;
-    rpyrole = exn.e.rpy.a.role;
-    rpyeid = exn.e.rpy.a.eid;
+    const rpy2 = rpyExchange2.exn.e.rpy;
+    const rpyA2 = rpy2.a as RpyA;
+    rpystamp = rpy2.dt;
+    rpyrole = rpyA2.role;
+    rpyeid = rpyA2.eid;
     endRoleRes = await client2
         .identifiers()
         .addEndRole('holder', rpyrole, rpyeid, rpystamp);
@@ -377,7 +388,7 @@ test('multisig', async function run() {
     console.log(
         `Member1 received /exn/ipex/grant msg with SAID: ${grantMsgSaid} `
     );
-    const exnRes = await client1.exchanges().get(grantMsgSaid);
+    const exnRes = assertIpexGrant(await client1.exchanges().get(grantMsgSaid));
 
     recp = [aid2['state']].map((state) => state['i']);
     op1 = await multisigAdmitCredential(
@@ -388,9 +399,6 @@ test('multisig', async function run() {
         exnRes.exn.i,
         recp
     );
-    console.log(
-        `Member1 admitted credential with SAID : ${exnRes.exn.e.acdc.d}`
-    );
 
     const grantMsgSaid2 = await waitAndMarkNotification(
         client2,
@@ -399,7 +407,9 @@ test('multisig', async function run() {
     console.log(
         `Member2 received /exn/ipex/grant msg with SAID: ${grantMsgSaid2} `
     );
-    const exnRes2 = await client2.exchanges().get(grantMsgSaid2);
+    const exnRes2 = assertIpexGrant(
+        await client2.exchanges().get(grantMsgSaid2)
+    );
 
     assert.equal(grantMsgSaid, grantMsgSaid2);
 
@@ -413,9 +423,6 @@ test('multisig', async function run() {
         exnRes.exn.d,
         exnRes.exn.i,
         recp2
-    );
-    console.log(
-        `Member2 admitted credential with SAID : ${exnRes.exn.e.acdc.d}`
     );
 
     await waitOperation(client1, op1);

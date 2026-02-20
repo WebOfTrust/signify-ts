@@ -1,5 +1,8 @@
 import { SignifyClient } from './clienting.ts';
 import { Dict } from '../core/core.ts';
+import { Operation } from './coring.ts';
+import { ExnMultisig } from './exchanging.ts';
+import { Exn } from './exchanging.ts';
 
 /**
  * Groups
@@ -19,9 +22,9 @@ export class Groups {
      * Get group request messages
      * @async
      * @param {string} [said] SAID of exn message to load
-     * @returns {Promise<any>} A promise to the list of replay messages
+     * @returns {Promise<ExnMultisig[]>} A promise to the list of replay messages
      */
-    async getRequest(said: string): Promise<any> {
+    async getRequest(said: string): Promise<ExnMultisig[]> {
         const path = `/multisig/request/` + said;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
@@ -35,14 +38,14 @@ export class Groups {
      * @param {Dict<any>} [exn] exn message to send to other members
      * @param {string[]} [sigs] signature of the participant over the exn
      * @param {string} [atc] additional attachments from embedded events in exn
-     * @returns {Promise<any>} A promise to the list of replay messages
+     * @returns {Promise<Exn>} A promise to the list of replay messages
      */
     async sendRequest(
         name: string,
         exn: Dict<any>,
         sigs: string[],
         atc: string
-    ): Promise<any> {
+    ): Promise<Exn> {
         const path = `/identifiers/${name}/multisig/request`;
         const method = 'POST';
         const data = {
@@ -64,7 +67,7 @@ export class Groups {
      * @param {string} [gid] prefix
      * @param {string[]} [smids] array of particpants
      * @param {string[]} [rmids] array of particpants
-     * @returns {Promise<any>} A promise to the list of replay messages
+     * @returns {Promise<Operation<unknown>} A promise to the list of replay messages
      */
     async join(
         name: string,
@@ -73,7 +76,7 @@ export class Groups {
         gid: string,
         smids: string[],
         rmids: string[]
-    ): Promise<any> {
+    ): Promise<Operation<unknown>> {
         const path = `/identifiers/${name}/multisig/join`;
         const method = 'POST';
         const data = {
