@@ -10,6 +10,12 @@ import {
     messagize,
     b,
     d,
+    CredentialData,
+    assertMultisigIcp,
+    assertMultisigRpy,
+    assertMultisigIxn,
+    assertMultisigRot,
+    assertMultisigIss,
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
@@ -177,7 +183,8 @@ test('multisig', async function run() {
     console.log('Member2 received exchange message to join multisig');
 
     let res = await client2.groups().getRequest(msgSaid);
-    let exn = res[0].exn;
+    let multisigGroup = assertMultisigIcp(res[0]);
+    let exn = multisigGroup.exn;
     let icp = exn.e.icp;
 
     let icpResult2 = await client2.identifiers().create('multisig', {
@@ -222,7 +229,8 @@ test('multisig', async function run() {
     console.log('Member3 received exchange message to join multisig');
 
     res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    multisigGroup = assertMultisigIcp(res[0]);
+    exn = multisigGroup.exn;
     icp = exn.e.icp;
     let icpResult3 = await client3.identifiers().create('multisig', {
         algo: Algos.group,
@@ -345,7 +353,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -365,12 +373,16 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the end role authorization'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const rpyResponse = await client2.groups().getRequest(msgSaid);
+    const rpyGroup = assertMultisigRpy(rpyResponse[0]);
+    const rpyExn = rpyGroup.exn;
     // stamp, eid and role are provided in the exn message
-    let rpystamp = exn.e.rpy.dt;
-    let rpyrole = exn.e.rpy.a.role;
-    let rpyeid = exn.e.rpy.a.eid;
+    type RpyA = { role: string; eid: string };
+    const rpyObj = rpyExn.e.rpy;
+    const rpyA = rpyObj.a as RpyA;
+    let rpystamp = rpyObj.dt;
+    let rpyrole = rpyA.role;
+    let rpyeid = rpyA.eid;
     endRoleRes = await client2
         .identifiers()
         .addEndRole('multisig', rpyrole, rpyeid, rpystamp);
@@ -391,7 +403,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state'], aid3['state']].map((state) => state['i']);
-    res = await client2
+    await client2
         .exchanges()
         .send(
             'member2',
@@ -412,14 +424,17 @@ test('multisig', async function run() {
         'Member3 received exchange message to join the end role authorization'
     );
     res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
-    rpystamp = exn.e.rpy.dt;
-    rpyrole = exn.e.rpy.a.role;
-    rpyeid = exn.e.rpy.a.eid;
+    const rpyGroup3 = assertMultisigRpy(res[0]);
+    const rpyExn2 = rpyGroup3.exn;
+    type RpyA2 = { role: string; eid: string };
+    const rpyObj2 = rpyExn2.e.rpy;
+    const rpyA2 = rpyObj2.a as RpyA2;
+    const rpystamp2 = rpyObj2.dt;
+    const rpyrole2 = rpyA2.role;
+    const rpyeid2 = rpyA2.eid;
     endRoleRes = await client3
         .identifiers()
-        .addEndRole('multisig', rpyrole, rpyeid, rpystamp);
-
+        .addEndRole('multisig', rpyrole2, rpyeid2, rpystamp2);
     op3 = await endRoleRes.op();
     rpy = endRoleRes.serder;
     sigs = endRoleRes.sigs;
@@ -436,7 +451,7 @@ test('multisig', async function run() {
         rpy: [rpy, atc],
     };
     recp = [aid1['state'], aid2['state']].map((state) => state['i']);
-    res = await client3
+    await client3
         .exchanges()
         .send(
             'member3',
@@ -507,11 +522,13 @@ test('multisig', async function run() {
         'Member2 received exchange message to join the interaction event'
     );
     res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
-    let ixn = exn.e.ixn;
-    data = ixn.a;
 
-    icpResult2 = await client2.identifiers().interact('multisig', data);
+    const ixnGroup = assertMultisigIxn(res[0]);
+    const ixnExn = ixnGroup.exn;
+    const embeds1 = ixnExn.e;
+    const multisigData = embeds1.ixn.a;
+
+    icpResult2 = await client2.identifiers().interact('multisig', multisigData);
     op2 = await icpResult2.op();
     serder = icpResult2.serder;
     sigs = icpResult2.sigs;
@@ -544,12 +561,16 @@ test('multisig', async function run() {
     console.log(
         'Member3 received exchange message to join the interaction event'
     );
-    res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
-    ixn = exn.e.ixn;
-    data = ixn.a;
 
-    icpResult3 = await client3.identifiers().interact('multisig', data);
+    res = await client3.groups().getRequest(msgSaid);
+
+    const ixnGroup2 = assertMultisigIxn(res[0]);
+    const ixnExn2 = ixnGroup2.exn;
+
+    const ixn2 = ixnExn2.e.ixn;
+    const interactData = ixn2.a;
+
+    icpResult3 = await client3.identifiers().interact('multisig', interactData);
     op3 = await icpResult3.op();
     serder = icpResult3.serder;
     sigs = icpResult3.sigs;
@@ -672,7 +693,8 @@ test('multisig', async function run() {
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
     res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const rotGroup = assertMultisigRot(res[0]);
+    const rotExn = rotGroup.exn;
 
     icpResult2 = await client2
         .identifiers()
@@ -688,7 +710,7 @@ test('multisig', async function run() {
         rot: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    smids = rotExn.a.smids;
     recp = [aid1State, aid3State].map((state) => state['i']);
 
     await client2
@@ -708,7 +730,8 @@ test('multisig', async function run() {
     msgSaid = await waitAndMarkNotification(client3, '/multisig/rot');
     console.log('Member3 received exchange message to join the rotation event');
     res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const rotGroup2 = assertMultisigRot(res[0]);
+    const rotExn2 = rotGroup2.exn;
 
     icpResult3 = await client3
         .identifiers()
@@ -724,7 +747,7 @@ test('multisig', async function run() {
         rot: [serder, atc],
     };
 
-    smids = exn.a.smids;
+    smids = rotExn2.a.smids;
     recp = [aid1State, aid2State].map((state) => state['i']);
 
     await client3
@@ -777,7 +800,7 @@ test('multisig', async function run() {
     };
 
     recp = [aid2['state'], aid3['state']].map((state) => state['i']);
-    res = await client1
+    await client1
         .exchanges()
         .send(
             'member1',
@@ -796,8 +819,7 @@ test('multisig', async function run() {
     console.log(
         'Member2 received exchange message to join the create registry event'
     );
-    res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    await client2.groups().getRequest(msgSaid);
 
     const vcpRes2 = await client2.registries().create({
         name: 'multisig',
@@ -839,7 +861,6 @@ test('multisig', async function run() {
     );
 
     res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
 
     const vcpRes3 = await client3.registries().create({
         name: 'multisig',
@@ -910,10 +931,14 @@ test('multisig', async function run() {
         'Member2 received exchange message to join the credential create event'
     );
     res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const issGroup = assertMultisigIss(res[0]);
+    const issExn = issGroup.exn;
 
-    const credentialSaid = exn.e.acdc.d;
-    const credRes2 = await client2.credentials().issue('multisig', exn.e.acdc);
+    const acdc = issExn.e.acdc;
+    const credentialSaid = acdc.d;
+    const credRes2 = await client2
+        .credentials()
+        .issue('multisig', acdc as CredentialData);
 
     op2 = credRes2.op;
     await multisigIssue(client2, 'member2', 'multisig', credRes2);
@@ -925,9 +950,12 @@ test('multisig', async function run() {
         'Member3 received exchange message to join the credential create event'
     );
     res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
+    const issGroup2 = assertMultisigIss(res[0]);
+    const issExn2 = issGroup2.exn;
 
-    const credRes3 = await client3.credentials().issue('multisig', exn.e.acdc);
+    const credRes3 = await client3
+        .credentials()
+        .issue('multisig', issExn2.e.acdc as CredentialData);
 
     op3 = credRes3.op;
     await multisigIssue(client3, 'member3', 'multisig', credRes3);
@@ -1001,7 +1029,6 @@ test('multisig', async function run() {
     msgSaid = await waitAndMarkNotification(client2, '/multisig/exn');
     console.log('Member2 received exchange message to join the grant message');
     res = await client2.groups().getRequest(msgSaid);
-    exn = res[0].exn;
 
     const [grant2, gsigs2, end2] = await client2.ipex().grant({
         senderName: 'multisig',
@@ -1043,7 +1070,6 @@ test('multisig', async function run() {
     msgSaid = await waitAndMarkNotification(client3, '/multisig/exn');
     console.log('Member3 received exchange message to join the grant message');
     res = await client3.groups().getRequest(msgSaid);
-    exn = res[0].exn;
 
     const [grant3, gsigs3, end3] = await client3.ipex().grant({
         senderName: 'multisig',
@@ -1084,12 +1110,13 @@ test('multisig', async function run() {
 
     msgSaid = await waitAndMarkNotification(client4, '/exn/ipex/grant');
     console.log('Holder received exchange message with the grant message');
-    res = await client4.exchanges().get(msgSaid);
+
+    const exchangeResource = await client4.exchanges().get(msgSaid);
 
     const [admit, asigs, aend] = await client4.ipex().admit({
         senderName: 'holder',
         message: '',
-        grantSaid: res.exn.d,
+        grantSaid: exchangeResource.exn.d,
         recipient: m['prefix'],
     });
 

@@ -8,6 +8,8 @@ import signify, {
     d,
     messagize,
     HabState,
+    assertMultisigIcp,
+    assertMultisigIxn,
 } from 'signify-ts';
 import { getStates, waitAndMarkNotification } from './test-util.ts';
 import assert from 'assert';
@@ -22,8 +24,8 @@ export interface StartMultisigInceptArgs {
     groupName: string;
     localMemberName: string;
     participants: string[];
-    isith?: number | string | string[];
-    nsith?: number | string | string[];
+    isith?: string | number | string[] | string[][];
+    nsith?: string | number | string[] | string[][];
     toad?: number;
     wits?: string[];
     delpre?: string;
@@ -36,12 +38,14 @@ export async function acceptMultisigIncept(
     const memberHab = await client2.identifiers().get(localMemberName);
 
     const res = await client2.groups().getRequest(msgSaid);
-    const exn = res[0].exn;
+    const groupExn = assertMultisigIcp(res[0]);
+    const exn = groupExn.exn;
     const icp = exn.e.icp;
     const smids = exn.a.smids;
-    const rmids = exn.a.rmids;
+    const rmids = exn.a.rmids ?? smids;
     const states = await getStates(client2, smids);
     const rstates = await getStates(client2, rmids);
+    const delpre = 'di' in icp ? icp.di : undefined;
 
     const icpResult2 = await client2.identifiers().create(groupName, {
         algo: Algos.group,
@@ -52,7 +56,7 @@ export async function acceptMultisigIncept(
         wits: icp.b,
         states: states,
         rstates: rstates,
-        delpre: icp.di,
+        delpre: delpre,
     });
     const op2 = await icpResult2.op();
     const serder = icpResult2.serder;
@@ -297,10 +301,12 @@ export async function delegateMultisig(
         console.log(
             `${aid.name}(${aid.prefix}) received exchange message to join the interaction event`
         );
+
         const res = await client.groups().getRequest(msgSaid);
-        const exn = res[0].exn;
+        const groupExn = assertMultisigIxn(res[0]);
+        const exn = groupExn.exn;
         const ixn = exn.e.ixn;
-        anchor = ixn.a[0];
+        anchor = (ixn.a as Array<{ i: string; s: string; d: string }>)[0];
     }
 
     // const {delResult, delOp} = await retry(async () => {
@@ -314,10 +320,11 @@ export async function delegateMultisig(
         } with anchor ${JSON.stringify(anchor)}`
     );
 
-    assert.equal(
-        JSON.stringify(delResult.serder.sad.a[0]),
-        JSON.stringify(anchor)
-    );
+    const expectedAnchor = Array.isArray(delResult.serder.sad.a)
+        ? delResult.serder.sad.a[0]
+        : delResult.serder.sad.a;
+
+    assert.equal(JSON.stringify(expectedAnchor), JSON.stringify(anchor));
 
     const serder = delResult.serder;
     const sigs = delResult.sigs;
