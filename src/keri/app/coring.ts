@@ -158,9 +158,7 @@ export class Operations {
      * Check if operation failed and throw error with details
      * @throws {Error} If operation has an error
      */
-    private throwIfFailed(
-        op: Operation & { done: true }
-    ): asserts op is CompletedOperation {
+    private throwIfFailed(op: Operation): asserts op is CompletedOperation {
         if ('error' in op && op.error !== null) {
             const details = op.error.details
                 ? ` Details: ${JSON.stringify(op.error.details)}`
