@@ -105,8 +105,8 @@ test('salty', async () => {
 
     icpResult = await client1.identifiers().rotate('aid1');
     op = await waitOperation(client1, await icpResult.op());
-    let ked = op['response'];
-    const rot = new signify.Serder(ked);
+    let rotKed = op['response'];
+    const rot = new signify.Serder(rotKed);
     assert.equal(rot.sad['d'], 'EBQABdRgaxJONrSLcgrdtbASflkvLxJkiDO0H-XmuhGg');
     assert.equal(rot.sad['s'], '1');
     assert.equal(rot.verfers.length, 1);
@@ -122,8 +122,8 @@ test('salty', async () => {
 
     icpResult = await client1.identifiers().interact('aid1', [icp.pre]);
     op = await waitOperation(client1, await icpResult.op());
-    ked = op['response'];
-    const ixn = new signify.Serder(ked);
+    let ixnKed = op['response'];
+    const ixn = new signify.Serder(ixnKed);
     assert.equal(ixn.sad['d'], 'ENsmRAg_oM7Hl1S-GTRMA7s4y760lQMjzl0aqOQ2iTce');
     assert.equal(ixn.sad['s'], '2');
     assert.deepEqual([...ixn.sad['a']], [icp.pre]);

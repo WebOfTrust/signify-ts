@@ -391,7 +391,7 @@ test('multisig', async function run() {
     const exnRes = assertIpexGrant(await client1.exchanges().get(grantMsgSaid));
 
     recp = [aid2['state']].map((state) => state['i']);
-    op1 = await multisigAdmitCredential(
+    const exOp1 = await multisigAdmitCredential(
         client1,
         'holder',
         'member1',
@@ -416,7 +416,7 @@ test('multisig', async function run() {
     console.log(`Member2 /exn/ipex/grant msg :  ` + JSON.stringify(exnRes2));
 
     const recp2 = [aid1['state']].map((state) => state['i']);
-    op2 = await multisigAdmitCredential(
+    const exOp2 = await multisigAdmitCredential(
         client2,
         'holder',
         'member2',
@@ -425,8 +425,8 @@ test('multisig', async function run() {
         recp2
     );
 
-    await waitOperation(client1, op1);
-    await waitOperation(client2, op2);
+    await waitOperation(client1, exOp1);
+    await waitOperation(client2, exOp2);
 
     let creds1 = await client1.credentials().list();
     console.log(`Member1 has ${creds1.length} credential`);
@@ -503,7 +503,7 @@ async function issueCredential(
         let op = await client
             .ipex()
             .submitGrant(name, grant, gsigs, end, [data.a.i]);
-        op = await waitOperation(client, op);
+        await waitOperation(client, op);
     }
 
     console.log('Grant message sent');
