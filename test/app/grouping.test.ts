@@ -1,5 +1,6 @@
 import { assert, describe, it } from 'vitest';
 import { SignifyClient } from '../../src/keri/app/clienting.ts';
+import { Exn } from '../../src/keri/app/exchanging.ts';
 import { Tier } from '../../src/keri/core/salter.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { createMockFetch } from './test-utils.ts';
@@ -20,8 +21,21 @@ describe('Grouping', () => {
         await client.connect();
 
         const groups = client.groups();
+        const exn: Exn = {
+            v: 'KERI10JSON0000bf_',
+            t: 'exn',
+            d: 'EPWm8LWxxQXmXlB8gbTZKDy7NIwXxpx49N_ZYTa5QkJV',
+            i: 'test',
+            rp: '',
+            p: '',
+            dt: '2023-08-30T17:22:54.183Z',
+            r: '/multisig/request',
+            q: {},
+            a: { i: '' },
+            e: {},
+        };
         let lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        await groups.sendRequest('aid1', {}, [], '');
+        await groups.sendRequest('aid1', exn, [], '');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.equal(lastCall[0]!, url + '/identifiers/aid1/multisig/request');
         assert.equal(lastCall[1]!.method, 'POST');
