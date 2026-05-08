@@ -12,8 +12,11 @@ import {
     IdentifierDeps,
     IdentifierManagerFactory,
     randomPasscode,
+    Siger,
     Tier,
+    Verfer,
 } from '../../src/index.ts';
+import { b } from '../../src/keri/core/core.ts';
 import { createMockIdentifierState } from './test-utils.ts';
 
 const bran = '0123456789abcdefghijk';
@@ -21,6 +24,7 @@ const bran = '0123456789abcdefghijk';
 export class MockClient implements IdentifierDeps {
     manager: IdentifierManagerFactory;
     controller: Controller;
+    agent = { pre: 'Eagent' };
     pidx = 0;
 
     fetch = vitest.fn();
@@ -343,7 +347,7 @@ describe('Aiding', () => {
         client.fetch.mockResolvedValueOnce(Response.json(aid1));
         client.fetch.mockResolvedValueOnce(Response.json({}));
 
-        await client.identifiers().addEndRole('aid1', 'agent');
+        const result = await client.identifiers().addEndRole('aid1', 'agent');
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.path, '/identifiers/aid1/endroles');
         assert.equal(lastCall.method, 'POST');
@@ -352,7 +356,36 @@ describe('Aiding', () => {
         assert.deepEqual(lastCall.body.rpy.a, {
             cid: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
             role: 'agent',
+            eid: 'Eagent',
         });
+        const siger = new Siger({ qb64: result.sigs[0] });
+        const verfer = new Verfer({ qb64: aid1.state.k[0] });
+        expect(verfer.verify(siger.raw, b(result.serder.raw))).toBe(true);
+    });
+
+    it('Can add end role with an explicit endpoint AID', async () => {
+        const aid1 = await createMockIdentifierState('aid1', bran, {});
+        client.fetch.mockResolvedValueOnce(Response.json(aid1));
+        client.fetch.mockResolvedValueOnce(Response.json({}));
+
+        await client
+            .identifiers()
+            .addEndRole('aid1', 'agent', 'EexplicitAgent');
+        const lastCall = client.getLastMockRequest();
+        assert.deepEqual(lastCall.body.rpy.a, {
+            cid: 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK',
+            role: 'agent',
+            eid: 'EexplicitAgent',
+        });
+    });
+
+    it('Requires non-agent end roles to provide an endpoint AID', async () => {
+        const aid1 = await createMockIdentifierState('aid1', bran, {});
+        client.fetch.mockResolvedValueOnce(Response.json(aid1));
+
+        await expect(
+            client.identifiers().addEndRole('aid1', 'mailbox')
+        ).rejects.toThrow('endpoint role mailbox authorization requires eid');
     });
 
     it('Should throw error if fetch call fails when adding end role', async () => {

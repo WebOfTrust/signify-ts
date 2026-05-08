@@ -65,6 +65,7 @@ export interface IdentifierDeps {
     ): Promise<Response>;
     pidx: number;
     manager: IdentifierManagerFactory | null;
+    agent?: { pre: string } | null;
 }
 
 /**
@@ -450,8 +451,9 @@ export class Identifier {
     ): Promise<EventResult> {
         const hab = await this.get(name);
         const pre = hab.prefix;
+        const resolvedEid = this.resolveEndRoleEid(role, eid);
 
-        const rpy = this.makeEndRole(pre, role, eid, stamp);
+        const rpy = this.makeEndRole(pre, role, resolvedEid, stamp);
         const keeper = this.client.manager!.get(hab);
         const sigs = await keeper.sign(b(rpy.raw));
 
@@ -466,6 +468,25 @@ export class Identifier {
             jsondata
         );
         return new EventResult(rpy, sigs, res);
+    }
+
+    private resolveEndRoleEid(role: string, eid?: string): string {
+        if (eid !== undefined && eid.trim().length > 0) {
+            return eid;
+        }
+
+        if (role === 'agent') {
+            const agentPre = this.client.agent?.pre;
+            if (agentPre !== undefined && agentPre.trim().length > 0) {
+                return agentPre;
+            }
+
+            throw new Error(
+                'agent endpoint role authorization requires a connected agent AID'
+            );
+        }
+
+        throw new Error(`endpoint role ${role} authorization requires eid`);
     }
 
     /**
