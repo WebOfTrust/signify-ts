@@ -1,23 +1,22 @@
-import {
-    Algos,
-    HabState,
-    KeyState,
-    Serder,
-    Siger,
-    SignifyClient,
-    assertMultisigIcp,
-    d,
-    messagize,
-    ready,
-} from 'signify-ts';
+import { HabState, KeyState, Siger, SignifyClient, ready } from 'signify-ts';
 import { assert, test } from 'vitest';
 import {
     getOrCreateClient,
     getOrCreateIdentifier,
-    markNotification,
-    waitForNotifications,
+    waitAndMarkNotification,
     waitOperation,
 } from './utils/test-util.ts';
+import {
+    acceptMultisigIncept,
+    startMultisigIncept,
+} from './utils/multisig-utils.ts';
+
+const NOTIFICATION_WAIT = {
+    maxRetries: 30,
+    minSleep: 500,
+    maxSleep: 500,
+    timeout: 15_000,
+};
 
 test('3-of-3 multisig replacement rotation signs with prior next ondexes', async () => {
     await ready();
@@ -55,12 +54,40 @@ test('3-of-3 multisig replacement rotation signs with prior next ondexes', async
         ]
     );
 
-    await createThreeOfThreeGroup({
-        clients: [client1, client2, client3],
-        memberNames: [names.member1, names.member2, names.member3],
+    const groupOp1 = await startMultisigIncept(client1, {
         groupName: names.group,
-        aids: [aid1, aid2, aid3],
+        localMemberName: names.member1,
+        participants: [aid1.prefix, aid2.prefix, aid3.prefix],
+        isith: 3,
+        nsith: 3,
+        toad: 0,
+        wits: [],
     });
+    const msg2 = await waitAndMarkNotification(
+        client2,
+        '/multisig/icp',
+        NOTIFICATION_WAIT
+    );
+    const groupOp2 = await acceptMultisigIncept(client2, {
+        groupName: names.group,
+        localMemberName: names.member2,
+        msgSaid: msg2,
+    });
+    const msg3 = await waitAndMarkNotification(
+        client3,
+        '/multisig/icp',
+        NOTIFICATION_WAIT
+    );
+    const groupOp3 = await acceptMultisigIncept(client3, {
+        groupName: names.group,
+        localMemberName: names.member3,
+        msgSaid: msg3,
+    });
+    await Promise.all([
+        waitOperation(client1, groupOp1, AbortSignal.timeout(20_000)),
+        waitOperation(client2, groupOp2, AbortSignal.timeout(20_000)),
+        waitOperation(client3, groupOp3, AbortSignal.timeout(20_000)),
+    ]);
 
     // Rotate the existing member AIDs so their current keys expose the
     // group prior next digests committed by the multisig inception.
@@ -137,102 +164,6 @@ async function createAID(client: SignifyClient, name: string) {
     return await client.identifiers().get(name);
 }
 
-async function createThreeOfThreeGroup({
-    clients,
-    memberNames,
-    groupName,
-    aids,
-}: {
-    clients: [SignifyClient, SignifyClient, SignifyClient];
-    memberNames: [string, string, string];
-    groupName: string;
-    aids: [HabState, HabState, HabState];
-}) {
-    const states = aids.map((aid) => aid.state);
-    const [client1, client2, client3] = clients;
-    const [aid1, aid2, aid3] = aids;
-
-    const icp1 = await client1.identifiers().create(groupName, {
-        algo: Algos.group,
-        mhab: aid1,
-        isith: 3,
-        nsith: 3,
-        toad: 0,
-        wits: [],
-        states,
-        rstates: states,
-    });
-    const groupOp1 = await icp1.op();
-    await sendInceptionNotice({
-        client: client1,
-        localMemberName: memberNames[0],
-        groupName,
-        localAid: aid1,
-        serder: icp1.serder,
-        sigs: icp1.sigs,
-        recipients: [aid2.prefix, aid3.prefix],
-        smids: states.map((state) => state.i),
-    });
-
-    const msg2 = await waitAndMarkNotification(client2, '/multisig/icp');
-    const icpExn2 = assertMultisigIcp(
-        (await client2.groups().getRequest(msg2))[0]
-    ).exn;
-    const icp2 = await client2.identifiers().create(groupName, {
-        algo: Algos.group,
-        mhab: aid2,
-        isith: icpExn2.e.icp.kt,
-        nsith: icpExn2.e.icp.nt,
-        toad: parseInt(icpExn2.e.icp.bt),
-        wits: icpExn2.e.icp.b,
-        states,
-        rstates: states,
-    });
-    const groupOp2 = await icp2.op();
-    await sendInceptionNotice({
-        client: client2,
-        localMemberName: memberNames[1],
-        groupName,
-        localAid: aid2,
-        serder: icp2.serder,
-        sigs: icp2.sigs,
-        recipients: [aid1.prefix, aid3.prefix],
-        smids: icpExn2.a.smids,
-    });
-
-    const msg3 = await waitAndMarkNotification(client3, '/multisig/icp');
-    const icpExn3 = assertMultisigIcp(
-        (await client3.groups().getRequest(msg3))[0]
-    ).exn;
-    const icp3 = await client3.identifiers().create(groupName, {
-        algo: Algos.group,
-        mhab: aid3,
-        isith: icpExn3.e.icp.kt,
-        nsith: icpExn3.e.icp.nt,
-        toad: parseInt(icpExn3.e.icp.bt),
-        wits: icpExn3.e.icp.b,
-        states,
-        rstates: states,
-    });
-    const groupOp3 = await icp3.op();
-    await sendInceptionNotice({
-        client: client3,
-        localMemberName: memberNames[2],
-        groupName,
-        localAid: aid3,
-        serder: icp3.serder,
-        sigs: icp3.sigs,
-        recipients: [aid1.prefix, aid2.prefix],
-        smids: icpExn3.a.smids,
-    });
-
-    await Promise.all([
-        waitOperation(client1, groupOp1, AbortSignal.timeout(20_000)),
-        waitOperation(client2, groupOp2, AbortSignal.timeout(20_000)),
-        waitOperation(client3, groupOp3, AbortSignal.timeout(20_000)),
-    ]);
-}
-
 async function queryReplacementStates(
     client: SignifyClient,
     aids: [HabState, HabState, HabState, HabState]
@@ -271,54 +202,4 @@ async function resolveOobisForReplacement(
             })
         )
     );
-}
-
-async function sendInceptionNotice({
-    client,
-    localMemberName,
-    groupName,
-    localAid,
-    serder,
-    sigs,
-    recipients,
-    smids,
-}: {
-    client: SignifyClient;
-    localMemberName: string;
-    groupName: string;
-    localAid: HabState;
-    serder: Serder;
-    sigs: string[];
-    recipients: string[];
-    smids: string[];
-}) {
-    const atc = attachment(serder, sigs);
-    await client
-        .exchanges()
-        .send(
-            localMemberName,
-            groupName,
-            localAid,
-            '/multisig/icp',
-            { gid: serder.pre, smids, rmids: smids },
-            { icp: [serder, atc] },
-            recipients
-        );
-}
-
-function attachment(serder: Serder, sigs: string[]) {
-    const sigers = sigs.map((sig) => new Siger({ qb64: sig }));
-    const ims = d(messagize(serder, sigers));
-    return ims.substring(serder.size);
-}
-
-async function waitAndMarkNotification(client: SignifyClient, route: string) {
-    const notes = await waitForNotifications(client, route, {
-        maxRetries: 30,
-        minSleep: 500,
-        maxSleep: 500,
-        timeout: 15_000,
-    });
-    await Promise.all(notes.map((note) => markNotification(client, note)));
-    return notes[notes.length - 1]?.a.d ?? '';
 }
