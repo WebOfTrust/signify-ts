@@ -34,7 +34,6 @@ describe('IdentifierManager signing', () => {
             undefined,
             undefined,
             keys.slice(0, 3),
-            priorNextDigests,
             priorNextDigests
         );
 
@@ -65,7 +64,6 @@ describe('IdentifierManager signing', () => {
             undefined,
             undefined,
             keys.slice(0, 3),
-            priorNextDigests,
             priorNextDigests
         );
 

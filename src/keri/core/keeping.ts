@@ -225,8 +225,7 @@ export class IdentifierManagerFactory {
                 undefined,
                 undefined,
                 aid.group.keys,
-                aid.group.ndigs,
-                aid.state?.n ?? aid.group.ndigs
+                aid.group.ndigs
             );
         } else if (Algos.extern in aid) {
             const typ = aid.extern.extern_type;
@@ -746,12 +745,13 @@ export class GroupIdentifierManager implements IdentifierManager {
      *
      * `states` and `rstates` are app-level key state records used when creating
      * a new group event. `keys` and `ndigs` are persisted group manager params
-     * used when loading an existing group. `pndigs`, when provided, is the
-     * current group state's prior next digest list (`aid.state.n`) used for
-     * rotation `ondex` derivation.
+     * used when loading an existing group. For an existing group, `ndigs` is
+     * expected to be the current establishment event's next digest list.
      *
      * During group inception there is no separate prior establishment event, so
-     * `gpndigs` falls back to the same digest list as `gdigs`.
+     * `gpndigs` starts as the same digest list as `gdigs`. During rotation,
+     * `gdigs` changes to the proposed next digests, while `gpndigs` stays
+     * fixed for `ondex` derivation.
      */
     constructor(
         manager: IdentifierManagerFactory,
@@ -759,8 +759,7 @@ export class GroupIdentifierManager implements IdentifierManager {
         states: KeyState[] | undefined = undefined,
         rstates: KeyState[] | undefined = undefined,
         keys: string[] = [],
-        ndigs: string[] = [],
-        pndigs?: string[]
+        ndigs: string[] = []
     ) {
         this.manager = manager;
         if (states != undefined) {
@@ -773,7 +772,7 @@ export class GroupIdentifierManager implements IdentifierManager {
 
         this.gkeys = states?.map((state) => state['k'][0]) ?? keys;
         this.gdigs = rstates?.map((state) => state['n'][0]) ?? ndigs;
-        this.gpndigs = pndigs ?? this.gdigs;
+        this.gpndigs = this.gdigs;
         this.mhab = mhab;
         this.signers = [];
     }
