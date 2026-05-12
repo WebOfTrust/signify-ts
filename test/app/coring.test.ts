@@ -62,6 +62,42 @@ describe('Coring', () => {
         assert.deepEqual(lastBody.oobialias, 'witness');
     });
 
+    it('Endroles without role filter', async () => {
+        await libsodium.ready;
+        const bran = '0123456789abcdefghijk';
+
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+
+        await client.boot();
+        await client.connect();
+
+        const oobis = client.oobis();
+        const aid = 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK';
+
+        await oobis.endroles(aid);
+        const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.equal(lastCall[0]!, url + `/endroles/${aid}`);
+        assert.equal(lastCall[1]!.method, 'GET');
+    });
+
+    it('Endroles with role filter', async () => {
+        await libsodium.ready;
+        const bran = '0123456789abcdefghijk';
+
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+
+        await client.boot();
+        await client.connect();
+
+        const oobis = client.oobis();
+        const aid = 'ELUvZ8aJEHAQE-0nsevyYTP98rBbGJUrTj5an-pCmwrK';
+
+        await oobis.endroles(aid, 'agent');
+        const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.equal(lastCall[0]!, url + `/endroles/${aid}/agent`);
+        assert.equal(lastCall[1]!.method, 'GET');
+    });
+
     it('Events and states', async () => {
         await libsodium.ready;
         const bran = '0123456789abcdefghijk';

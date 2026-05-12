@@ -217,3 +217,5 @@ export type GenericOperation =
     | CredentialOperation
     | GroupOperation
     | DelegatorOperation;
+
+export type EndRole = components['schemas']['EndRole'];
