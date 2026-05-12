@@ -406,7 +406,7 @@ interface SignArgs {
     verfers?: Array<Verfer> | undefined;
     indexed?: boolean;
     indices?: Array<number> | undefined;
-    ondices?: Array<number> | undefined;
+    ondices?: Array<number | undefined> | undefined;
 }
 
 /**
@@ -1086,19 +1086,22 @@ export class Manager {
                     i = idx;
                 }
 
-                let o;
+                let o: number | undefined;
                 if (ondices != undefined) {
                     o = ondices[idx];
-                    if (o <= 0) {
+                    if (
+                        o !== undefined &&
+                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
+                    ) {
                         throw new Error(
-                            `Invalid other signing index = {o}, not None or not whole number.`
+                            `Invalid other signing index = ${o}, not None or not whole number.`
                         );
                     }
                 } else {
                     o = i;
                 }
 
-                const only = o == undefined;
+                const only = o === undefined;
                 sigers.push(signer.sign(ser, i, only, o) as Siger);
             });
             return sigers;

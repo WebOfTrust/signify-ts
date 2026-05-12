@@ -445,6 +445,83 @@ describe('Aiding', () => {
     });
 
     describe('Group identifiers', () => {
+        it('Group icp permits local member as signer only, not rotator, with proposed next digests excluding local signer', async () => {
+            const member1 = await createMockIdentifierState(randomUUID(), bran);
+            const member2 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member3 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+
+            const states = [member1.state, member2.state];
+            const rstates = [member2.state, member3.state];
+
+            // Regression guard: member1 is authorized by current keys (`states`)
+            // but intentionally absent from proposed next digests (`rstates`).
+            // Group icp signing must stay current-only and not derive ondex.
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().create(randomUUID(), {
+                algo: Algos.group,
+                mhab: member1,
+                isith: '1',
+                nsith: '1',
+                states,
+                rstates,
+            });
+
+            const body = client.getLastMockRequest().body;
+            const siger = new Siger({ qb64: body.sigs[0] });
+            assert.equal(siger.index, 0);
+            assert.equal(siger.ondex, undefined);
+            assert.deepEqual(
+                body.icp.n,
+                rstates.map((state) => state.n[0])
+            );
+        });
+
+        it('Creates group interaction signatures as current-only without looking up proposed next digests', async () => {
+            const member1 = await createMockIdentifierState(randomUUID(), bran);
+            const member2 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member3 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+
+            const states = [member1.state, member2.state];
+            const rstates = [member2.state, member3.state];
+            // Regression guard: interaction events have no prior-next threshold
+            // to expose. Excluding member1 from proposed next digests proves ixn
+            // signing does not consult rstates/gdigs for ondex.
+            const group = await createMockIdentifierState(randomUUID(), bran, {
+                algo: Algos.group,
+                mhab: member1,
+                isith: '1',
+                nsith: '1',
+                states,
+                rstates,
+            });
+
+            client.fetch.mockResolvedValueOnce(Response.json(group));
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().interact(group.name, {
+                test: 'interaction',
+            });
+
+            const body = client.getLastMockRequest().body;
+            const siger = new Siger({ qb64: body.sigs[0] });
+            assert.equal(siger.index, 0);
+            assert.equal(siger.ondex, undefined);
+            assert.equal(body.ixn.t, 'ixn');
+        });
+
         it('Can Rotate group', async () => {
             const member1 = await createMockIdentifierState(
                 randomUUID(),

@@ -80,7 +80,7 @@ export interface IdentifierManager<
         ser: Uint8Array,
         indexed?: boolean,
         indices?: number[],
-        ondices?: number[]
+        ondices?: Array<number | undefined>
     ): Promise<SignResult>;
 }
 
@@ -418,7 +418,7 @@ export class SaltyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: number[] | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined
     ): Promise<SignResult> {
         const signers = this.creator.create(
             this.icodes,
@@ -445,14 +445,12 @@ export class SaltyIdentifierManager implements IdentifierManager {
                 } else {
                     i = j;
                 }
-                let o = 0;
+                let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
                     if (
-                        (o == undefined ||
-                            (typeof o == 'number' &&
-                                typeof o != 'number' &&
-                                o >= 0))!
+                        o !== undefined &&
+                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
                     ) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
@@ -462,7 +460,7 @@ export class SaltyIdentifierManager implements IdentifierManager {
                     o = i;
                 }
                 sigers.push(
-                    signer.sign(ser, i, o == undefined ? true : false, o)
+                    signer.sign(ser, i, o === undefined ? true : false, o)
                 );
             }
             return sigers.map((siger) => siger.qb64);
@@ -627,7 +625,7 @@ export class RandyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: number[] | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined
     ): Promise<SignResult> {
         const signers = this.prxs!.map((prx) =>
             this.decrypter.decrypt(
@@ -651,14 +649,12 @@ export class RandyIdentifierManager implements IdentifierManager {
                 } else {
                     i = j;
                 }
-                let o = 0;
+                let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
                     if (
-                        (o == undefined ||
-                            (typeof o == 'number' &&
-                                typeof o != 'number' &&
-                                o >= 0))!
+                        o !== undefined &&
+                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
                     ) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
@@ -668,7 +664,7 @@ export class RandyIdentifierManager implements IdentifierManager {
                     o = i;
                 }
                 sigers.push(
-                    signer.sign(ser, i, o == undefined ? true : false, o)
+                    signer.sign(ser, i, o === undefined ? true : false, o)
                 );
             }
             return sigers.map((siger) => siger.qb64);
@@ -814,8 +810,6 @@ export class GroupIdentifierManager implements IdentifierManager {
         }
 
         const key = this.mhab['state']['k'][0];
-        const ndig = this.mhab['state']['n'][0];
-
         // The event's current key list authorizes the signature's `index`.
         const csi = this.gkeys!.indexOf(key); // csi = current signing index (from current rotation event)
         if (csi < 0) {
@@ -825,8 +819,7 @@ export class GroupIdentifierManager implements IdentifierManager {
         }
 
         const ilk = this.eventIlk(ser);
-        let pni: number; // prior next index exposed as signature `ondex`
-        let ondexSource: string;
+        let pni: number | undefined; // prior next index exposed as signature `ondex`
 
         switch (ilk) {
             case Ilks.rot:
@@ -835,20 +828,18 @@ export class GroupIdentifierManager implements IdentifierManager {
                 // precommitted key digest, because prior `n` authorizes this
                 // event's current signer set.
                 pni = this.priorNextIndexForKey(key);
-                ondexSource = 'prior next digest list';
                 break;
             default:
-                // Inception and non-rotation group signatures do not satisfy a
-                // prior-next rotation threshold. Preserve the existing same-list
-                // behavior for their `ondex` value.
-                pni = this.gdigs!.indexOf(ndig);
-                ondexSource = 'group next digest list';
+                // Inception and non-rotation signatures satisfy only the
+                // current signing threshold. The event's `n` field is a
+                // precommitment for a future rotation, not an `ondex` source.
+                pni = undefined;
                 break;
         }
 
-        if (pni < 0) {
+        if (pni !== undefined && pni < 0) {
             throw new Error(
-                `Group signing key ${key} cannot derive ondex from ${ondexSource}.`
+                `Group signing key ${key} cannot derive ondex from prior next digest list.`
             );
         }
 
