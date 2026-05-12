@@ -4,7 +4,7 @@ import { MtrDex } from './matter.ts';
 import { Tier } from './salter.ts';
 import { Encrypter } from '../core/encrypter.ts';
 import { Decrypter } from './decrypter.ts';
-import { b, d, Ilks } from './core.ts';
+import { b } from './core.ts';
 import { Cipher } from './cipher.ts';
 import { Diger } from './diger.ts';
 import { Prefixer } from './prefixer.ts';
@@ -76,11 +76,19 @@ export interface IdentifierManager<
         states?: KeyState[],
         rstates?: KeyState[]
     ): Promise<IdentifierManagerResult>;
+    /**
+     * Sign serialized bytes.
+     *
+     * `rotated` is meaningful for group identifiers only. Callers building a
+     * group rotation must pass `rotated=true` so the group signature exposes
+     * prior-next `ondex`; non-rotation calls leave it false/current-only.
+     */
     sign(
         ser: Uint8Array,
         indexed?: boolean,
         indices?: number[],
-        ondices?: Array<number | undefined>
+        ondices?: Array<number | undefined>,
+        rotated?: boolean
     ): Promise<SignResult>;
 }
 
@@ -418,7 +426,8 @@ export class SaltyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: Array<number | undefined> | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined,
+        _rotated?: boolean
     ): Promise<SignResult> {
         const signers = this.creator.create(
             this.icodes,
@@ -625,7 +634,8 @@ export class RandyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: Array<number | undefined> | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined,
+        _rotated?: boolean
     ): Promise<SignResult> {
         const signers = this.prxs!.map((prx) =>
             this.decrypter.decrypt(
@@ -804,7 +814,16 @@ export class GroupIdentifierManager implements IdentifierManager {
         return [this.gkeys, this.gdigs];
     }
 
-    async sign(ser: Uint8Array, indexed: boolean = true): Promise<SignResult> {
+    /**
+     * Signs for the group by delegating to the local member keeper.
+     */
+    async sign(
+        ser: Uint8Array,
+        indexed: boolean = true,
+        _indices: number[] | undefined = undefined,
+        _ondices: Array<number | undefined> | undefined = undefined,
+        rotated = false
+    ): Promise<SignResult> {
         if (!this.mhab.state) {
             throw new Error(`No state in mhab`);
         }
@@ -818,23 +837,17 @@ export class GroupIdentifierManager implements IdentifierManager {
             );
         }
 
-        const ilk = this.eventIlk(ser);
         let pni: number | undefined; // prior next index exposed as signature `ondex`
 
-        switch (ilk) {
-            case Ilks.rot:
-            case Ilks.drt:
-                // Rotations must expose the prior establishment event's
-                // precommitted key digest, because prior `n` authorizes this
-                // event's current signer set.
-                pni = this.priorNextIndexForKey(key);
-                break;
-            default:
-                // Inception and non-rotation signatures satisfy only the
-                // current signing threshold. The event's `n` field is a
-                // precommitment for a future rotation, not an `ondex` source.
-                pni = undefined;
-                break;
+        if (rotated) {
+            // Rotation call sites must explicitly request prior-next exposure,
+            // dual indexed signatures with both an index (csi) and an ondex (pni)
+            pni = this.priorNextIndexForKey(key);
+        } else {
+            // Inception and non-rotation signatures satisfy only the current
+            // signing threshold. The event's `n` field is a precommitment for a
+            // future rotation, not an `ondex` source.
+            pni = undefined;
         }
 
         if (pni !== undefined && pni < 0) {
@@ -872,20 +885,6 @@ export class GroupIdentifierManager implements IdentifierManager {
         }
 
         return -1;
-    }
-
-    /**
-     * Extracts the serialized event ilk for local signing decisions. Parsing is
-     * intentionally conservative: unknown or unparsable payloads fall through to
-     * the non-rotation signing path.
-     */
-    private eventIlk(ser: Uint8Array): string | undefined {
-        try {
-            const sad = JSON.parse(d(ser)) as { t?: string };
-            return sad.t;
-        } catch {
-            return undefined;
-        }
     }
 
     params() {

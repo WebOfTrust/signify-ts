@@ -648,6 +648,33 @@ describe('Aiding', () => {
                 rstates.map((state) => state.n[0])
             );
         });
+
+        it('Passes rotated=true when signing identifier rotation events', async () => {
+            const aid = await createMockIdentifierState(randomUUID(), bran, {});
+            const keeper = {
+                algo: Algos.salty,
+                rotate: vitest
+                    .fn()
+                    .mockResolvedValue([aid.state.k, aid.state.n]),
+                sign: vitest.fn().mockResolvedValue(['signature']),
+                params: vitest.fn().mockReturnValue({}),
+            };
+            client.manager = {
+                get: vitest.fn().mockReturnValue(keeper),
+            } as never;
+            client.fetch.mockResolvedValueOnce(Response.json(aid));
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().rotate(aid.name);
+
+            expect(keeper.sign).toHaveBeenCalledWith(
+                expect.any(Uint8Array),
+                true,
+                undefined,
+                undefined,
+                true
+            );
+        });
     });
 
     describe('Typings test', () => {

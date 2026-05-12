@@ -108,7 +108,8 @@ export class BIP39Shim implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: Array<number | undefined> | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined,
+        _rotated?: boolean
     ) {
         const signers = this.keys(this.icount, this.kidx, this.transferable);
 
