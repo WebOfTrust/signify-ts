@@ -8,11 +8,16 @@ import libsodium from 'libsodium-wrappers-sumo';
 import { randomUUID } from 'node:crypto';
 import {
     Controller,
+    Diger,
+    HabState,
     Identifier,
     IdentifierDeps,
     IdentifierManagerFactory,
+    KeyState,
     randomPasscode,
+    Siger,
     Tier,
+    Verfer,
 } from '../../src/index.ts';
 import { createMockIdentifierState } from './test-utils.ts';
 
@@ -460,6 +465,7 @@ describe('Aiding', () => {
                 states: [member1.state, member2.state],
                 rstates: [member1.state, member2.state],
             });
+            setGroupPriorNextDigests(group, [member1.state, member2.state]);
 
             client.fetch.mockResolvedValueOnce(
                 Response.json(group, { status: 200 })
@@ -500,6 +506,7 @@ describe('Aiding', () => {
                 states: [member1.state, member2.state],
                 rstates: [member1.state, member2.state],
             });
+            setGroupPriorNextDigests(group, [member1.state, member2.state]);
 
             client.fetch.mockResolvedValueOnce(Response.json(group));
             client.fetch.mockResolvedValueOnce(Response.json({}));
@@ -513,6 +520,56 @@ describe('Aiding', () => {
                 t: 'rot',
                 kt: nextThreshold,
             });
+        });
+
+        it('Uses prior group next digests for replacement rotation ondex', async () => {
+            const member1 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member2 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member3 = await createMockIdentifierState(randomUUID(), bran);
+            const member4 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const states = [member1.state, member2.state, member3.state];
+            const rstates = [member1.state, member2.state, member4.state];
+
+            const group = await createMockIdentifierState(randomUUID(), bran, {
+                algo: Algos.group,
+                mhab: member3,
+                isith: '3',
+                nsith: '3',
+                states,
+                rstates: states,
+            });
+            setGroupPriorNextDigests(group, states);
+
+            client.fetch.mockResolvedValueOnce(Response.json(group));
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().rotate(group.name, {
+                nsith: '3',
+                states,
+                rstates,
+            });
+
+            const body = client.getLastMockRequest().body;
+            const siger = new Siger({ qb64: body.sigs[0] });
+            assert.equal(siger.index, 2);
+            assert.equal(siger.ondex, 2);
+            assert.deepEqual(
+                body.rot.n,
+                rstates.map((state) => state.n[0])
+            );
+            assert.deepEqual(
+                body.group.ndigs,
+                rstates.map((state) => state.n[0])
+            );
         });
     });
 
@@ -551,3 +608,15 @@ describe('Aiding', () => {
         });
     });
 });
+
+function setGroupPriorNextDigests(group: HabState, states: KeyState[]) {
+    if (!('group' in group)) {
+        throw new Error('Expected mock identifier to be a group.');
+    }
+
+    const priorNextDigests = states.map(
+        (state) => new Diger({}, new Verfer({ qb64: state.k[0] }).qb64b).qb64
+    );
+    group.state.n = priorNextDigests;
+    group.group.ndigs = priorNextDigests;
+}
