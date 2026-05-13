@@ -18,7 +18,7 @@ const NOTIFICATION_WAIT = {
     timeout: 15_000,
 };
 
-test('3-of-3 multisig replacement rotation signs with prior next ondexes', async () => {
+test('can replace a group member under a 3-of-3 threshold', async () => {
     await ready();
 
     const suffix = Date.now().toString(36);

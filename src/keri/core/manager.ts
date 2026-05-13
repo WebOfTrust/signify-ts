@@ -1089,10 +1089,7 @@ export class Manager {
                 let o: number | undefined;
                 if (ondices != undefined) {
                     o = ondices[idx];
-                    if (
-                        o !== undefined &&
-                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid other signing index = ${o}, not None or not whole number.`
                         );

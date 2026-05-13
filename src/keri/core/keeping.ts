@@ -82,6 +82,10 @@ export interface IdentifierManager<
      * `rotated` is meaningful for group identifiers only. Callers building a
      * group rotation must pass `rotated=true` so the group signature exposes
      * prior-next `ondex`; non-rotation calls leave it false/current-only.
+     *
+     * `ondices === undefined` uses the default dual-index behavior where each
+     * `ondex` matches its `index`. `ondices[j] === undefined` is the explicit
+     * current-only case for that signature, so no `ondex` is emitted.
      */
     sign(
         ser: Uint8Array,
@@ -456,10 +460,7 @@ export class SaltyIdentifierManager implements IdentifierManager {
                 let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
-                    if (
-                        o !== undefined &&
-                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
                         );
@@ -661,10 +662,7 @@ export class RandyIdentifierManager implements IdentifierManager {
                 let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
-                    if (
-                        o !== undefined &&
-                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
                         );

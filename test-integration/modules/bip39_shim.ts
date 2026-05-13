@@ -130,10 +130,7 @@ export class BIP39Shim implements IdentifierManager {
                 let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
-                    if (
-                        o !== undefined &&
-                        (typeof o !== 'number' || !Number.isInteger(o) || o < 0)
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
                         );
