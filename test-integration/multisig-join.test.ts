@@ -1,4 +1,5 @@
 import signify, {
+    HabState,
     KeyState,
     Serder,
     SignifyClient,
@@ -9,10 +10,22 @@ import {
     getOrCreateClient,
     getOrCreateIdentifier,
     markNotification,
+    waitAndMarkNotification as waitAndMarkNotificationWithRetry,
     waitForNotifications,
     waitOperation,
 } from './utils/test-util.ts';
+import {
+    acceptMultisigIncept,
+    startMultisigIncept,
+} from './utils/multisig-utils.ts';
 import { assert, beforeAll, describe, test } from 'vitest';
+
+const NOTIFICATION_WAIT = {
+    maxRetries: 30,
+    minSleep: 500,
+    maxSleep: 500,
+    timeout: 15_000,
+};
 
 describe('multisig-join', () => {
     const nameMember1 = 'member1';
@@ -390,6 +403,177 @@ describe('multisig-join', () => {
             await endRoleOperation.op()
         );
     });
+
+    test('can replace a group member under a 3-of-3 threshold', async () => {
+        const suffix = Date.now().toString(36);
+        const names = {
+            member1: `ondex-member1-${suffix}`,
+            member2: `ondex-member2-${suffix}`,
+            member3: `ondex-member3-${suffix}`,
+            member4: `ondex-member4-${suffix}`,
+            group: `ondex-group-${suffix}`,
+        };
+
+        const [
+            replacementClient1,
+            replacementClient2,
+            replacementClient3,
+            replacementClient4,
+        ] = await Promise.all([
+            getOrCreateClient(),
+            getOrCreateClient(),
+            getOrCreateClient(),
+            getOrCreateClient(),
+        ]);
+
+        const [aid1, aid2, aid3, aid4] = await Promise.all([
+            createAID(replacementClient1, names.member1, []),
+            createAID(replacementClient2, names.member2, []),
+            createAID(replacementClient3, names.member3, []),
+            createAID(replacementClient4, names.member4, []),
+        ]);
+
+        await resolveOobisForReplacement(
+            [replacementClient1, replacementClient2, replacementClient3],
+            [
+                [names.member1, replacementClient1],
+                [names.member2, replacementClient2],
+                [names.member3, replacementClient3],
+                [names.member4, replacementClient4],
+            ]
+        );
+
+        const groupOp1 = await startMultisigIncept(replacementClient1, {
+            groupName: names.group,
+            localMemberName: names.member1,
+            participants: [aid1.prefix, aid2.prefix, aid3.prefix],
+            isith: 3,
+            nsith: 3,
+            toad: 0,
+            wits: [],
+        });
+        const msg2 = await waitAndMarkNotificationWithRetry(
+            replacementClient2,
+            '/multisig/icp',
+            NOTIFICATION_WAIT
+        );
+        const groupOp2 = await acceptMultisigIncept(replacementClient2, {
+            groupName: names.group,
+            localMemberName: names.member2,
+            msgSaid: msg2,
+        });
+        const msg3 = await waitAndMarkNotificationWithRetry(
+            replacementClient3,
+            '/multisig/icp',
+            NOTIFICATION_WAIT
+        );
+        const groupOp3 = await acceptMultisigIncept(replacementClient3, {
+            groupName: names.group,
+            localMemberName: names.member3,
+            msgSaid: msg3,
+        });
+        await Promise.all([
+            waitOperation(
+                replacementClient1,
+                groupOp1,
+                AbortSignal.timeout(20_000)
+            ),
+            waitOperation(
+                replacementClient2,
+                groupOp2,
+                AbortSignal.timeout(20_000)
+            ),
+            waitOperation(
+                replacementClient3,
+                groupOp3,
+                AbortSignal.timeout(20_000)
+            ),
+        ]);
+
+        // Rotate the existing member AIDs so their current keys expose the
+        // group prior next digests committed by the multisig inception.
+        const [singleRot1, singleRot2, singleRot3] = await Promise.all([
+            replacementClient1.identifiers().rotate(names.member1),
+            replacementClient2.identifiers().rotate(names.member2),
+            replacementClient3.identifiers().rotate(names.member3),
+        ]);
+        await Promise.all([
+            waitOperation(
+                replacementClient1,
+                await singleRot1.op(),
+                AbortSignal.timeout(20_000)
+            ),
+            waitOperation(
+                replacementClient2,
+                await singleRot2.op(),
+                AbortSignal.timeout(20_000)
+            ),
+            waitOperation(
+                replacementClient3,
+                await singleRot3.op(),
+                AbortSignal.timeout(20_000)
+            ),
+        ]);
+
+        const [member1State, member2State, member3State, member4State] =
+            await queryReplacementStates(replacementClient1, [
+                aid1,
+                aid2,
+                aid3,
+                aid4,
+            ]);
+
+        // Each recipient must also know the rotated member KELs before it can
+        // verify and accept the multisig exchange messages signed by those
+        // rotated member AIDs.
+        await Promise.all([
+            queryReplacementStates(replacementClient2, [
+                aid1,
+                aid2,
+                aid3,
+                aid4,
+            ]),
+            queryReplacementStates(replacementClient3, [
+                aid1,
+                aid2,
+                aid3,
+                aid4,
+            ]),
+        ]);
+
+        // This is the protocol-valid first replacement step: the current
+        // signing set is still LAR1/LAR2/LAR3, while the next set removes LAR3
+        // and adds LAR4. LAR3 must still be able to sign because LAR3 was
+        // committed in the prior next set.
+        const states = [member1State, member2State, member3State];
+        const rstates = [member1State, member2State, member4State];
+
+        const rot1 = await replacementClient1
+            .identifiers()
+            .rotate(names.group, { states, rstates });
+        const sig1 = new signify.Siger({ qb64: rot1.sigs[0] });
+        assert.equal(sig1.index, 0);
+        assert.equal(sig1.ondex, 0);
+
+        const rot2 = await replacementClient2
+            .identifiers()
+            .rotate(names.group, { states, rstates });
+        const sig2 = new signify.Siger({ qb64: rot2.sigs[0] });
+        assert.equal(sig2.index, 1);
+        assert.equal(sig2.ondex, 1);
+
+        // This is the bug reproduction. LAR3 is signing with the third
+        // current key, and its current key was committed at position 2 in the
+        // group's prior next digests. Even though LAR3 is intentionally absent
+        // from the proposed next rstates, its rotation signature should carry
+        // index=2 and ondex=2.
+        const rot3 = await replacementClient3
+            .identifiers()
+            .rotate(names.group, { states, rstates });
+        const sig3 = new signify.Siger({ qb64: rot3.sigs[0] });
+        assert.equal(sig3.index, 2);
+        assert.equal(sig3.ondex, 2);
+    }, 60_000);
 });
 
 async function createAID(client: SignifyClient, name: string, wits: string[]) {
@@ -410,4 +594,46 @@ async function waitAndMarkNotification(client: SignifyClient, route: string) {
     );
 
     return notes[notes.length - 1]?.a.d ?? '';
+}
+
+async function queryReplacementStates(
+    client: SignifyClient,
+    aids: [HabState, HabState, HabState, HabState]
+): Promise<[KeyState, KeyState, KeyState, KeyState]> {
+    const [state1, state2, state3, state4] = await Promise.all([
+        queryState(client, aids[0].prefix, '1'),
+        queryState(client, aids[1].prefix, '1'),
+        queryState(client, aids[2].prefix, '1'),
+        queryState(client, aids[3].prefix, '0'),
+    ]);
+    return [state1, state2, state3, state4];
+}
+
+async function queryState(client: SignifyClient, prefix: string, sn: string) {
+    const op = await client.keyStates().query(prefix, sn);
+    const result = await waitOperation(client, op, AbortSignal.timeout(20_000));
+    return result.response;
+}
+
+async function resolveOobisForReplacement(
+    clients: SignifyClient[],
+    aliases: Array<[string, SignifyClient]>
+) {
+    const oobis = await Promise.all(
+        aliases.map(
+            async ([name, client]): Promise<[string, string]> => [
+                name,
+                (await client.oobis().get(name, 'agent')).oobis[0],
+            ]
+        )
+    );
+
+    await Promise.all(
+        clients.flatMap((client) =>
+            oobis.map(async ([name, oobi]) => {
+                const op = await client.oobis().resolve(oobi, name);
+                await waitOperation(client, op, AbortSignal.timeout(20_000));
+            })
+        )
+    );
 }
