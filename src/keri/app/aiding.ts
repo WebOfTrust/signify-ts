@@ -407,7 +407,13 @@ export class Identifier {
             data: data,
         });
 
-        const sigs = await keeper.sign(b(serder.raw));
+        const sigs = await keeper.sign(
+            b(serder.raw),
+            true,
+            undefined,
+            undefined,
+            true
+        );
 
         const jsondata: any = {
             rot: serder.sad,

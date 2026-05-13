@@ -8,11 +8,16 @@ import libsodium from 'libsodium-wrappers-sumo';
 import { randomUUID } from 'node:crypto';
 import {
     Controller,
+    Diger,
+    HabState,
     Identifier,
     IdentifierDeps,
     IdentifierManagerFactory,
+    KeyState,
     randomPasscode,
+    Siger,
     Tier,
+    Verfer,
 } from '../../src/index.ts';
 import { createMockIdentifierState } from './test-utils.ts';
 
@@ -440,6 +445,83 @@ describe('Aiding', () => {
     });
 
     describe('Group identifiers', () => {
+        it('Group icp permits local member as signer only, not rotator, with proposed next digests excluding local signer', async () => {
+            const member1 = await createMockIdentifierState(randomUUID(), bran);
+            const member2 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member3 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+
+            const states = [member1.state, member2.state];
+            const rstates = [member2.state, member3.state];
+
+            // Regression guard: member1 is authorized by current keys (`states`)
+            // but intentionally absent from proposed next digests (`rstates`).
+            // Group icp signing must stay current-only and not derive ondex.
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().create(randomUUID(), {
+                algo: Algos.group,
+                mhab: member1,
+                isith: '1',
+                nsith: '1',
+                states,
+                rstates,
+            });
+
+            const body = client.getLastMockRequest().body;
+            const siger = new Siger({ qb64: body.sigs[0] });
+            assert.equal(siger.index, 0);
+            assert.equal(siger.ondex, undefined);
+            assert.deepEqual(
+                body.icp.n,
+                rstates.map((state) => state.n[0])
+            );
+        });
+
+        it('Creates group interaction signatures as current-only without looking up proposed next digests', async () => {
+            const member1 = await createMockIdentifierState(randomUUID(), bran);
+            const member2 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member3 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+
+            const states = [member1.state, member2.state];
+            const rstates = [member2.state, member3.state];
+            // Regression guard: interaction events have no prior-next threshold
+            // to expose. Excluding member1 from proposed next digests proves ixn
+            // signing does not consult rstates/gdigs for ondex.
+            const group = await createMockIdentifierState(randomUUID(), bran, {
+                algo: Algos.group,
+                mhab: member1,
+                isith: '1',
+                nsith: '1',
+                states,
+                rstates,
+            });
+
+            client.fetch.mockResolvedValueOnce(Response.json(group));
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().interact(group.name, {
+                test: 'interaction',
+            });
+
+            const body = client.getLastMockRequest().body;
+            const siger = new Siger({ qb64: body.sigs[0] });
+            assert.equal(siger.index, 0);
+            assert.equal(siger.ondex, undefined);
+            assert.equal(body.ixn.t, 'ixn');
+        });
+
         it('Can Rotate group', async () => {
             const member1 = await createMockIdentifierState(
                 randomUUID(),
@@ -460,6 +542,7 @@ describe('Aiding', () => {
                 states: [member1.state, member2.state],
                 rstates: [member1.state, member2.state],
             });
+            setGroupPriorNextDigests(group, [member1.state, member2.state]);
 
             client.fetch.mockResolvedValueOnce(
                 Response.json(group, { status: 200 })
@@ -500,6 +583,7 @@ describe('Aiding', () => {
                 states: [member1.state, member2.state],
                 rstates: [member1.state, member2.state],
             });
+            setGroupPriorNextDigests(group, [member1.state, member2.state]);
 
             client.fetch.mockResolvedValueOnce(Response.json(group));
             client.fetch.mockResolvedValueOnce(Response.json({}));
@@ -513,6 +597,83 @@ describe('Aiding', () => {
                 t: 'rot',
                 kt: nextThreshold,
             });
+        });
+
+        it('Uses prior group next digests for replacement rotation ondex', async () => {
+            const member1 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member2 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const member3 = await createMockIdentifierState(randomUUID(), bran);
+            const member4 = await createMockIdentifierState(
+                randomUUID(),
+                randomPasscode()
+            );
+            const states = [member1.state, member2.state, member3.state];
+            const rstates = [member1.state, member2.state, member4.state];
+
+            const group = await createMockIdentifierState(randomUUID(), bran, {
+                algo: Algos.group,
+                mhab: member3,
+                isith: '3',
+                nsith: '3',
+                states,
+                rstates: states,
+            });
+            setGroupPriorNextDigests(group, states);
+
+            client.fetch.mockResolvedValueOnce(Response.json(group));
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().rotate(group.name, {
+                nsith: '3',
+                states,
+                rstates,
+            });
+
+            const body = client.getLastMockRequest().body;
+            const siger = new Siger({ qb64: body.sigs[0] });
+            assert.equal(siger.index, 2);
+            assert.equal(siger.ondex, 2);
+            assert.deepEqual(
+                body.rot.n,
+                rstates.map((state) => state.n[0])
+            );
+            assert.deepEqual(
+                body.group.ndigs,
+                rstates.map((state) => state.n[0])
+            );
+        });
+
+        it('Passes rotated=true when signing identifier rotation events', async () => {
+            const aid = await createMockIdentifierState(randomUUID(), bran, {});
+            const keeper = {
+                algo: Algos.salty,
+                rotate: vitest
+                    .fn()
+                    .mockResolvedValue([aid.state.k, aid.state.n]),
+                sign: vitest.fn().mockResolvedValue(['signature']),
+                params: vitest.fn().mockReturnValue({}),
+            };
+            client.manager = {
+                get: vitest.fn().mockReturnValue(keeper),
+            } as never;
+            client.fetch.mockResolvedValueOnce(Response.json(aid));
+            client.fetch.mockResolvedValueOnce(Response.json({}));
+
+            await client.identifiers().rotate(aid.name);
+
+            expect(keeper.sign).toHaveBeenCalledWith(
+                expect.any(Uint8Array),
+                true,
+                undefined,
+                undefined,
+                true
+            );
         });
     });
 
@@ -551,3 +712,15 @@ describe('Aiding', () => {
         });
     });
 });
+
+function setGroupPriorNextDigests(group: HabState, states: KeyState[]) {
+    if (!('group' in group)) {
+        throw new Error('Expected mock identifier to be a group.');
+    }
+
+    const priorNextDigests = states.map(
+        (state) => new Diger({}, new Verfer({ qb64: state.k[0] }).qb64b).qb64
+    );
+    group.state.n = priorNextDigests;
+    group.group.ndigs = priorNextDigests;
+}

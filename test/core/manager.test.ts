@@ -353,6 +353,30 @@ describe('Manager', () => {
             'ADCRPqO6vdXm1oSSa82rmVVHikf7NdN4JXjOWEk30Ub5JHChL0bW6DzJfA-7VlgLm_B1XR0Z61FweP87bBQpVawI'
         );
 
+        // Per-signature undefined is the explicit current-only case used by
+        // non-rotation group signing; it must not be rejected as invalid ondex.
+        psigers = manager.sign({
+            ser: serb,
+            pubs: ps.new.pubs,
+            indices: [0],
+            ondices: [undefined],
+        }) as Array<Siger>;
+        assert.equal(psigers.length, 1);
+        assert.equal(psigers[0].index, 0);
+        assert.equal(psigers[0].ondex, undefined);
+
+        // ondex=0 is a valid dual-index rotation signature at prior-next
+        // position zero, so validation must not treat it as falsy/absent.
+        psigers = manager.sign({
+            ser: serb,
+            pubs: ps.new.pubs,
+            indices: [0],
+            ondices: [0],
+        }) as Array<Siger>;
+        assert.equal(psigers.length, 1);
+        assert.equal(psigers[0].index, 0);
+        assert.equal(psigers[0].ondex, 0);
+
         vsigers = manager.sign({
             ser: serb,
             verfers: verfers,

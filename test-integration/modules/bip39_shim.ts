@@ -108,7 +108,8 @@ export class BIP39Shim implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: number[] | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined,
+        _rotated?: boolean
     ) {
         const signers = this.keys(this.icount, this.kidx, this.transferable);
 
@@ -126,15 +127,10 @@ export class BIP39Shim implements IdentifierManager {
                 } else {
                     i = j;
                 }
-                let o = 0;
+                let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
-                    if (
-                        (o == undefined ||
-                            (typeof o == 'number' &&
-                                typeof o != 'number' &&
-                                o >= 0))!
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
                         );
@@ -143,7 +139,7 @@ export class BIP39Shim implements IdentifierManager {
                     o = i;
                 }
                 sigers.push(
-                    signer.sign(ser, i, o == undefined ? true : false, o)
+                    signer.sign(ser, i, o === undefined ? true : false, o)
                 );
             }
             return sigers.map((siger) => siger.qb64);

@@ -9,6 +9,7 @@ import { Cipher } from './cipher.ts';
 import { Diger } from './diger.ts';
 import { Prefixer } from './prefixer.ts';
 import { Signer } from './signer.ts';
+import { Verfer } from './verfer.ts';
 import {
     ExternState,
     GroupKeyState,
@@ -75,11 +76,23 @@ export interface IdentifierManager<
         states?: KeyState[],
         rstates?: KeyState[]
     ): Promise<IdentifierManagerResult>;
+    /**
+     * Sign serialized bytes.
+     *
+     * `rotated` is meaningful for group identifiers only. Callers building a
+     * group rotation must pass `rotated=true` so the group signature exposes
+     * prior-next `ondex`; non-rotation calls leave it false/current-only.
+     *
+     * `ondices === undefined` uses the default dual-index behavior where each
+     * `ondex` matches its `index`. `ondices[j] === undefined` is the explicit
+     * current-only case for that signature, so no `ondex` is emitted.
+     */
     sign(
         ser: Uint8Array,
         indexed?: boolean,
         indices?: number[],
-        ondices?: number[]
+        ondices?: Array<number | undefined>,
+        rotated?: boolean
     ): Promise<SignResult>;
 }
 
@@ -416,7 +429,8 @@ export class SaltyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: number[] | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined,
+        _rotated?: boolean
     ): Promise<SignResult> {
         const signers = this.creator.create(
             this.icodes,
@@ -443,15 +457,10 @@ export class SaltyIdentifierManager implements IdentifierManager {
                 } else {
                     i = j;
                 }
-                let o = 0;
+                let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
-                    if (
-                        (o == undefined ||
-                            (typeof o == 'number' &&
-                                typeof o != 'number' &&
-                                o >= 0))!
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
                         );
@@ -460,7 +469,7 @@ export class SaltyIdentifierManager implements IdentifierManager {
                     o = i;
                 }
                 sigers.push(
-                    signer.sign(ser, i, o == undefined ? true : false, o)
+                    signer.sign(ser, i, o === undefined ? true : false, o)
                 );
             }
             return sigers.map((siger) => siger.qb64);
@@ -625,7 +634,8 @@ export class RandyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: number[] | undefined = undefined
+        ondices: Array<number | undefined> | undefined = undefined,
+        _rotated?: boolean
     ): Promise<SignResult> {
         const signers = this.prxs!.map((prx) =>
             this.decrypter.decrypt(
@@ -649,15 +659,10 @@ export class RandyIdentifierManager implements IdentifierManager {
                 } else {
                     i = j;
                 }
-                let o = 0;
+                let o: number | undefined = 0;
                 if (ondices != undefined) {
                     o = ondices![j];
-                    if (
-                        (o == undefined ||
-                            (typeof o == 'number' &&
-                                typeof o != 'number' &&
-                                o >= 0))!
-                    ) {
+                    if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
                         );
@@ -666,7 +671,7 @@ export class RandyIdentifierManager implements IdentifierManager {
                     o = i;
                 }
                 sigers.push(
-                    signer.sign(ser, i, o == undefined ? true : false, o)
+                    signer.sign(ser, i, o === undefined ? true : false, o)
                 );
             }
             return sigers.map((siger) => siger.qb64);
@@ -680,14 +685,72 @@ export class RandyIdentifierManager implements IdentifierManager {
     }
 }
 
+/**
+ * Identifier manager for group identifiers.
+ *
+ * A group identifier does not have its own private signing keys. Instead, this
+ * manager maps group event signing indexes onto the local member AID (`mhab`)
+ * and delegates actual signing to that member's key manager.
+ *
+ * The central invariant is that indexed rotation signatures carry two
+ * positions:
+ *
+ * - `index` points to the signer's current key in the event's current key list
+ *   (`k`), which SignifyTS derives from `states`.
+ * - `ondex` points to the prior establishment event's next digest list (`n`),
+ *   proving that the current key was a precommitted key.
+ *
+ * `rstates` are the proposed next digest source for the new event. They are not
+ * the signer authorization set for the event being signed.
+ */
 export class GroupIdentifierManager implements IdentifierManager {
+    /** Factory used to recover the local member keeper that performs signing. */
     private manager: IdentifierManagerFactory;
+
+    /** Local member AID whose private key signs on behalf of the group. */
     private mhab: HabState;
+
+    /**
+     * Current group signing public keys for the event being built. During
+     * rotation these come from `states[*].k[0]` and define signature `index`.
+     */
     private gkeys: string[] = [];
+
+    /**
+     * Proposed next digest list for the event being built. During rotation
+     * these come from `rstates[*].n[0]`, are returned from `rotate()`, and are
+     * serialized as `group.ndigs`.
+     */
     private gdigs: string[] = [];
+
+    /**
+     * Prior next digest list from the current group establishment event. For
+     * rotations, this is the authorization commitment set used to derive
+     * `ondex`; it must remain separate from proposed next digests in `gdigs`.
+     */
+    private gpndigs: string[] = [];
+
     public algo: Algos = Algos.group;
+
+    /**
+     * Retained for the `IdentifierManager` interface. Group signing delegates
+     * to the local member AID keeper instead of storing signers here.
+     */
     public signers: Signer[];
 
+    /**
+     * Creates a manager for either a new group event or an existing group AID.
+     *
+     * `states` and `rstates` are app-level key state records used when creating
+     * a new group event. `keys` and `ndigs` are persisted group manager params
+     * used when loading an existing group. For an existing group, `ndigs` is
+     * expected to be the current establishment event's next digest list.
+     *
+     * During group inception there is no separate prior establishment event, so
+     * `gpndigs` starts as the same digest list as `gdigs`. During rotation,
+     * `gdigs` changes to the proposed next digests, while `gpndigs` stays
+     * fixed for `ondex` derivation.
+     */
     constructor(
         manager: IdentifierManagerFactory,
         mhab: HabState,
@@ -707,21 +770,35 @@ export class GroupIdentifierManager implements IdentifierManager {
 
         this.gkeys = states?.map((state) => state['k'][0]) ?? keys;
         this.gdigs = rstates?.map((state) => state['n'][0]) ?? ndigs;
+        this.gpndigs = this.gdigs;
         this.mhab = mhab;
         this.signers = [];
     }
 
+    /**
+     * Returns the inception key material for the group event.
+     *
+     * Inception has no prior group establishment event. The current keys and
+     * proposed next digests are therefore returned directly from the manager's
+     * configured `states` and `rstates`.
+     */
     async incept(): Promise<IdentifierManagerResult> {
         return [this.gkeys, this.gdigs];
     }
 
     /**
-     * Performs a multisig rotation
+     * Performs a multisig rotation.
+     *
+     * `states` supplies the current group signing keys for the event being
+     * signed. `rstates` supplies the proposed next key digests to put in the
+     * new event. The prior next digests used for rotation `ondex` lookup stay
+     * unchanged until KERIA accepts the new establishment event and returns an
+     * updated group state.
+     *
      * @param _ncodes
      * @param _transferable
      * @param states
-     * @param rstates key state records for the prior establishment event indicating next key digests.
-     *                You should pass in the current key
+     * @param rstates
      */
     async rotate(
         _ncodes: string[],
@@ -734,19 +811,77 @@ export class GroupIdentifierManager implements IdentifierManager {
         return [this.gkeys, this.gdigs];
     }
 
-    async sign(ser: Uint8Array, indexed: boolean = true): Promise<SignResult> {
+    /**
+     * Signs for the group by delegating to the local member keeper.
+     */
+    async sign(
+        ser: Uint8Array,
+        indexed: boolean = true,
+        _indices: number[] | undefined = undefined,
+        _ondices: Array<number | undefined> | undefined = undefined,
+        rotated = false
+    ): Promise<SignResult> {
         if (!this.mhab.state) {
             throw new Error(`No state in mhab`);
         }
 
         const key = this.mhab['state']['k'][0];
-        const ndig = this.mhab['state']['n'][0];
-
+        // The event's current key list authorizes the signature's `index`.
         const csi = this.gkeys!.indexOf(key); // csi = current signing index (from current rotation event)
-        const pni = this.gdigs!.indexOf(ndig); // pni = prior next index (from last establishment event)
+        if (csi < 0) {
+            throw new Error(
+                `Group signing key ${key} is not present in current group signing keys.`
+            );
+        }
+
+        let pni: number | undefined; // prior next index exposed as signature `ondex`
+
+        if (rotated) {
+            // Rotation call sites must explicitly request prior-next exposure,
+            // dual indexed signatures with both an index (csi) and an ondex (pni)
+            pni = this.priorNextIndexForKey(key);
+        } else {
+            // Inception and non-rotation signatures satisfy only the current
+            // signing threshold. The event's `n` field is a precommitment for a
+            // future rotation, not an `ondex` source.
+            pni = undefined;
+        }
+
+        if (pni !== undefined && pni < 0) {
+            throw new Error(
+                `Group signing key ${key} cannot derive ondex from prior next digest list.`
+            );
+        }
+
+        // Delegate the actual signature to the local member AID keeper while
+        // supplying group-level index and ondex positions.
         const mkeeper = this.manager.get(this.mhab);
 
         return await mkeeper.sign(ser, indexed, [csi], [pni]);
+    }
+
+    /**
+     * Finds the prior next digest position that precommitted the current key.
+     *
+     * This mirrors KERIpy's exposed-prior-next behavior: for each prior next
+     * digest, hash the current verifier key using that digest's code and compare
+     * the result to the digest at that position. A match means the signer has
+     * exposed that precommitted key, and the matching position is the `ondex`.
+     */
+    private priorNextIndexForKey(key: string): number {
+        const verfer = new Verfer({ qb64: key });
+
+        for (const [index, ndig] of this.gpndigs.entries()) {
+            const priorDiger = new Diger({ qb64: ndig });
+            const keyDigest = new Diger({ code: priorDiger.code }, verfer.qb64b)
+                .qb64;
+
+            if (keyDigest === priorDiger.qb64) {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     params() {
