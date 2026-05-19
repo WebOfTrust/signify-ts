@@ -15,7 +15,6 @@ import {
     startMultisigIncept,
     acceptMultisigIncept,
 } from './utils/multisig-utils.ts';
-import { step } from './utils/test-step.ts';
 
 const groupName = 'endroles-byaid-group';
 
@@ -41,95 +40,93 @@ beforeAll(async () => {
     ]);
     aid1 = id1;
     aid2 = id2;
+});
 
-    await step('Resolve member oobis across group', async () => {
-        const [oobi1, oobi2] = await Promise.all([
-            client1.oobis().get('member1', 'agent'),
-            client2.oobis().get('member2', 'agent'),
-        ]);
-        await Promise.all([
-            resolveOobi(client1, oobi2.oobis[0], 'member2'),
-            resolveOobi(client2, oobi1.oobis[0], 'member1'),
-        ]);
+beforeAll(async () => {
+    const [oobi1, oobi2] = await Promise.all([
+        client1.oobis().get('member1', 'agent'),
+        client2.oobis().get('member2', 'agent'),
+    ]);
+    await Promise.all([
+        resolveOobi(client1, oobi2.oobis[0], 'member2'),
+        resolveOobi(client2, oobi1.oobis[0], 'member1'),
+    ]);
+});
+
+beforeAll(async () => {
+    const op1 = await startMultisigIncept(client1, {
+        groupName,
+        localMemberName: 'member1',
+        participants: [aid1, aid2],
+        isith: 2,
+        nsith: 2,
+        toad: 3,
+        wits: [
+            'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
+            'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
+            'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
+        ],
     });
 
-    await step('Create 2-member multisig group (2-of-2)', async () => {
-        const op1 = await startMultisigIncept(client1, {
+    const notes = await waitForNotifications(client2, '/multisig/icp');
+    await Promise.all(
+        notes.map((note) => client2.notifications().mark(note.i))
+    );
+    const msgSaid = notes[notes.length - 1].a.d;
+    assert(msgSaid, 'msgSaid not defined');
+    const op2 = await acceptMultisigIncept(client2, {
+        localMemberName: 'member2',
+        groupName,
+        msgSaid,
+    });
+
+    await Promise.all([
+        waitOperation(client1, op1),
+        waitOperation(client2, op2),
+    ]);
+
+    const multisig = await client1.identifiers().get(groupName);
+    groupAid = multisig.prefix;
+});
+
+beforeAll(async () => {
+    const aid1Hab = await client1.identifiers().get('member1');
+    const aid2Hab = await client2.identifiers().get('member2');
+    const multisigAID = await client1.identifiers().get(groupName);
+    const stamp = new Date().toISOString().replace('Z', '000+00:00');
+
+    const [ops1, ops2] = await Promise.all([
+        addEndRoleMultisig(
+            client1,
             groupName,
-            localMemberName: 'member1',
-            participants: [aid1, aid2],
-            isith: 2,
-            nsith: 2,
-            toad: 3,
-            wits: [
-                'BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
-                'BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM',
-                'BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX',
-            ],
-        });
-
-        const notes = await waitForNotifications(client2, '/multisig/icp');
-        await Promise.all(
-            notes.map((note) => client2.notifications().mark(note.i))
-        );
-        const msgSaid = notes[notes.length - 1].a.d;
-        assert(msgSaid, 'msgSaid not defined');
-        const op2 = await acceptMultisigIncept(client2, {
-            localMemberName: 'member2',
+            aid1Hab,
+            [aid2Hab],
+            multisigAID,
+            stamp,
+            true
+        ),
+        addEndRoleMultisig(
+            client2,
             groupName,
-            msgSaid,
-        });
+            aid2Hab,
+            [aid1Hab],
+            multisigAID,
+            stamp
+        ),
+    ]);
 
-        await Promise.all([
-            waitOperation(client1, op1),
-            waitOperation(client2, op2),
-        ]);
+    await Promise.all([
+        ...ops1.map((op) => waitOperation(client1, op)),
+        ...ops2.map((op) => waitOperation(client2, op)),
+    ]);
 
-        const multisig = await client1.identifiers().get(groupName);
-        groupAid = multisig.prefix;
-        console.log('Multisig created:', groupAid);
-    });
+    agentEids = [client1.agent!.pre, client2.agent!.pre];
+});
 
-    await step('Add agent end roles for group', async () => {
-        const aid1Hab = await client1.identifiers().get('member1');
-        const aid2Hab = await client2.identifiers().get('member2');
-        const multisigAID = await client1.identifiers().get(groupName);
-        const stamp = new Date().toISOString().replace('Z', '000+00:00');
-
-        const [ops1, ops2] = await Promise.all([
-            addEndRoleMultisig(
-                client1,
-                groupName,
-                aid1Hab,
-                [aid2Hab],
-                multisigAID,
-                stamp,
-                true
-            ),
-            addEndRoleMultisig(
-                client2,
-                groupName,
-                aid2Hab,
-                [aid1Hab],
-                multisigAID,
-                stamp
-            ),
-        ]);
-
-        await Promise.all([
-            ...ops1.map((op) => waitOperation(client1, op)),
-            ...ops2.map((op) => waitOperation(client2, op)),
-        ]);
-
-        agentEids = [client1.agent!.pre, client2.agent!.pre];
-        console.log('Agent EIDs:', agentEids);
-    });
-
-    await step('Alice resolves group oobi', async () => {
-        const groupOobi = await client1.oobis().get(groupName, 'agent');
-        const oobiUrl = groupOobi.oobis[0].split('/agent/')[0];
-        await resolveOobi(aliceClient, oobiUrl, groupName);
-    });
+beforeAll(async () => {
+    const groupOobi = await client1.oobis().get(groupName, 'agent');
+    const oobiUrl = groupOobi.oobis[0].split('/agent/')[0];
+    await resolveOobi(aliceClient, oobiUrl, groupName);
 });
 
 afterAll(async () => {
