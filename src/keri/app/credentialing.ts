@@ -356,11 +356,22 @@ export class Credentials {
 
         const keeper = this.client.manager.get(hab);
 
-        const [, subject] = Saider.saidify({
-            d: '',
-            ...args.a,
-            dt: args.a.dt ?? new Date().toISOString().replace('Z', '000+00:00'),
-        });
+        let subject;
+        let dt: string;
+        if (typeof args.a === 'string') {
+            subject = args.a;
+            dt = new Date().toISOString().replace('Z', '000+00:00');
+        } else if (typeof args.a !== 'string') {
+            dt =
+                args.a.dt ?? new Date().toISOString().replace('Z', '000+00:00');
+            [, subject] = Saider.saidify({
+                d: '',
+                ...args.a,
+                dt: dt,
+            });
+        } else {
+            throw new Error('Data section must be valid CredentialData');
+        }
 
         const [, acdc] = Saider.saidify({
             v: versify(Protocols.ACDC, undefined, Serials.JSON, 0),
@@ -381,7 +392,7 @@ export class Credentials {
             i: acdc.d,
             s: '0',
             ri: args.ri,
-            dt: subject.dt,
+            dt: dt,
         });
 
         const sn = parseInt(hab.state.s, 16);
