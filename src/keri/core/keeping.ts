@@ -634,7 +634,7 @@ export class RandyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: Array<number | undefined> | undefined = undefined,
+        ondices: Ondex[] | undefined = undefined,
         _rotated?: boolean
     ): Promise<SignResult> {
         const signers = this.prxs!.map((prx) =>
@@ -684,6 +684,11 @@ export class RandyIdentifierManager implements IdentifierManager {
         }
     }
 }
+
+// ondex = other index in KERI's dual indexing scheme of
+//   - Index: signing key index (csi - current signing index)
+//   - Ondex: rotation key index (pni - prior next index)
+type Ondex = number | undefined;
 
 /**
  * Identifier manager for group identifiers.
@@ -818,7 +823,7 @@ export class GroupIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed: boolean = true,
         _indices: number[] | undefined = undefined,
-        _ondices: Array<number | undefined> | undefined = undefined,
+        _ondices: Ondex[],
         rotated = false
     ): Promise<SignResult> {
         if (!this.mhab.state) {
