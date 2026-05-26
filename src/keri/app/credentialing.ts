@@ -80,23 +80,23 @@ export interface CredentialData {
     /**
      * Registry id.
      */
-    ri?: string;
+    ri?: string; // Note: this is rd in the approved ACDC spec.
     /**
      * Schema id
      */
-    s?: string;
+    s?: string | { [key: string]: unknown }; // Either the SAID of the schema or the schema block itself.
     /**
      * Credential subject data
      */
-    a: CredentialSubject;
+    a: CredentialSubject | string; // Either a block representing Credential Subject or the SAID itself
     /**
      * Credential source section
      */
-    e?: { [key: string]: unknown };
+    e?: string | { [key: string]: unknown }; // Either the block of edges or the SAID of block of edges itself
     /**
      * Credential rules section
      */
-    r?: { [key: string]: unknown };
+    r?: string | { [key: string]: unknown }; // Either a block of rules or the SAID itself
 }
 
 export interface IssueCredentialResult {
