@@ -28,8 +28,13 @@ publish_dir="$(mktemp -d)"
 cp -r README.md LICENSE dist package.json package-lock.json "${publish_dir}/"
 jq ".version = \"${version}\" | .name = \"${name}\" | del(.scripts.prepare)" package.json > "${publish_dir}/package.json"
 
+provenance_arg=""
+if [ "${NPM_PUBLISH_PROVENANCE:-}" = "1" ]; then
+    provenance_arg="--provenance"
+fi
+
 if [ -z "$DRY_RUN" ]; then
-    npm publish "${publish_dir}" --tag "${tag}"
+    npm publish "${publish_dir}" --tag "${tag}" ${provenance_arg}
 else
-    npm publish "${publish_dir}" --tag "${tag}" --dry-run
+    npm publish "${publish_dir}" --tag "${tag}" ${provenance_arg} --dry-run
 fi
