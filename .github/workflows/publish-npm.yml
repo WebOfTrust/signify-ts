@@ -9,26 +9,28 @@ on:
           - dev
           - latest
         default: dev
-        description: Npm dist tag
+        description: NPM dist tag
 jobs:
   publish:
     name: Publish NPM
     permissions:
-        contents: write
+      contents: read
+      id-token: write
+    environment: npm-publish
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Publish package
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_PUBLISH_TAG: ${{ inputs.dist-tag }}
           NPM_PACKAGE_SCOPE: ${{ vars.NPM_PACKAGE_SCOPE }}
+          NPM_PUBLISH_PROVENANCE: 1
         run: ./publish.sh

@@ -154,6 +154,20 @@ Account Creation Workflow
 
 This package is published on npm: https://www.npmjs.com/package/signify-ts.
 
+## Release publishing
+
+Releases are published with npm trusted publishing from GitHub Actions. The
+normal release flow is:
+
+1. Validate the release locally.
+2. Create and push a signed version tag.
+3. Run the `Publish NPM` workflow against that tag with the intended npm dist tag.
+4. Approve the `npm-publish` GitHub environment when prompted.
+5. Verify the published package and npm dist tag.
+
+The npm package has a trusted publisher configured for the `WebOfTrust/signify-ts` repository,
+the `publish-npm.yml` workflow, and the `npm-publish` environment.
+
 If you need to publish a version under your own scope, you can use the [publish script](./publish.sh). This enables you to create development packages. For example:
 
 ```bash
@@ -189,3 +203,7 @@ npm notice
 npm notice Publishing to https://registry.npmjs.org/ with tag latest and default access (dry-run)
 + @myorg/signify-ts@0.3.0-rc1
 ```
+
+Direct local publishing to the public `signify-ts` package should be treated as
+an emergency fallback. It requires an npm account with publish access and any
+OTP required by npm.

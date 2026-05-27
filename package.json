@@ -14,7 +14,7 @@
   ],
   "author": "Phil Feairheller",
   "homepage": "https://github.com/WebOfTrust/signify-ts",
-  "repo": {
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/WebOfTrust/signify-ts.git"
   },
