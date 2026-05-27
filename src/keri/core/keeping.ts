@@ -91,7 +91,7 @@ export interface IdentifierManager<
         ser: Uint8Array,
         indexed?: boolean,
         indices?: number[],
-        ondices?: Array<number | undefined>,
+        ondices?: Ondex[],
         rotated?: boolean
     ): Promise<SignResult>;
 }
@@ -429,7 +429,7 @@ export class SaltyIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed = true,
         indices: number[] | undefined = undefined,
-        ondices: Array<number | undefined> | undefined = undefined,
+        ondices: Ondex[] | undefined = undefined,
         _rotated?: boolean
     ): Promise<SignResult> {
         const signers = this.creator.create(
@@ -447,9 +447,13 @@ export class SaltyIdentifierManager implements IdentifierManager {
             const sigers = [];
             let i = 0;
             for (const [j, signer] of signers.signers.entries()) {
-                if (indices != undefined) {
-                    i = indices![j];
-                    if (typeof i != 'number' || i < 0) {
+                if (
+                    indices &&
+                    indices.length > 0 &&
+                    indices.length === signers.signers.length
+                ) {
+                    i = indices[j]; // default indexing behavior of pulling index order from signer order
+                    if (!Number.isInteger(i) || i < 0) {
                         throw new Error(
                             `Invalid signing index = ${i}, not whole number.`
                         );
@@ -457,9 +461,12 @@ export class SaltyIdentifierManager implements IdentifierManager {
                 } else {
                     i = j;
                 }
-                let o: number | undefined = 0;
-                if (ondices != undefined) {
-                    o = ondices![j];
+                let o: Ondex = 0;
+                // if ondices are specified then the count and order should match the indices list
+                // even if a given ondex is "undefined" which means to ignore the ondex (dual indexed sig)
+                // for that given index.
+                if (ondices && ondices.length > 0) {
+                    o = ondices[j];
                     if (o !== undefined && (!Number.isInteger(o) || o < 0)) {
                         throw new Error(
                             `Invalid ondex = ${o}, not whole number.`
@@ -823,7 +830,7 @@ export class GroupIdentifierManager implements IdentifierManager {
         ser: Uint8Array,
         indexed: boolean = true,
         _indices: number[] | undefined = undefined,
-        _ondices: Ondex[],
+        _ondices: Ondex[] | undefined = undefined,
         rotated = false
     ): Promise<SignResult> {
         if (!this.mhab.state) {
