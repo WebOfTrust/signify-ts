@@ -42,3 +42,5 @@ export * from './keri/core/verfer.ts';
 export * from './keri/core/keyState.ts';
 
 export * from './keri/end/ending.ts';
+
+export * as KeriaApi from './types/keria-api-schema.ts';
