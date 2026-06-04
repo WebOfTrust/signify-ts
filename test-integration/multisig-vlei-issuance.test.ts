@@ -564,8 +564,8 @@ test('multisig-vlei-issuance', async function run() {
         );
 
         await Promise.all([
-            waitOperation(clientGAR1, IssOp1),
-            waitOperation(clientGAR2, IssOp2),
+            waitOperation(clientGAR1, IssOp1.op),
+            waitOperation(clientGAR2, IssOp2.op),
         ]);
 
         await waitAndMarkNotification(clientGAR1, '/multisig/iss');
@@ -930,9 +930,9 @@ test('multisig-vlei-issuance', async function run() {
         );
 
         await Promise.all([
-            waitOperation(clientQAR1, IssOp1),
-            waitOperation(clientQAR2, IssOp2),
-            waitOperation(clientQAR3, IssOp3),
+            waitOperation(clientQAR1, IssOp1.op),
+            waitOperation(clientQAR2, IssOp2.op),
+            waitOperation(clientQAR3, IssOp3.op),
         ]);
 
         await waitAndMarkNotification(clientQAR1, '/multisig/iss');
@@ -1185,9 +1185,9 @@ test('multisig-vlei-issuance', async function run() {
         );
 
         await Promise.all([
-            waitOperation(clientLAR1, IssOp1),
-            waitOperation(clientLAR2, IssOp2),
-            waitOperation(clientLAR3, IssOp3),
+            waitOperation(clientLAR1, IssOp1.op),
+            waitOperation(clientLAR2, IssOp2.op),
+            waitOperation(clientLAR3, IssOp3.op),
         ]);
 
         await waitAndMarkNotification(clientLAR1, '/multisig/iss');
