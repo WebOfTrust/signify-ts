@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-- Drop Node 18 support — Node 18 reached EOL; webcrypto loader workaround removed ([#ba89286](https://github.com/WebOfTrust/signify-ts/commit/ba89286))
+- Drop Node 18 support - Node 18 reached EOL; webcrypto loader workaround removed ([#ba89286](https://github.com/WebOfTrust/signify-ts/commit/ba89286))
 
 ### Added
 
@@ -14,7 +14,7 @@
 
 ### Fixed
 
-- Calculate `ondex` from prior establishment event, not proposed one — resolves [#378](https://github.com/WebOfTrust/signify-ts/issues/378) ([#1e093b3](https://github.com/WebOfTrust/signify-ts/commit/1e093b3))
+- Calculate `ondex` from prior establishment event, not proposed one - resolves [#378](https://github.com/WebOfTrust/signify-ts/issues/378) ([#1e093b3](https://github.com/WebOfTrust/signify-ts/commit/1e093b3))
 - `ondex` was `undefined` for `icp` and `ixn` events ([#668bce4](https://github.com/WebOfTrust/signify-ts/commit/668bce4))
 
 ### Changed
