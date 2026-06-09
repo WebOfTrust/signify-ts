@@ -1,3 +1,5 @@
+import type { CredentialSubject } from '../src/keri/app/credentialing.ts';
+
 import { assert, test } from 'vitest';
 import signify, {
     SignifyClient,
@@ -477,7 +479,7 @@ async function createRegistry(
 async function issueCredential(
     client: SignifyClient,
     name: string,
-    data: CredentialData
+    data: CredentialData & { a: CredentialSubject }
 ) {
     const result = await client.credentials().issue(name, data);
 
