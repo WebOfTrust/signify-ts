@@ -2,6 +2,7 @@ import signify, {
     Algos,
     CreateIdentiferArgs,
     CredentialData,
+    CredentialOperation,
     Serder,
     Siger,
     SignifyClient,
@@ -29,6 +30,11 @@ export interface StartMultisigInceptArgs {
     toad?: number;
     wits?: string[];
     delpre?: string;
+}
+
+export interface IssueCredentialMultisigResult {
+    op: CredentialOperation;
+    credentialSaid: string;
 }
 
 export async function acceptMultisigIncept(
@@ -419,7 +425,7 @@ export async function issueCredentialMultisig(
     multisigAIDName: string,
     kargsIss: CredentialData,
     isInitiator: boolean = false
-) {
+): Promise<IssueCredentialMultisigResult> {
     if (!isInitiator) await waitAndMarkNotification(client, '/multisig/iss');
 
     const credResult = await client
@@ -452,7 +458,7 @@ export async function issueCredentialMultisig(
             recp
         );
 
-    return op;
+    return { op, credentialSaid: credResult.acdc.sad.d };
 }
 
 export async function startMultisigIncept(
