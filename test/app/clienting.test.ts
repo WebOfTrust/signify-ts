@@ -17,6 +17,7 @@ import { Escrows } from '../../src/keri/app/escrowing.ts';
 import { Exchanges } from '../../src/keri/app/exchanging.ts';
 import { Groups } from '../../src/keri/app/grouping.ts';
 import { Notifications } from '../../src/keri/app/notifying.ts';
+import { AgentSignals } from '../../src/keri/app/signaling.ts';
 
 import {
     HEADER_SIG_INPUT,
@@ -117,6 +118,7 @@ describe('SignifyClient', () => {
         assert.equal(client.keyStates() instanceof KeyStates, true);
         assert.equal(client.credentials() instanceof Credentials, true);
         assert.equal(client.registries() instanceof Registries, true);
+        assert.equal(client.signals() instanceof AgentSignals, true);
         assert.equal(client.schemas() instanceof Schemas, true);
         assert.equal(client.challenges() instanceof Challenges, true);
         assert.equal(client.contacts() instanceof Contacts, true);
