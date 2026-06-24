@@ -13,47 +13,63 @@ export interface components {
             | {
                   v: string;
                   d: string;
-                  i: string;
-                  s: string;
                   u?: string;
+                  i: string;
                   ri?: string;
-                  e?: string;
-                  r?: string;
+                  s: string;
                   a?: components['schemas']['ACDCAttributes'];
+                  e?: {
+                      [key: string]: unknown;
+                  };
+                  r?: {
+                      [key: string]: unknown;
+                  };
               }
             | {
                   v: string;
                   d: string;
-                  i: string;
-                  s: string;
                   u?: string;
+                  i: string;
                   ri?: string;
-                  e?: string;
-                  r?: string;
+                  s: string;
                   A?: string | unknown[];
+                  e?: {
+                      [key: string]: unknown;
+                  };
+                  r?: {
+                      [key: string]: unknown;
+                  };
               };
         ACDC_V_2:
             | {
                   v: string;
                   d: string;
-                  i: string;
-                  s: string;
                   u?: string;
+                  i: string;
                   rd?: string;
-                  e?: string;
-                  r?: string;
+                  s: string;
                   a?: components['schemas']['ACDCAttributes'];
+                  e?: {
+                      [key: string]: unknown;
+                  };
+                  r?: {
+                      [key: string]: unknown;
+                  };
               }
             | {
                   v: string;
                   d: string;
-                  i: string;
-                  s: string;
                   u?: string;
+                  i: string;
                   rd?: string;
-                  e?: string;
-                  r?: string;
+                  s: string;
                   A?: string | unknown[];
+                  e?: {
+                      [key: string]: unknown;
+                  };
+                  r?: {
+                      [key: string]: unknown;
+                  };
               };
         IssEvent: {
             v: string;
@@ -328,29 +344,22 @@ export interface components {
             }[];
             status: components['schemas']['CredentialState'];
             anchor: components['schemas']['Anchor'];
-            anc:
-                | components['schemas']['IXN_V_1']
-                | components['schemas']['IXN_V_2']
-                | components['schemas']['ICP_V_1']
-                | components['schemas']['ICP_V_2']
-                | components['schemas']['ROT_V_1']
-                | components['schemas']['ROT_V_2']
-                | components['schemas']['DIP_V_1']
-                | components['schemas']['DIP_V_2']
-                | components['schemas']['DRT_V_1']
-                | components['schemas']['DRT_V_2'];
-            ancatc: string;
+            anc: components['schemas']['KeyEvent'];
+            ancatc: string[];
         };
         EmptyDict: Record<string, never>;
         CredentialStateIssOrRev: {
-            vn: unknown;
+            vn: number[];
             i: string;
             s: string;
             d: string;
             ri: string;
             a: components['schemas']['Seal'];
             dt: string;
-            /** @enum {unknown} */
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
             et: CredentialStateIssOrRevEt;
             ra: components['schemas']['EmptyDict'];
         };
@@ -360,25 +369,58 @@ export interface components {
             d: string;
         };
         CredentialStateBisOrBrv: {
-            vn: unknown;
+            vn: number[];
             i: string;
             s: string;
             d: string;
             ri: string;
             a: components['schemas']['Seal'];
             dt: string;
-            /** @enum {unknown} */
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
             et: CredentialStateBisOrBrvEt;
             ra: components['schemas']['RaFields'];
         };
-        CredentialState:
+        KeyEvent:
+            | components['schemas']['IXN_V_1']
+            | components['schemas']['IXN_V_2']
+            | components['schemas']['ICP_V_1']
+            | components['schemas']['ICP_V_2']
+            | components['schemas']['ROT_V_1']
+            | components['schemas']['ROT_V_2']
+            | components['schemas']['DIP_V_1']
+            | components['schemas']['DIP_V_2']
+            | components['schemas']['DRT_V_1']
+            | components['schemas']['DRT_V_2'];
+        CredentialState: {
+            /** @enum {string} */
+            et?: CredentialStateEt;
+            /** @description Empty for iss/rev, RaFields for bis/brv */
+            ra?: Record<string, never>;
+        } & (
             | components['schemas']['CredentialStateIssOrRev']
-            | components['schemas']['CredentialStateBisOrBrv'];
+            | components['schemas']['CredentialStateBisOrBrv']
+        );
+        RegistryState: {
+            vn: number[];
+            i: string;
+            s: string;
+            d: string;
+            ii: string;
+            dt: string;
+            /** @enum {unknown} */
+            et: RegistryStateEt;
+            bt: string;
+            b: string[];
+            c: string[];
+        };
         Registry: {
             name: string;
             regk: string;
             pre: string;
-            state: components['schemas']['CredentialState'];
+            state: components['schemas']['RegistryState'];
         };
         StateEERecord: {
             /** @default 0 */
@@ -441,9 +483,9 @@ export interface components {
             name: string;
             prefix: string;
             icp_dt: string;
-            state: components['schemas']['KeyStateRecord'];
-            transferable: boolean;
-            windexes: string[];
+            state?: components['schemas']['KeyStateRecord'];
+            transferable?: boolean;
+            windexes?: string[];
         } & (
             | {
                   salty: components['schemas']['SaltyState'];
@@ -532,39 +574,57 @@ export interface components {
         MemberEnds: {
             /** @default null */
             agent: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             controller: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             witness: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             registrar: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             watcher: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             judge: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             juror: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             peer: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
             /** @default null */
             mailbox: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
             } | null;
         };
         WellKnown: {
@@ -590,17 +650,7 @@ export interface components {
             rotation: components['schemas']['AidRecord'][];
         };
         KeyEventRecord: {
-            ked:
-                | components['schemas']['IXN_V_1']
-                | components['schemas']['IXN_V_2']
-                | components['schemas']['ICP_V_1']
-                | components['schemas']['ICP_V_2']
-                | components['schemas']['ROT_V_1']
-                | components['schemas']['ROT_V_2']
-                | components['schemas']['DIP_V_1']
-                | components['schemas']['DIP_V_2']
-                | components['schemas']['DRT_V_1']
-                | components['schemas']['DRT_V_2'];
+            ked: components['schemas']['KeyEvent'];
             atc: string;
         };
         AgentConfig: {
@@ -930,7 +980,7 @@ export interface components {
             | components['schemas']['FailedDelegationOperation'];
         RegistryOperationMetadata: {
             pre: string;
-            depends?: components['schemas']['Operation'];
+            depends?: components['schemas']['KelOperation'];
             anchor: components['schemas']['Anchor'];
         };
         PendingRegistryOperation: {
@@ -1175,7 +1225,7 @@ export interface components {
             ced:
                 | components['schemas']['ACDC_V_1']
                 | components['schemas']['ACDC_V_2'];
-            depends?: components['schemas']['Operation'];
+            depends?: components['schemas']['KelOperation'];
         };
         CredentialOperationResponse: {
             ced?:
@@ -1266,10 +1316,7 @@ export interface components {
             pre: string;
             teepre: string;
             anchor?: components['schemas']['Anchor'];
-            depends?:
-                | components['schemas']['GroupOperation']
-                | components['schemas']['WitnessOperation']
-                | components['schemas']['DoneOperation'];
+            depends?: components['schemas']['KelOperation'];
         };
         PendingDelegatorOperation: {
             name: string;
@@ -1304,6 +1351,11 @@ export interface components {
             | components['schemas']['PendingDelegatorOperation']
             | components['schemas']['CompletedDelegatorOperation']
             | components['schemas']['FailedDelegatorOperation'];
+        KelOperation:
+            | components['schemas']['GroupOperation']
+            | components['schemas']['WitnessOperation']
+            | components['schemas']['DoneOperation']
+            | components['schemas']['DelegationOperation'];
         Operation:
             | components['schemas']['OOBIOperation']
             | components['schemas']['QueryOperation']
@@ -1337,6 +1389,16 @@ export enum CredentialStateIssOrRevEt {
 export enum CredentialStateBisOrBrvEt {
     bis = 'bis',
     brv = 'brv',
+}
+export enum CredentialStateEt {
+    iss = 'iss',
+    rev = 'rev',
+    bis = 'bis',
+    brv = 'brv',
+}
+export enum RegistryStateEt {
+    vcp = 'vcp',
+    vrt = 'vrt',
 }
 export enum Tier {
     low = 'low',
