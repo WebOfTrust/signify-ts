@@ -89,8 +89,8 @@ test('multisig', async function run() {
         localMemberName: aid1.name,
         isith: 2,
         nsith: 2,
-        toad: aid1.state.b.length,
-        wits: aid1.state.b,
+        toad: aid1.state!.b.length,
+        wits: aid1.state!.b,
         participants: [aid1.prefix, aid2.prefix],
     });
     console.log('Member1 initiated multisig, waiting for others to join...');
@@ -161,7 +161,7 @@ test('multisig', async function run() {
     op1 = await endRoleRes.op();
     let rpy = endRoleRes.serder;
     let sigs = endRoleRes.sigs;
-    let ghabState1 = ghab1['state'];
+    let ghabState1 = ghab1['state']!;
     let seal = [
         'SealEvent',
         {
@@ -178,7 +178,7 @@ test('multisig', async function run() {
     let roleembeds = {
         rpy: [rpy, atc],
     };
-    let recp = [aid2['state']].map((state) => state['i']);
+    let recp = [aid2['state']].map((state) => state!['i']);
     let res = await client1
         .exchanges()
         .send(
@@ -217,7 +217,7 @@ test('multisig', async function run() {
     sigs = endRoleRes.sigs;
 
     let ghab2 = await client2.identifiers().get('holder');
-    let ghabState2 = ghab2['state'];
+    let ghabState2 = ghab2['state']!;
     seal = [
         'SealEvent',
         {
@@ -234,7 +234,7 @@ test('multisig', async function run() {
     roleembeds = {
         rpy: [rpy, atc],
     };
-    recp = [aid1['state']].map((state) => state['i']);
+    recp = [aid1['state']].map((state) => state!['i']);
     res = await client2
         .exchanges()
         .send(
@@ -264,7 +264,7 @@ test('multisig', async function run() {
     sigs = endRoleRes.sigs;
 
     ghab1 = await client1.identifiers().get('holder');
-    ghabState1 = ghab1['state'];
+    ghabState1 = ghab1['state']!;
     seal = [
         'SealEvent',
         {
@@ -281,7 +281,7 @@ test('multisig', async function run() {
     roleembeds = {
         rpy: [rpy, atc],
     };
-    recp = [aid2['state']].map((state) => state['i']);
+    recp = [aid2['state']].map((state) => state!['i']);
     res = await client1
         .exchanges()
         .send(
@@ -319,7 +319,7 @@ test('multisig', async function run() {
     sigs = endRoleRes.sigs;
 
     ghab2 = await client2.identifiers().get('holder');
-    ghabState2 = ghab2['state'];
+    ghabState2 = ghab2['state']!;
     seal = [
         'SealEvent',
         {
@@ -337,7 +337,7 @@ test('multisig', async function run() {
     roleembeds = {
         rpy: [rpy, atc],
     };
-    recp = [aid1['state']].map((state) => state['i']);
+    recp = [aid1['state']].map((state) => state!['i']);
     res = await client2
         .exchanges()
         .send(
@@ -392,8 +392,8 @@ test('multisig', async function run() {
     );
     const exnRes = assertIpexGrant(await client1.exchanges().get(grantMsgSaid));
 
-    recp = [aid2['state']].map((state) => state['i']);
-    const admitResult1 = await multisigAdmitCredential(
+    recp = [aid2['state']].map((state) => state!['i']);
+    const exOp1 = await multisigAdmitCredential(
         client1,
         'holder',
         'member1',
@@ -419,8 +419,8 @@ test('multisig', async function run() {
 
     console.log(`Member2 /exn/ipex/grant msg :  ` + JSON.stringify(exnRes2));
 
-    const recp2 = [aid1['state']].map((state) => state['i']);
-    const admitResult2 = await multisigAdmitCredential(
+    const recp2 = [aid1['state']].map((state) => state!['i']);
+    const exOp2 = await multisigAdmitCredential(
         client2,
         'holder',
         'member2',
@@ -562,7 +562,7 @@ async function multisigAdmitCredential(
         .ipex()
         .submitAdmit(groupName, admit, sigs, end, [issuerPrefix]);
 
-    const mstate = gHab['state'];
+    const mstate = gHab['state']!;
     const seal = [
         'SealEvent',
         { i: gHab['prefix'], s: mstate['ee']['s'], d: mstate['ee']['d'] },

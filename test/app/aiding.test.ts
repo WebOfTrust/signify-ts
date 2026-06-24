@@ -713,7 +713,10 @@ describe('Aiding', () => {
     });
 });
 
-function setGroupPriorNextDigests(group: HabState, states: KeyState[]) {
+function setGroupPriorNextDigests(
+    group: HabState & { state: KeyState },
+    states: KeyState[]
+) {
     if (!('group' in group)) {
         throw new Error('Expected mock identifier to be a group.');
     }

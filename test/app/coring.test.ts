@@ -11,7 +11,10 @@ import { SignifyClient } from '../../src/keri/app/clienting.ts';
 import { Tier } from '../../src/keri/core/salter.ts';
 import { randomUUID } from 'node:crypto';
 import { createMockFetch } from './test-utils.ts';
-import { RegistryOperation } from '../../src/keri/core/keyState.ts';
+import {
+    KelOperation,
+    RegistryOperation,
+} from '../../src/keri/core/keyState.ts';
 
 const url = 'http://127.0.0.1:3901';
 const boot_url = 'http://127.0.0.1:3903';
@@ -328,7 +331,7 @@ describe('Operations', () => {
         it('returns when child operation is also done', async () => {
             const name = randomUUID();
             const nestedName = randomUUID();
-            const depends: Operation = { name: nestedName, done: false };
+            const depends: KelOperation = { name: nestedName, done: false };
             const op: RegistryOperation = {
                 name,
                 done: false,

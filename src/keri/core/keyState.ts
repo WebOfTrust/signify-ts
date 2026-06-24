@@ -35,6 +35,13 @@ export type ExternState = components['schemas']['ExternState'];
  */
 export type HabState = components['schemas']['HabState'];
 
+export function requireKeyState(hab: HabState): KeyState {
+    if (hab.state === undefined) {
+        throw new Error(`No key state for identifier ${hab.name}`);
+    }
+    return hab.state;
+}
+
 export type Icp =
     | components['schemas']['ICP_V_1']
     | components['schemas']['ICP_V_2'];
@@ -68,6 +75,7 @@ export type DoneOperation = components['schemas']['DoneOperation'];
 export type CredentialOperation = components['schemas']['CredentialOperation'];
 export type GroupOperation = components['schemas']['GroupOperation'];
 export type DelegatorOperation = components['schemas']['DelegatorOperation'];
+export type KelOperation = components['schemas']['KelOperation'];
 
 export type PendingOOBIOperation =
     components['schemas']['PendingOOBIOperation'];

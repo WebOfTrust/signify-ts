@@ -7,7 +7,7 @@ import { MtrDex } from '../core/matter.ts';
 import { Serder } from '../core/serder.ts';
 import { parseRangeHeaders } from '../core/httping.ts';
 import { IdentifierManagerFactory } from '../core/keeping.ts';
-import { HabState } from '../core/keyState.ts';
+import { HabState, requireKeyState } from '../core/keyState.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
 /** Arguments required to create an identfier */
@@ -308,7 +308,7 @@ export class Identifier {
         const hab = await this.get(name);
         const pre: string = hab.prefix;
 
-        const state = hab.state;
+        const state = requireKeyState(hab);
         const sn = parseInt(state.s, 16);
         const dig = state.d;
 
@@ -349,9 +349,9 @@ export class Identifier {
 
         const hab = await this.get(name);
         const pre = hab.prefix;
-        const delegated = hab.state.di !== '';
 
-        const state = hab.state;
+        const state = requireKeyState(hab);
+        const delegated = state.di !== '';
         const count = state.k.length;
         const dig = state.d;
         const ridx = parseInt(state.s, 16) + 1;
