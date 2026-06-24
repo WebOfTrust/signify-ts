@@ -8,12 +8,13 @@ import signify, {
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
+    assertNotifications,
+    assertNoNotifications,
     assertOperations,
     getOrCreateClient,
     getOrCreateIdentifier,
     waitAndMarkNotification,
     waitOperation,
-    warnNotifications,
 } from './utils/test-util.ts';
 import {
     acceptMultisigIncept,
@@ -371,7 +372,7 @@ test('multisig', async function run() {
 
     console.log(`Issuer starting credential issuance to holder...`);
     const registires = await client3.registries().list('issuer');
-    await issueCredential(client3, 'issuer', {
+    const issuedGrantSaid = await issueCredential(client3, 'issuer', {
         ri: registires[0].regk,
         s: SCHEMA_SAID,
         a: {
@@ -383,7 +384,8 @@ test('multisig', async function run() {
 
     const grantMsgSaid = await waitAndMarkNotification(
         client1,
-        '/exn/ipex/grant'
+        '/exn/ipex/grant',
+        { said: issuedGrantSaid }
     );
     console.log(
         `Member1 received /exn/ipex/grant msg with SAID: ${grantMsgSaid} `
@@ -391,18 +393,20 @@ test('multisig', async function run() {
     const exnRes = assertIpexGrant(await client1.exchanges().get(grantMsgSaid));
 
     recp = [aid2['state']].map((state) => state['i']);
-    const exOp1 = await multisigAdmitCredential(
+    const admitResult1 = await multisigAdmitCredential(
         client1,
         'holder',
         'member1',
         exnRes.exn.d,
         exnRes.exn.i,
-        recp
+        recp,
+        true
     );
 
     const grantMsgSaid2 = await waitAndMarkNotification(
         client2,
-        '/exn/ipex/grant'
+        '/exn/ipex/grant',
+        { said: issuedGrantSaid }
     );
     console.log(
         `Member2 received /exn/ipex/grant msg with SAID: ${grantMsgSaid2} `
@@ -416,7 +420,7 @@ test('multisig', async function run() {
     console.log(`Member2 /exn/ipex/grant msg :  ` + JSON.stringify(exnRes2));
 
     const recp2 = [aid1['state']].map((state) => state['i']);
-    const exOp2 = await multisigAdmitCredential(
+    const admitResult2 = await multisigAdmitCredential(
         client2,
         'holder',
         'member2',
@@ -425,8 +429,21 @@ test('multisig', async function run() {
         recp2
     );
 
-    await waitOperation(client1, exOp1);
-    await waitOperation(client2, exOp2);
+    assert.equal(admitResult1.admitSaid, admitResult2.admitSaid);
+
+    await waitOperation(client1, admitResult1.op);
+    await waitOperation(client2, admitResult2.op);
+    await assertNoNotifications(client1, '/multisig/exn');
+    await assertNoNotifications(client2, '/multisig/exn');
+    await waitAndMarkNotification(client1, '/exn/ipex/admit', {
+        said: admitResult1.admitSaid,
+    });
+    await waitAndMarkNotification(client2, '/exn/ipex/admit', {
+        said: admitResult1.admitSaid,
+    });
+    await waitAndMarkNotification(client3, '/exn/ipex/admit', {
+        said: admitResult1.admitSaid,
+    });
 
     let creds1 = await client1.credentials().list();
     console.log(`Member1 has ${creds1.length} credential`);
@@ -448,7 +465,7 @@ test('multisig', async function run() {
     assert.equal(creds1.length, 1);
 
     await assertOperations(client1, client2, client3);
-    await warnNotifications(client1, client2, client3);
+    await assertNotifications(client1, client2, client3);
 }, 360000);
 
 async function createAID(client: SignifyClient, name: string, wits: string[]) {
@@ -478,7 +495,7 @@ async function issueCredential(
     client: SignifyClient,
     name: string,
     data: CredentialData
-) {
+): Promise<string> {
     const result = await client.credentials().issue(name, data);
 
     await waitOperation(client, result.op);
@@ -504,11 +521,15 @@ async function issueCredential(
             .ipex()
             .submitGrant(name, grant, gsigs, end, [data.a.i]);
         await waitOperation(client, op);
+        await waitAndMarkNotification(client, '/exn/ipex/grant', {
+            said: grant.said,
+        });
+        return grant.said;
     }
 
     console.log('Grant message sent');
 
-    return creds[0];
+    return '';
 }
 
 function createTimestamp() {
@@ -522,10 +543,12 @@ async function multisigAdmitCredential(
     memberAlias: string,
     grantSaid: string,
     issuerPrefix: string,
-    recipients: string[]
-): Promise<Operation> {
+    recipients: string[],
+    isInitiator: boolean = false
+): Promise<{ op: Operation; admitSaid: string }> {
     const mHab = await client.identifiers().get(memberAlias);
     const gHab = await client.identifiers().get(groupName);
+    if (!isInitiator) await waitAndMarkNotification(client, '/multisig/exn');
 
     const [admit, sigs, end] = await client.ipex().admit({
         senderName: groupName,
@@ -564,5 +587,5 @@ async function multisigAdmitCredential(
             recipients
         );
 
-    return op;
+    return { op, admitSaid: admit.said };
 }

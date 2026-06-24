@@ -21,13 +21,13 @@ services:
             - 7723:7723
 
     keria:
-        image: ${KERIA_IMAGE:-weboftrust/keria}:${KERIA_IMAGE_TAG:-0.2.0-rc2}
+        image: ${KERIA_IMAGE:-weboftrust/keria}:${KERIA_IMAGE_TAG:-0.4.0}
         environment:
             KERI_AGENT_CORS: 1
             <<: *python-env
         volumes:
             - ./config/keria.json:/keria/config/keri/cf/keria.json
-        command: start --config-dir /keria/config --config-file keria --name agent
+        command: start --config-dir /keria/config --config-file keria --name keria
         healthcheck:
             test: wget --spider http://keria:3902/spec.yaml
             <<: *healthcheck
@@ -37,11 +37,12 @@ services:
             - 3903:3903
 
     witness-demo:
-        image: weboftrust/keri-witness-demo:1.1.0
+        image: ${KERI_IMAGE:-weboftrust/keri}:${KERI_IMAGE_TAG:-1.2.13}
         environment:
             <<: *python-env
+        command: witness demo
         healthcheck:
-            test: curl -f http://localhost:5642/oobi
+            test: wget --spider http://127.0.0.1:5642/oobi
             <<: *healthcheck
         volumes:
             - ./config/witness-demo:/keripy/scripts/keri/cf/main

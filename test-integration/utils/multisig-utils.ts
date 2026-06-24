@@ -95,11 +95,16 @@ export async function addEndRoleMultisig(
     timestamp: string,
     isInitiator: boolean = false
 ) {
-    if (!isInitiator) await waitAndMarkNotification(client, '/multisig/rpy');
-
     const opList: any[] = [];
     const members = await client.identifiers().members(multisigAID.name);
     const signings = members['signing'];
+    // there should be a notification to mark per multisig member since each
+    // member will send /multisig/rpy exn messages per-member to each other member.
+    if (!isInitiator) {
+        await waitAndMarkNotification(client, '/multisig/rpy', {
+            minCount: signings.length,
+        });
+    }
 
     for (const signing of signings) {
         const agentEnds = signing.ends.agent;
@@ -157,9 +162,12 @@ export async function admitMultisig(
     otherMembersAIDs: HabState[],
     multisigAID: HabState,
     recipientAID: HabState,
-    timestamp: string
+    timestamp: string,
+    isInitiator: boolean = false
     // numGrantMsgs: number
-) {
+): Promise<string> {
+    if (!isInitiator) await waitAndMarkNotification(client, '/multisig/exn');
+
     const grantMsgSaid = await waitAndMarkNotification(
         client,
         '/exn/ipex/grant'
@@ -202,6 +210,8 @@ export async function admitMultisig(
             gembeds,
             recp
         );
+
+    return admit.said;
 }
 
 export async function createAIDMultisig(
@@ -369,7 +379,7 @@ export async function grantMultisig(
     credential: any,
     timestamp: string,
     isInitiator: boolean = false
-) {
+): Promise<string> {
     if (!isInitiator) await waitAndMarkNotification(client, '/multisig/exn');
 
     const [grant, sigs, end] = await client.ipex().grant({
@@ -410,6 +420,8 @@ export async function grantMultisig(
             gembeds,
             recp
         );
+
+    return grant.said;
 }
 
 export async function issueCredentialMultisig(
