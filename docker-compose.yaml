@@ -10,10 +10,10 @@ x-python-env: &python-env
 
 services:
     vlei-server:
-        image: gleif/vlei:0.2.0
+        image: gleif/vlei:1.0.3
         environment:
             <<: *python-env
-        command: vLEI-server -s ./schema/acdc -c ./samples/acdc/ -o ./samples/oobis/
+        command: vLEI-server -s /vLEI/schema -c /vLEI/credentials -o /vLEI/oobis
         healthcheck:
             test: curl -f http://localhost:7723/oobi/EBfdlu8R27Fbx-ehrqwImnK-8Cm79sqbAQ4MmvEAYqao
             <<: *healthcheck
