@@ -3,6 +3,7 @@ import { Saider, Serder, SignifyClient } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
     Aid,
+    assertNotifications,
     assertOperations,
     createAid,
     getOrCreateClients,
@@ -10,10 +11,11 @@ import {
     getOrIssueCredential,
     getReceivedCredential,
     markAndRemoveNotification,
+    type Notification,
     resolveOobi,
+    waitAndMarkNotification,
     waitForNotifications,
     waitOperation,
-    warnNotifications,
 } from './utils/test-util.ts';
 import { retry } from './utils/retry.ts';
 
@@ -183,8 +185,26 @@ test('singlesig-vlei-issuance', async function run() {
     let qviCredHolder = await getReceivedCredential(qviClient, qviCred.sad.d);
 
     if (!qviCredHolder) {
-        await sendGrantMessage(gleifClient, gleifAid, qviAid, qviCred);
-        await sendAdmitMessage(qviClient, qviAid, gleifAid);
+        const qviGrantSaid = await sendGrantMessage(
+            gleifClient,
+            gleifAid,
+            qviAid,
+            qviCred
+        );
+        const qviGrantNotifications = await waitForGrantNotificationsCount(
+            qviClient,
+            qviGrantSaid,
+            1
+        );
+        const qviAdmitSaid = await sendAdmitMessage(
+            qviClient,
+            qviAid,
+            gleifAid,
+            qviGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(gleifClient, '/exn/ipex/admit', {
+            said: qviAdmitSaid,
+        });
 
         qviCredHolder = await retry(async () => {
             const cred = await getReceivedCredential(qviClient, qviCred.sad.d);
@@ -223,8 +243,26 @@ test('singlesig-vlei-issuance', async function run() {
     let leCredHolder = await getReceivedCredential(leClient, leCred.sad.d);
 
     if (!leCredHolder) {
-        await sendGrantMessage(qviClient, qviAid, leAid, leCred);
-        await sendAdmitMessage(leClient, leAid, qviAid);
+        const leGrantSaid = await sendGrantMessage(
+            qviClient,
+            qviAid,
+            leAid,
+            leCred
+        );
+        const leGrantNotifications = await waitForGrantNotificationsCount(
+            leClient,
+            leGrantSaid,
+            1
+        );
+        const leAdmitSaid = await sendAdmitMessage(
+            leClient,
+            leAid,
+            qviAid,
+            leGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(qviClient, '/exn/ipex/admit', {
+            said: leAdmitSaid,
+        });
 
         leCredHolder = await retry(async () => {
             const cred = await getReceivedCredential(leClient, leCred.sad.d);
@@ -265,8 +303,26 @@ test('singlesig-vlei-issuance', async function run() {
     let ecrCredHolder = await getReceivedCredential(roleClient, ecrCred.sad.d);
 
     if (!ecrCredHolder) {
-        await sendGrantMessage(leClient, leAid, roleAid, ecrCred);
-        await sendAdmitMessage(roleClient, roleAid, leAid);
+        const ecrGrantSaid = await sendGrantMessage(
+            leClient,
+            leAid,
+            roleAid,
+            ecrCred
+        );
+        const roleGrantNotifications = await waitForGrantNotificationsCount(
+            roleClient,
+            ecrGrantSaid,
+            1
+        );
+        const ecrAdmitSaid = await sendAdmitMessage(
+            roleClient,
+            roleAid,
+            leAid,
+            roleGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(leClient, '/exn/ipex/admit', {
+            said: ecrAdmitSaid,
+        });
 
         ecrCredHolder = await retry(async () => {
             const cred = await getReceivedCredential(roleClient, ecrCred.sad.d);
@@ -310,8 +366,26 @@ test('singlesig-vlei-issuance', async function run() {
     );
 
     if (!ecrAuthCredHolder) {
-        await sendGrantMessage(leClient, leAid, qviAid, ecrAuthCred);
-        await sendAdmitMessage(qviClient, qviAid, leAid);
+        const ecrAuthGrantSaid = await sendGrantMessage(
+            leClient,
+            leAid,
+            qviAid,
+            ecrAuthCred
+        );
+        const qviGrantNotifications = await waitForGrantNotificationsCount(
+            qviClient,
+            ecrAuthGrantSaid,
+            1
+        );
+        const ecrAuthAdmitSaid = await sendAdmitMessage(
+            qviClient,
+            qviAid,
+            leAid,
+            qviGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(leClient, '/exn/ipex/admit', {
+            said: ecrAuthAdmitSaid,
+        });
 
         ecrAuthCredHolder = await retry(async () => {
             const cred = await getReceivedCredential(
@@ -360,8 +434,26 @@ test('singlesig-vlei-issuance', async function run() {
     );
 
     if (!ecrCredHolder2) {
-        await sendGrantMessage(qviClient, qviAid, roleAid, ecrCred2);
-        await sendAdmitMessage(roleClient, roleAid, qviAid);
+        const ecrGrantSaid2 = await sendGrantMessage(
+            qviClient,
+            qviAid,
+            roleAid,
+            ecrCred2
+        );
+        const roleGrantNotifications = await waitForGrantNotificationsCount(
+            roleClient,
+            ecrGrantSaid2,
+            1
+        );
+        const ecrAdmitSaid2 = await sendAdmitMessage(
+            roleClient,
+            roleAid,
+            qviAid,
+            roleGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(qviClient, '/exn/ipex/admit', {
+            said: ecrAdmitSaid2,
+        });
 
         ecrCredHolder2 = await retry(async () => {
             const cred = await getReceivedCredential(
@@ -407,8 +499,26 @@ test('singlesig-vlei-issuance', async function run() {
     );
 
     if (!oorAuthCredHolder) {
-        await sendGrantMessage(leClient, leAid, qviAid, oorAuthCred);
-        await sendAdmitMessage(qviClient, qviAid, leAid);
+        const oorAuthGrantSaid = await sendGrantMessage(
+            leClient,
+            leAid,
+            qviAid,
+            oorAuthCred
+        );
+        const qviGrantNotifications = await waitForGrantNotificationsCount(
+            qviClient,
+            oorAuthGrantSaid,
+            1
+        );
+        const oorAuthAdmitSaid = await sendAdmitMessage(
+            qviClient,
+            qviAid,
+            leAid,
+            qviGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(leClient, '/exn/ipex/admit', {
+            said: oorAuthAdmitSaid,
+        });
 
         oorAuthCredHolder = await retry(async () => {
             const cred = await getReceivedCredential(
@@ -453,8 +563,26 @@ test('singlesig-vlei-issuance', async function run() {
     let oorCredHolder = await getReceivedCredential(roleClient, oorCred.sad.d);
 
     if (!oorCredHolder) {
-        await sendGrantMessage(qviClient, qviAid, roleAid, oorCred);
-        await sendAdmitMessage(roleClient, roleAid, qviAid);
+        const oorGrantSaid = await sendGrantMessage(
+            qviClient,
+            qviAid,
+            roleAid,
+            oorCred
+        );
+        const roleGrantNotifications = await waitForGrantNotificationsCount(
+            roleClient,
+            oorGrantSaid,
+            1
+        );
+        const oorAdmitSaid = await sendAdmitMessage(
+            roleClient,
+            roleAid,
+            qviAid,
+            roleGrantNotifications.at(-1)!
+        );
+        await waitAndMarkNotification(qviClient, '/exn/ipex/admit', {
+            said: oorAdmitSaid,
+        });
 
         oorCredHolder = await retry(async () => {
             const cred = await getReceivedCredential(roleClient, oorCred.sad.d);
@@ -471,7 +599,7 @@ test('singlesig-vlei-issuance', async function run() {
     assert(oorCredHolder.atc !== undefined);
 
     await assertOperations(gleifClient, qviClient, leClient, roleClient);
-    await warnNotifications(gleifClient, qviClient, leClient, roleClient);
+    await assertNotifications(gleifClient, qviClient, leClient, roleClient);
 }, 360000);
 
 async function getOrCreateRegistry(
@@ -497,7 +625,7 @@ async function sendGrantMessage(
     senderAid: Aid,
     recipientAid: Aid,
     credential: any
-) {
+): Promise<string> {
     const [grant, gsigs, gend] = await senderClient.ipex().grant({
         senderName: senderAid.name,
         acdc: new Serder(credential.sad),
@@ -512,20 +640,36 @@ async function sendGrantMessage(
         .ipex()
         .submitGrant(senderAid.name, grant, gsigs, gend, [recipientAid.prefix]);
     await waitOperation(senderClient, op);
+
+    await waitAndMarkNotification(senderClient, '/exn/ipex/grant', {
+        said: grant.said,
+    });
+
+    return grant.said;
+}
+
+async function waitForGrantNotificationsCount(
+    client: SignifyClient,
+    said: string,
+    expectedCount: number
+): Promise<Notification[]> {
+    return retry(async () => {
+        const notifications = await waitForNotifications(
+            client,
+            '/exn/ipex/grant',
+            { said }
+        );
+        assert.equal(notifications.length, expectedCount);
+        return notifications;
+    }, CRED_RETRY_DEFAULTS);
 }
 
 async function sendAdmitMessage(
     senderClient: SignifyClient,
     senderAid: Aid,
-    recipientAid: Aid
-) {
-    const notifications = await waitForNotifications(
-        senderClient,
-        '/exn/ipex/grant'
-    );
-    assert.equal(notifications.length, 1);
-    const grantNotification = notifications[0];
-
+    recipientAid: Aid,
+    grantNotification: Notification
+): Promise<string> {
     const [admit, sigs, aend] = await senderClient.ipex().admit({
         senderName: senderAid.name,
         message: '',
@@ -539,5 +683,11 @@ async function sendAdmitMessage(
         .submitAdmit(senderAid.name, admit, sigs, aend, [recipientAid.prefix]);
     await waitOperation(senderClient, op);
 
+    await waitAndMarkNotification(senderClient, '/exn/ipex/admit', {
+        said: admit.said,
+    });
+
     await markAndRemoveNotification(senderClient, grantNotification);
+
+    return admit.said;
 }

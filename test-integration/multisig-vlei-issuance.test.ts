@@ -21,6 +21,7 @@ import {
     waitForCredential,
     admitSinglesig,
     waitAndMarkNotification,
+    assertNoNotifications,
 } from './utils/test-util.ts';
 import {
     addEndRoleMultisig,
@@ -238,8 +239,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientGAR1, multisigAIDOp1),
             waitOperation(clientGAR2, multisigAIDOp2),
         ]);
-
-        await waitAndMarkNotification(clientGAR1, '/multisig/icp');
+        await assertNoNotifications(clientGAR1, '/multisig/icp');
 
         aidGEDAbyGAR1 = await clientGAR1.identifiers().get('GEDA');
         aidGEDAbyGAR2 = await clientGAR2.identifiers().get('GEDA');
@@ -276,8 +276,7 @@ test('multisig-vlei-issuance', async function run() {
 
         await Promise.all(opList1.map((op) => waitOperation(clientGAR1, op)));
         await Promise.all(opList2.map((op) => waitOperation(clientGAR2, op)));
-
-        await waitAndMarkNotification(clientGAR1, '/multisig/rpy');
+        await assertNoNotifications(clientGAR1, '/multisig/rpy');
 
         [oobiGEDAbyGAR1, oobiGEDAbyGAR2] = await Promise.all([
             clientGAR1.oobis().get(aidGEDA.name, 'agent'),
@@ -376,8 +375,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientGAR1, ixnOp1),
             waitOperation(clientGAR2, ixnOp2),
         ]);
-
-        await waitAndMarkNotification(clientGAR1, '/multisig/ixn');
+        await assertNoNotifications(clientGAR1, '/multisig/ixn');
 
         // QARs query the GEDA's key state
         const queryOp1 = await clientQAR1
@@ -398,8 +396,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientQAR2, queryOp2),
             waitOperation(clientQAR3, queryOp3),
         ]);
-
-        await waitAndMarkNotification(clientQAR1, '/multisig/icp');
+        await assertNoNotifications(clientQAR1, '/multisig/icp');
 
         aidQVIbyQAR1 = await clientQAR1.identifiers().get('QVI');
         aidQVIbyQAR2 = await clientQAR2.identifiers().get('QVI');
@@ -454,8 +451,8 @@ test('multisig-vlei-issuance', async function run() {
         await Promise.all(opList2.map((op) => waitOperation(clientQAR2, op)));
         await Promise.all(opList3.map((op) => waitOperation(clientQAR3, op)));
 
-        await waitAndMarkNotification(clientQAR1, '/multisig/rpy');
-        await waitAndMarkNotification(clientQAR2, '/multisig/rpy');
+        await assertNoNotifications(clientQAR1, '/multisig/rpy');
+        await assertNoNotifications(clientQAR2, '/multisig/rpy');
 
         [oobiQVIbyQAR1, oobiQVIbyQAR2, oobiQVIbyQAR3] = await Promise.all([
             clientQAR1.oobis().get(aidQVI.name, 'agent'),
@@ -509,8 +506,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientGAR1, registryOp1),
             waitOperation(clientGAR2, registryOp2),
         ]);
-
-        await waitAndMarkNotification(clientGAR1, '/multisig/vcp');
+        await assertNoNotifications(clientGAR1, '/multisig/vcp');
 
         [gedaRegistrybyGAR1, gedaRegistrybyGAR2] = await Promise.all([
             clientGAR1.registries().list(aidGEDA.name),
@@ -567,8 +563,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientGAR1, IssOp1),
             waitOperation(clientGAR2, IssOp2),
         ]);
-
-        await waitAndMarkNotification(clientGAR1, '/multisig/iss');
+        await assertNoNotifications(clientGAR1, '/multisig/iss');
 
         qviCredbyGAR1 = await getIssuedCredential(
             clientGAR1,
@@ -584,7 +579,7 @@ test('multisig-vlei-issuance', async function run() {
         );
 
         const grantTime = createTimestamp();
-        await grantMultisig(
+        const qviGrantSaid1 = await grantMultisig(
             clientGAR1,
             aidGAR1,
             [aidGAR2],
@@ -594,7 +589,7 @@ test('multisig-vlei-issuance', async function run() {
             grantTime,
             true
         );
-        await grantMultisig(
+        const qviGrantSaid2 = await grantMultisig(
             clientGAR2,
             aidGAR2,
             [aidGAR1],
@@ -603,8 +598,14 @@ test('multisig-vlei-issuance', async function run() {
             qviCredbyGAR2,
             grantTime
         );
-
-        await waitAndMarkNotification(clientGAR1, '/multisig/exn');
+        assert.equal(qviGrantSaid1, qviGrantSaid2);
+        await waitAndMarkNotification(clientGAR1, '/exn/ipex/grant', {
+            said: qviGrantSaid1,
+        });
+        await waitAndMarkNotification(clientGAR2, '/exn/ipex/grant', {
+            said: qviGrantSaid2,
+        });
+        await assertNoNotifications(clientGAR1, '/multisig/exn');
     }
     assert.equal(qviCredbyGAR1.sad.d, qviCredbyGAR2.sad.d);
     assert.equal(qviCredbyGAR1.sad.s, QVI_SCHEMA_SAID);
@@ -631,15 +632,16 @@ test('multisig-vlei-issuance', async function run() {
     let qviCredbyQAR3 = await getReceivedCredential(clientQAR3, qviCred.sad.d);
     if (!(qviCredbyQAR1 && qviCredbyQAR2 && qviCredbyQAR3)) {
         const admitTime = createTimestamp();
-        await admitMultisig(
+        const qviAdmitSaid1 = await admitMultisig(
             clientQAR1,
             aidQAR1,
             [aidQAR2, aidQAR3],
             aidQVI,
             aidGEDA,
-            admitTime
+            admitTime,
+            true
         );
-        await admitMultisig(
+        const qviAdmitSaid2 = await admitMultisig(
             clientQAR2,
             aidQAR2,
             [aidQAR1, aidQAR3],
@@ -647,7 +649,7 @@ test('multisig-vlei-issuance', async function run() {
             aidGEDA,
             admitTime
         );
-        await admitMultisig(
+        const qviAdmitSaid3 = await admitMultisig(
             clientQAR3,
             aidQAR3,
             [aidQAR1, aidQAR2],
@@ -655,14 +657,26 @@ test('multisig-vlei-issuance', async function run() {
             aidGEDA,
             admitTime
         );
-        await waitAndMarkNotification(clientGAR1, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientGAR2, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientQAR1, '/multisig/exn');
-        await waitAndMarkNotification(clientQAR2, '/multisig/exn');
-        await waitAndMarkNotification(clientQAR3, '/multisig/exn');
-        await waitAndMarkNotification(clientQAR1, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientQAR2, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientQAR3, '/exn/ipex/admit');
+        assert.equal(qviAdmitSaid1, qviAdmitSaid2);
+        assert.equal(qviAdmitSaid1, qviAdmitSaid3);
+        await waitAndMarkNotification(clientGAR1, '/exn/ipex/admit', {
+            said: qviAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientGAR2, '/exn/ipex/admit', {
+            said: qviAdmitSaid1,
+        });
+        await assertNoNotifications(clientQAR1, '/multisig/exn');
+        await assertNoNotifications(clientQAR2, '/multisig/exn');
+        await assertNoNotifications(clientQAR3, '/multisig/exn');
+        await waitAndMarkNotification(clientQAR1, '/exn/ipex/admit', {
+            said: qviAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientQAR2, '/exn/ipex/admit', {
+            said: qviAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientQAR3, '/exn/ipex/admit', {
+            said: qviAdmitSaid1,
+        });
 
         qviCredbyQAR1 = await waitForCredential(clientQAR1, qviCred.sad.d);
         qviCredbyQAR2 = await waitForCredential(clientQAR2, qviCred.sad.d);
@@ -724,8 +738,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientLAR2, multisigAIDOp2),
             waitOperation(clientLAR3, multisigAIDOp3),
         ]);
-
-        await waitAndMarkNotification(clientLAR1, '/multisig/icp');
+        await assertNoNotifications(clientLAR1, '/multisig/icp');
 
         aidLEbyLAR1 = await clientLAR1.identifiers().get('LE');
         aidLEbyLAR2 = await clientLAR2.identifiers().get('LE');
@@ -780,8 +793,8 @@ test('multisig-vlei-issuance', async function run() {
         await Promise.all(opList2.map((op) => waitOperation(clientLAR2, op)));
         await Promise.all(opList3.map((op) => waitOperation(clientLAR3, op)));
 
-        await waitAndMarkNotification(clientLAR1, '/multisig/rpy');
-        await waitAndMarkNotification(clientLAR2, '/multisig/rpy');
+        await assertNoNotifications(clientLAR1, '/multisig/rpy');
+        await assertNoNotifications(clientLAR2, '/multisig/rpy');
 
         [oobiLEbyLAR1, oobiLEbyLAR2, oobiLEbyLAR3] = await Promise.all([
             clientLAR1.oobis().get(aidLE.name, 'agent'),
@@ -848,8 +861,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientQAR2, registryOp2),
             waitOperation(clientQAR3, registryOp3),
         ]);
-
-        await waitAndMarkNotification(clientQAR1, '/multisig/vcp');
+        await assertNoNotifications(clientQAR1, '/multisig/vcp');
 
         [qviRegistrybyQAR1, qviRegistrybyQAR2, qviRegistrybyQAR3] =
             await Promise.all([
@@ -934,8 +946,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientQAR2, IssOp2),
             waitOperation(clientQAR3, IssOp3),
         ]);
-
-        await waitAndMarkNotification(clientQAR1, '/multisig/iss');
+        await assertNoNotifications(clientQAR1, '/multisig/iss');
 
         leCredbyQAR1 = await getIssuedCredential(
             clientQAR1,
@@ -957,7 +968,7 @@ test('multisig-vlei-issuance', async function run() {
         );
 
         const grantTime = createTimestamp();
-        await grantMultisig(
+        const leGrantSaid1 = await grantMultisig(
             clientQAR1,
             aidQAR1,
             [aidQAR2, aidQAR3],
@@ -967,7 +978,7 @@ test('multisig-vlei-issuance', async function run() {
             grantTime,
             true
         );
-        await grantMultisig(
+        const leGrantSaid2 = await grantMultisig(
             clientQAR2,
             aidQAR2,
             [aidQAR1, aidQAR3],
@@ -976,7 +987,7 @@ test('multisig-vlei-issuance', async function run() {
             leCredbyQAR2,
             grantTime
         );
-        await grantMultisig(
+        const leGrantSaid3 = await grantMultisig(
             clientQAR3,
             aidQAR3,
             [aidQAR1, aidQAR2],
@@ -985,8 +996,18 @@ test('multisig-vlei-issuance', async function run() {
             leCredbyQAR3,
             grantTime
         );
-
-        await waitAndMarkNotification(clientQAR1, '/multisig/exn');
+        assert.equal(leGrantSaid1, leGrantSaid2);
+        assert.equal(leGrantSaid1, leGrantSaid3);
+        await waitAndMarkNotification(clientQAR1, '/exn/ipex/grant', {
+            said: leGrantSaid1,
+        });
+        await waitAndMarkNotification(clientQAR2, '/exn/ipex/grant', {
+            said: leGrantSaid1,
+        });
+        await waitAndMarkNotification(clientQAR3, '/exn/ipex/grant', {
+            said: leGrantSaid1,
+        });
+        await assertNoNotifications(clientQAR1, '/multisig/exn');
     }
     assert.equal(leCredbyQAR1.sad.d, leCredbyQAR2.sad.d);
     assert.equal(leCredbyQAR1.sad.d, leCredbyQAR3.sad.d);
@@ -1012,15 +1033,16 @@ test('multisig-vlei-issuance', async function run() {
     let leCredbyLAR3 = await getReceivedCredential(clientLAR3, leCred.sad.d);
     if (!(leCredbyLAR1 && leCredbyLAR2 && leCredbyLAR3)) {
         const admitTime = createTimestamp();
-        await admitMultisig(
+        const leAdmitSaid1 = await admitMultisig(
             clientLAR1,
             aidLAR1,
             [aidLAR2, aidLAR3],
             aidLE,
             aidQVI,
-            admitTime
+            admitTime,
+            true
         );
-        await admitMultisig(
+        const leAdmitSaid2 = await admitMultisig(
             clientLAR2,
             aidLAR2,
             [aidLAR1, aidLAR3],
@@ -1028,7 +1050,7 @@ test('multisig-vlei-issuance', async function run() {
             aidQVI,
             admitTime
         );
-        await admitMultisig(
+        const leAdmitSaid3 = await admitMultisig(
             clientLAR3,
             aidLAR3,
             [aidLAR1, aidLAR2],
@@ -1036,15 +1058,29 @@ test('multisig-vlei-issuance', async function run() {
             aidQVI,
             admitTime
         );
-        await waitAndMarkNotification(clientQAR1, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientQAR2, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientQAR3, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientLAR1, '/multisig/exn');
-        await waitAndMarkNotification(clientLAR2, '/multisig/exn');
-        await waitAndMarkNotification(clientLAR3, '/multisig/exn');
-        await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit');
+        assert.equal(leAdmitSaid1, leAdmitSaid2);
+        assert.equal(leAdmitSaid1, leAdmitSaid3);
+        await waitAndMarkNotification(clientQAR1, '/exn/ipex/admit', {
+            said: leAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientQAR2, '/exn/ipex/admit', {
+            said: leAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientQAR3, '/exn/ipex/admit', {
+            said: leAdmitSaid1,
+        });
+        await assertNoNotifications(clientLAR1, '/multisig/exn');
+        await assertNoNotifications(clientLAR2, '/multisig/exn');
+        await assertNoNotifications(clientLAR3, '/multisig/exn');
+        await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit', {
+            said: leAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit', {
+            said: leAdmitSaid1,
+        });
+        await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit', {
+            said: leAdmitSaid1,
+        });
 
         leCredbyLAR1 = await waitForCredential(clientLAR1, leCred.sad.d);
         leCredbyLAR2 = await waitForCredential(clientLAR2, leCred.sad.d);
@@ -1099,8 +1135,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientLAR2, registryOp2),
             waitOperation(clientLAR3, registryOp3),
         ]);
-
-        await waitAndMarkNotification(clientLAR1, '/multisig/vcp');
+        await assertNoNotifications(clientLAR1, '/multisig/vcp');
 
         [leRegistrybyLAR1, leRegistrybyLAR2, leRegistrybyLAR3] =
             await Promise.all([
@@ -1189,8 +1224,7 @@ test('multisig-vlei-issuance', async function run() {
             waitOperation(clientLAR2, IssOp2),
             waitOperation(clientLAR3, IssOp3),
         ]);
-
-        await waitAndMarkNotification(clientLAR1, '/multisig/iss');
+        await assertNoNotifications(clientLAR1, '/multisig/iss');
 
         ecrCredbyLAR1 = await getIssuedCredential(
             clientLAR1,
@@ -1212,7 +1246,7 @@ test('multisig-vlei-issuance', async function run() {
         );
 
         const grantTime = createTimestamp();
-        await grantMultisig(
+        const ecrGrantSaid1 = await grantMultisig(
             clientLAR1,
             aidLAR1,
             [aidLAR2, aidLAR3],
@@ -1222,7 +1256,7 @@ test('multisig-vlei-issuance', async function run() {
             grantTime,
             true
         );
-        await grantMultisig(
+        const ecrGrantSaid2 = await grantMultisig(
             clientLAR2,
             aidLAR2,
             [aidLAR1, aidLAR3],
@@ -1231,7 +1265,7 @@ test('multisig-vlei-issuance', async function run() {
             ecrCredbyLAR2,
             grantTime
         );
-        await grantMultisig(
+        const ecrGrantSaid3 = await grantMultisig(
             clientLAR3,
             aidLAR3,
             [aidLAR1, aidLAR2],
@@ -1240,8 +1274,18 @@ test('multisig-vlei-issuance', async function run() {
             ecrCredbyLAR3,
             grantTime
         );
-
-        await waitAndMarkNotification(clientLAR1, '/multisig/exn');
+        assert.equal(ecrGrantSaid1, ecrGrantSaid2);
+        assert.equal(ecrGrantSaid1, ecrGrantSaid3);
+        await waitAndMarkNotification(clientLAR1, '/exn/ipex/grant', {
+            said: ecrGrantSaid1,
+        });
+        await waitAndMarkNotification(clientLAR2, '/exn/ipex/grant', {
+            said: ecrGrantSaid1,
+        });
+        await waitAndMarkNotification(clientLAR3, '/exn/ipex/grant', {
+            said: ecrGrantSaid1,
+        });
+        await assertNoNotifications(clientLAR1, '/multisig/exn');
     }
     assert.equal(ecrCredbyLAR1.sad.d, ecrCredbyLAR2.sad.d);
     assert.equal(ecrCredbyLAR1.sad.d, ecrCredbyLAR3.sad.d);
@@ -1267,10 +1311,23 @@ test('multisig-vlei-issuance', async function run() {
     // Skip if ECR Person has already received the credential.
     let ecrCredbyECR = await getReceivedCredential(clientECR, ecrCred.sad.d);
     if (!ecrCredbyECR) {
-        await admitSinglesig(clientECR, aidECR.name, aidLE);
-        await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit');
-        await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit');
+        const ecrAdmitSaid = await admitSinglesig(
+            clientECR,
+            aidECR.name,
+            aidLE
+        );
+        await waitAndMarkNotification(clientECR, '/exn/ipex/admit', {
+            said: ecrAdmitSaid,
+        });
+        await waitAndMarkNotification(clientLAR1, '/exn/ipex/admit', {
+            said: ecrAdmitSaid,
+        });
+        await waitAndMarkNotification(clientLAR2, '/exn/ipex/admit', {
+            said: ecrAdmitSaid,
+        });
+        await waitAndMarkNotification(clientLAR3, '/exn/ipex/admit', {
+            said: ecrAdmitSaid,
+        });
 
         ecrCredbyECR = await waitForCredential(clientECR, ecrCred.sad.d);
     }

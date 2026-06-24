@@ -41,7 +41,6 @@ import signify, {
 import { RetryOptions, retry } from './retry.ts';
 import assert from 'assert';
 import { resolveEnvironment } from './resolve-env.ts';
-import { expect } from 'vitest';
 
 export interface Aid {
     name: string;
@@ -56,6 +55,29 @@ export interface Notification {
     a: { r: string; d?: string; m?: string };
 }
 
+export interface NotificationOptions extends RetryOptions {
+    said?: string;
+    minCount?: number;
+}
+
+function matchesNotification(
+    note: Notification,
+    route: string,
+    said?: string
+): boolean {
+    return (
+        note.a.r === route &&
+        note.r === false &&
+        (said === undefined || note.a.d === said)
+    );
+}
+
+function notificationFilterDescription(route: string, said?: string): string {
+    return said === undefined
+        ? `route ${route}`
+        : `route ${route} and SAID ${said}`;
+}
+
 export function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
@@ -66,7 +88,7 @@ export async function admitSinglesig(
     client: SignifyClient,
     aidName: string,
     recipientAid: HabState
-) {
+): Promise<string> {
     const grantMsgSaid = await waitAndMarkNotification(
         client,
         '/exn/ipex/grant'
@@ -79,9 +101,12 @@ export async function admitSinglesig(
         recipient: recipientAid.prefix,
     });
 
-    await client
+    const op = await client
         .ipex()
         .submitAdmit(aidName, admit, sigs, aend, [recipientAid.prefix]);
+    await waitOperation(client, op);
+
+    return admit.said;
 }
 
 /**
@@ -107,11 +132,36 @@ export async function assertOperations(
 export async function assertNotifications(
     ...clients: SignifyClient[]
 ): Promise<void> {
-    for (const client of clients) {
+    for (const [index, client] of clients.entries()) {
         const res = await client.notifications().list();
         const notes = res.notes.filter((i: { r: boolean }) => i.r === false);
-        assert.strictEqual(notes.length, 0);
+        assert.strictEqual(
+            notes.length,
+            0,
+            `Unread notifications remain for client ${index}: ${JSON.stringify(notes)}`
+        );
     }
+}
+
+export async function assertNoNotifications(
+    client: SignifyClient,
+    route: string,
+    options: Pick<NotificationOptions, 'said'> = {}
+): Promise<void> {
+    const response: { notes: Notification[] } = await client
+        .notifications()
+        .list();
+    const notes = response.notes.filter((note) =>
+        matchesNotification(note, route, options.said)
+    );
+    assert.strictEqual(
+        notes.length,
+        0,
+        `Unexpected unread notifications with ${notificationFilterDescription(
+            route,
+            options.said
+        )}: ${JSON.stringify(notes)}`
+    );
 }
 
 export async function createAid(
@@ -401,26 +451,6 @@ export async function hasEndRole(
     return false;
 }
 
-/**
- * Logs a warning for each un-handled notification.
- * <p>Replace warnNotifications with assertNotifications when test handles all notifications
- * @see assertNotifications
- */
-export async function warnNotifications(
-    ...clients: SignifyClient[]
-): Promise<void> {
-    let count = 0;
-    for (const client of clients) {
-        const res = await client.notifications().list();
-        const notes = res.notes.filter((i: { r: boolean }) => i.r === false);
-        if (notes.length > 0) {
-            count += notes.length;
-            console.warn('notifications', notes);
-        }
-    }
-    expect(count).toBeGreaterThan(0); // replace warnNotifications with assertNotifications
-}
-
 async function deleteOperations(client: SignifyClient, op: Operation) {
     if (op.metadata && 'depends' in op.metadata && op.metadata.depends) {
         await deleteOperations(client, op.metadata.depends);
@@ -499,7 +529,7 @@ export async function waitForCredential(
 export async function waitAndMarkNotification(
     client: SignifyClient,
     route: string,
-    options: RetryOptions = {}
+    options: NotificationOptions = {}
 ) {
     const notes = await waitForNotifications(client, route, options);
 
@@ -515,19 +545,25 @@ export async function waitAndMarkNotification(
 export async function waitForNotifications(
     client: SignifyClient,
     route: string,
-    options: RetryOptions = {}
+    options: NotificationOptions = {}
 ): Promise<Notification[]> {
     return retry(async () => {
         const response: { notes: Notification[] } = await client
             .notifications()
             .list();
 
-        const notes = response.notes.filter(
-            (note) => note.a.r === route && note.r === false
+        const notes = response.notes.filter((note) =>
+            matchesNotification(note, route, options.said)
         );
 
-        if (!notes.length) {
-            throw new Error(`No notifications with route ${route}`);
+        const minCount = options.minCount ?? 1;
+        if (notes.length < minCount) {
+            throw new Error(
+                `No notifications with ${notificationFilterDescription(
+                    route,
+                    options.said
+                )}; expected at least ${minCount}, got ${notes.length}`
+            );
         }
 
         return notes;

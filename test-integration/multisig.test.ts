@@ -18,12 +18,13 @@ import {
 } from 'signify-ts';
 import { resolveEnvironment } from './utils/resolve-env.ts';
 import {
+    assertNotifications,
+    assertNoNotifications,
     assertOperations,
     getOrCreateClient,
     getOrCreateIdentifier,
     waitAndMarkNotification,
     waitOperation,
-    warnNotifications,
 } from './utils/test-util.ts';
 
 const { vleiServerUrl } = resolveEnvironment();
@@ -1122,7 +1123,25 @@ test('multisig', async function run() {
 
     console.log('Member3 joined grant message, waiting for others to join...');
 
-    msgSaid = await waitAndMarkNotification(client4, '/exn/ipex/grant');
+    assert.equal(grant.said, grant2.said);
+    assert.equal(grant.said, grant3.said);
+    await waitAndMarkNotification(client1, '/exn/ipex/grant', {
+        said: grant.said,
+    });
+    await waitAndMarkNotification(client2, '/exn/ipex/grant', {
+        said: grant.said,
+    });
+    await waitAndMarkNotification(client3, '/exn/ipex/grant', {
+        said: grant.said,
+    });
+
+    await assertNoNotifications(client1, '/multisig/exn');
+    await assertNoNotifications(client2, '/multisig/exn');
+    await assertNoNotifications(client3, '/multisig/exn');
+
+    msgSaid = await waitAndMarkNotification(client4, '/exn/ipex/grant', {
+        said: grant.said,
+    });
     console.log('Holder received exchange message with the grant message');
 
     const exchangeResource = await client4.exchanges().get(msgSaid);
@@ -1137,6 +1156,9 @@ test('multisig', async function run() {
     const exOp4 = await client4
         .ipex()
         .submitAdmit('holder', admit, asigs, aend, [m['prefix']]);
+    await waitAndMarkNotification(client4, '/exn/ipex/admit', {
+        said: admit.said,
+    });
 
     await Promise.all([
         waitOperation(client1, exOp1),
@@ -1147,13 +1169,21 @@ test('multisig', async function run() {
 
     console.log('Holder creates and sends admit message');
 
-    msgSaid = await waitAndMarkNotification(client1, '/exn/ipex/admit');
+    msgSaid = await waitAndMarkNotification(client1, '/exn/ipex/admit', {
+        said: admit.said,
+    });
+    await assertNoNotifications(client2, '/exn/ipex/admit', {
+        said: admit.said,
+    });
+    await assertNoNotifications(client3, '/exn/ipex/admit', {
+        said: admit.said,
+    });
     console.log('Member1 received exchange message with the admit response');
     const creds = await client4.credentials().list();
     console.log(`Holder holds ${creds.length} credential`);
 
     await assertOperations(client1, client2, client3, client4);
-    await warnNotifications(client1, client2, client3, client4);
+    await assertNotifications(client1, client2, client3, client4);
 
     console.log('Revoking credential...');
     const REVTIME = new Date().toISOString().replace('Z', '000+00:00');
