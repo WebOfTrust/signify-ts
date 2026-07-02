@@ -181,7 +181,7 @@ describe('multisig-join', () => {
             client1.oobis().get(nameMultisig, 'agent'),
         ]);
 
-        const oobiMultisig = oobi4.oobis[0].split('/agent/')[0];
+        const oobiMultisig = oobi4.oobis[0];
 
         const [opOobi1, opOobi2, opOobi3, opOobi4, opOobi5] = await Promise.all(
             [
