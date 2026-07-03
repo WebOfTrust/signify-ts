@@ -33,10 +33,7 @@ import {
 
 import { components } from '../../types/keria-api-schema.ts';
 
-export type CredentialResult = Omit<
-    components['schemas']['Credential'],
-    'status'
-> & { status: CredentialState };
+export type CredentialResult = components['schemas']['Credential'];
 export type Registry = components['schemas']['Registry'];
 export type Schema = components['schemas']['Schema'];
 
@@ -247,9 +244,7 @@ export interface IpexAdmitArgs {
     datetime?: string;
 }
 
-export type CredentialState =
-    | components['schemas']['CredentialStateIssOrRev']
-    | components['schemas']['CredentialStateBisOrBrv'];
+export type CredentialState = components['schemas']['CredentialState'];
 
 /**
  * Credentials

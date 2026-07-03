@@ -2,12 +2,23 @@ import path from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import openapiTS, { astToString } from 'openapi-typescript';
 import { isInterfaceDeclaration, isEnumDeclaration } from 'typescript';
+import { parseYaml } from '@redocly/openapi-core';
 
 const specUrl = process.env.SPEC_URL || 'http://localhost:3902/spec.yaml';
 const outputFile = path.resolve('src/types/keria-api-schema.ts');
 
 console.log(`📦 Generating types from ${specUrl}`);
-const ast = await openapiTS(new URL(specUrl), {
+const response = await fetch(specUrl);
+const schema = parseYaml(await response.text());
+
+// discriminator not required for TS unions (and causes other issues)
+for (const s of Object.values(schema.components.schemas)) {
+    if (s.oneOf && s.discriminator) {
+        delete s.properties;
+    }
+}
+
+const ast = await openapiTS(schema, {
     enum: true,
     rootTypes: false,
 });
