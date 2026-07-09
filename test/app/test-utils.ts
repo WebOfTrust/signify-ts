@@ -25,7 +25,7 @@ export async function createMockIdentifierState(
     name: string,
     bran: string,
     kargs: CreateIdentiferArgs = {}
-): Promise<HabState & { state: KeyState }> {
+): Promise<HabState> {
     const controller = new Controller(bran, Tier.low);
     const manager = new IdentifierManagerFactory(controller.salter);
     const algo = kargs.algo == undefined ? Algos.salty : kargs.algo;

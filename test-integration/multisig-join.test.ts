@@ -5,6 +5,7 @@ import signify, {
     SignifyClient,
     assertMultisigIcp,
     assertMultisigRot,
+    requireKeyState,
 } from 'signify-ts';
 import {
     getOrCreateClient,
@@ -78,8 +79,8 @@ describe('multisig-join', () => {
             mhab: aid1,
             isith: 1,
             nsith: 1,
-            toad: aid1.state!.b.length,
-            wits: aid1.state!.b,
+            toad: requireKeyState(aid1).b.length,
+            wits: requireKeyState(aid1).b,
             states: states,
             rstates: states,
         });
@@ -97,8 +98,8 @@ describe('multisig-join', () => {
             icp: [serder, atc],
         };
 
-        const smids = [aid2.state!.i];
-        const recipients = [aid2.state!.i];
+        const smids = [requireKeyState(aid2).i];
+        const recipients = [requireKeyState(aid2).i];
 
         await client1
             .exchanges()
@@ -136,10 +137,10 @@ describe('multisig-join', () => {
             waitOperation(client2, createMultisig2),
         ]);
 
-        assert.equal(createResult1.response.k[0], aid1.state!.k[0]);
-        assert.equal(createResult1.response.k[1], aid2.state!.k[0]);
-        assert.equal(createResult2.response.k[0], aid1.state!.k[0]);
-        assert.equal(createResult2.response.k[1], aid2.state!.k[0]);
+        assert.equal(createResult1.response.k[0], requireKeyState(aid1).k[0]);
+        assert.equal(createResult1.response.k[1], requireKeyState(aid2).k[0]);
+        assert.equal(createResult2.response.k[0], requireKeyState(aid1).k[0]);
+        assert.equal(createResult2.response.k[1], requireKeyState(aid2).k[0]);
 
         const members1 = await client1.identifiers().members(nameMultisig);
         const members2 = await client2.identifiers().members(nameMultisig);
@@ -251,7 +252,7 @@ describe('multisig-join', () => {
         };
         const smids = states.map((state) => state!['i']);
         const rmids = rstates.map((state) => state!['i']);
-        const recp = [aid2.state, aid3.state].map((state) => state!['i']);
+        const recp = [aid2, aid3].map((aid) => requireKeyState(aid).i);
 
         await client1
             .exchanges()
@@ -272,14 +273,29 @@ describe('multisig-join', () => {
 
         const multisigAid = await client1.identifiers().get(nameMultisig);
 
-        assert.equal(multisigAid.state!.k.length, 2);
-        assert.equal(multisigAid.state!.k[0], aid1.state!.k[0]);
-        assert.equal(multisigAid.state!.k[1], aid2.state!.k[0]);
+        assert.equal(requireKeyState(multisigAid).k.length, 2);
+        assert.equal(
+            requireKeyState(multisigAid).k[0],
+            requireKeyState(aid1).k[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).k[1],
+            requireKeyState(aid2).k[0]
+        );
 
-        assert.equal(multisigAid.state!.n.length, 3);
-        assert.equal(multisigAid.state!.n[0], aid1.state!.n[0]);
-        assert.equal(multisigAid.state!.n[1], aid2.state!.n[0]);
-        assert.equal(multisigAid.state!.n[2], aid3.state!.n[0]);
+        assert.equal(requireKeyState(multisigAid).n.length, 3);
+        assert.equal(
+            requireKeyState(multisigAid).n[0],
+            requireKeyState(aid1).n[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).n[1],
+            requireKeyState(aid2).n[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).n[2],
+            requireKeyState(aid3).n[0]
+        );
     });
     test('Rotate again to get aid3 to current signing keys and join', async () => {
         const [rotateResult1, rotateResult2, rotateResult3] = await Promise.all(
@@ -340,7 +356,7 @@ describe('multisig-join', () => {
         };
         const smids = states.map((state) => state!['i']);
         const rmids = states.map((state) => state!['i']);
-        const recp = [aid2.state, aid3.state].map((state) => state!['i']);
+        const recp = [aid2, aid3].map((aid) => requireKeyState(aid).i);
 
         await client1
             .exchanges()
@@ -377,15 +393,33 @@ describe('multisig-join', () => {
 
         const multisigAid = await client3.identifiers().get(nameMultisig);
 
-        assert.equal(multisigAid.state!.k.length, 3);
-        assert.equal(multisigAid.state!.k[0], aid1.state!.k[0]);
-        assert.equal(multisigAid.state!.k[1], aid2.state!.k[0]);
-        assert.equal(multisigAid.state!.k[2], aid3.state!.k[0]);
+        assert.equal(requireKeyState(multisigAid).k.length, 3);
+        assert.equal(
+            requireKeyState(multisigAid).k[0],
+            requireKeyState(aid1).k[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).k[1],
+            requireKeyState(aid2).k[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).k[2],
+            requireKeyState(aid3).k[0]
+        );
 
-        assert.equal(multisigAid.state!.n.length, 3);
-        assert.equal(multisigAid.state!.n[0], aid1.state!.n[0]);
-        assert.equal(multisigAid.state!.n[1], aid2.state!.n[0]);
-        assert.equal(multisigAid.state!.n[2], aid3.state!.n[0]);
+        assert.equal(requireKeyState(multisigAid).n.length, 3);
+        assert.equal(
+            requireKeyState(multisigAid).n[0],
+            requireKeyState(aid1).n[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).n[1],
+            requireKeyState(aid2).n[0]
+        );
+        assert.equal(
+            requireKeyState(multisigAid).n[2],
+            requireKeyState(aid3).n[0]
+        );
 
         const members = await client3.identifiers().members(nameMultisig);
         const agentEnds = members.signing[2].ends.agent;

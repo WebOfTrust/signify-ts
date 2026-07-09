@@ -3,6 +3,7 @@ import {
     CreateIdentiferArgs,
     RotateIdentifierArgs,
     SignifyClient,
+    requireKeyState,
 } from 'signify-ts';
 import {
     assertOperations,
@@ -67,7 +68,7 @@ describe('singlesig-drt', () => {
         seal = {
             i: delegate1.prefix,
             s: '1',
-            d: delegate1.state!.d,
+            d: requireKeyState(delegate1).d,
         };
 
         result = await delegator.identifiers().interact('name1', seal);
