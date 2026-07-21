@@ -29,6 +29,7 @@ export * from './keri/core/kering.ts';
 export * from './keri/core/manager.ts';
 export * from './keri/core/matter.ts';
 export * from './keri/core/number.ts';
+export * from './keri/core/parsing.ts';
 export * from './keri/core/prefixer.ts';
 export * from './keri/core/saider.ts';
 export * from './keri/core/salter.ts';
