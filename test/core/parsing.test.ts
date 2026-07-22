@@ -67,18 +67,188 @@ function mkMessage(fields: Record<string, unknown>, proto = 'KERI'): string {
 }
 const bytesOf = (s: string) => new TextEncoder().encode(s);
 
+// --- CESR 2.0 (genus 2) vectors and helpers. ---
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+/** Encode an integer as `len` base64url chars (v2 counter soft / size fields). */
+function intToB64(n: number, len: number): string {
+    let s = '';
+    for (let i = 0; i < len; i++) {
+        s = B64[n % 64] + s;
+        n = Math.floor(n / 64);
+    }
+    return s;
+}
+/** A v2 counter header: code + base64 quadlet count (soft is 2 chars for `-X`,
+ * 5 for `--X`). */
+const ctr2 = (code: string, quadlets: number) =>
+    code + intToB64(quadlets, code.startsWith('--') ? 5 : 2);
+/** Build a self-framed v2 JSON message with a correct base64 version-string size. */
+function mkMessageV2(fields: Record<string, unknown>): string {
+    const placeholder = JSON.stringify({ v: 'KERICAACAAJSONAAAA.', ...fields });
+    const size = new TextEncoder().encode(placeholder).length;
+    return placeholder.replace(
+        'KERICAACAAJSONAAAA.',
+        `KERICAACAAJSON${intToB64(size, 4)}.`
+    );
+}
+/** A real keripy 2.0.0-dev6 witness-role OOBI (CESR genus 2, PII-free synthetic):
+ * one icp message whose -C AttachmentGroup wrapper (the v2 analog of v1 -V) holds
+ * a -K ControllerIdxSigs group and a -O FirstSeenReplayCouples group. */
+const V2_OOBI =
+    '{"v":"KERICAACAAJSONAAD_.","t":"icp","d":"EP16vD37O8CcvmgKRrjI5WbrtAioC34lY-eXX7-VTxt6","i":"BBDzeCI8m9Ls3OBw_LTOnJSEUyWXMD-Xggp4ufqeAE_9","s":"0","kt":"1","k":["BBDzeCI8m9Ls3OBw_LTOnJSEUyWXMD-Xggp4ufqeAE_9"],"nt":"0","n":[],"bt":"0","b":[],"c":[],"a":[]}-CAi-KAWAADx_HNvu67xglnKrv21Y9foLfEAOCyraOvsonbDvhXeEMxwmQgj6afrUxSJGs-MA_YFlc59_aO0rMp0pD-kHSEE-OAKMAAA1AAG2026-07-21T19c49c46d674250p00c00';
+
 describe('parseVersion', () => {
-    it('reads proto, version, kind and size from a v1 version string', () => {
+    it('reads proto, version, kind, size and CESR genus 1 from a v1 version string', () => {
         const v = parseVersion(bytesOf(mkMessage({ t: 'ixn' })), 0);
         assert.ok(v);
         assert.equal(v.proto, 'KERI');
         assert.equal(v.version, '1.0');
         assert.equal(v.kind, 'JSON');
         assert.equal(typeof v.size, 'number');
+        assert.equal(v.genus, 1);
     });
 
     it('returns null when there is no version string', () => {
         assert.equal(parseVersion(bytesOf('{"x":1}'), 0), null);
+    });
+
+    it('reads proto, protocol version, CESR genus and a base64 size from a v2 string', () => {
+        // AAD_ base64 = 255 = the exact JSON body length of the v2 OOBI sample.
+        assertLike(parseVersion(bytesOf(V2_OOBI), 0), {
+            proto: 'KERI',
+            version: '2.0',
+            kind: 'JSON',
+            size: 255,
+            genus: 2,
+        });
+    });
+
+    it('decodes the v2 size field as base64, not hex', () => {
+        // AAEv base64 = 4*64 + 47 = 303.
+        const v = parseVersion(bytesOf('{"v":"KERICAACAAJSONAAEv."}'), 0);
+        assert.equal(v?.size, 303);
+    });
+});
+
+describe('parse — CESR 2.0 framing (keripy sample)', () => {
+    it('frames a v2 message and its self-framing attachment groups', () => {
+        const bytes = bytesOf(V2_OOBI);
+        const { messages, errors, consumed } = parse(bytes);
+        assert.deepEqual(errors, []);
+        assert.equal(consumed, bytes.length); // delta 0
+        assert.equal(messages.length, 1);
+        assertLike(messages[0], {
+            proto: 'KERI',
+            version: '2.0',
+            kind: 'JSON',
+            ilk: 'icp',
+            sn: '0',
+        });
+        const c = asGroup(messages[0].attachments[0]);
+        assertLike(c, { code: '-C', genus: 2, state: 'known' });
+        const inner = c.items.map(asGroup);
+        assert.deepEqual(
+            inner.map((x) => x.code),
+            ['-K', '-O'] // ControllerIdxSigs, then FirstSeenReplayCouples
+        );
+        // -K holds an indexed signature (Indexer class), -O holds Matter primitives
+        assert.ok(inner[0].items.every((p) => primClass(p) === 'indexer'));
+        assert.ok(inner[1].items.every((p) => primClass(p) === 'matter'));
+        // byte-alignment invariant: inner groups tile the wrapper exactly
+        assert.equal(inner[0].span.start, c.span.start + 4); // past the -C header
+        assert.equal(inner[inner.length - 1].span.end, c.span.end);
+    });
+});
+
+describe('parse — CESR 2.0 synthetic structure and resilience', () => {
+    const V2ICP = { t: 'icp', d: SAID, i: SAID, s: '0' };
+
+    it('self-frames an UNRECOGNIZED v2 counter and keeps parsing (unknown-but-framed)', () => {
+        const unknown = ctr2('-d', 1) + 'A'.repeat(4); // -d not in CtrDex_2_0
+        const known = ctr2('-K', 22) + SIG;
+        const wrap = ctr2('-C', (unknown.length + known.length) / 4);
+        const stream = bytesOf(mkMessageV2(V2ICP) + wrap + unknown + known);
+        const { messages, errors, consumed } = parse(stream);
+        assert.deepEqual(errors, []);
+        assert.equal(consumed, stream.length);
+        const inner = asGroup(messages[0].attachments[0]).items.map(asGroup);
+        assertLike(inner[0], { code: '-d', state: 'unknown', items: [] });
+        assertLike(inner[1], { code: '-K', state: 'known' });
+    });
+
+    it('frames a big (--C) attachment wrapper (hard 3 / soft 5)', () => {
+        const k = ctr2('-K', 22) + SIG;
+        const stream = bytesOf(
+            mkMessageV2(V2ICP) + ctr2('--C', k.length / 4) + k
+        );
+        const { messages, errors } = parse(stream);
+        assert.deepEqual(errors, []);
+        const w = asGroup(messages[0].attachments[0]);
+        assert.equal(w.code, '--C');
+        assert.equal(asGroup(w.items[0]).code, '-K');
+    });
+
+    it('marks an unrecognized genus-version counter unknown-but-bodyless, then resumes', () => {
+        const stream = bytesOf(
+            mkMessageV2(V2ICP) + '-_AABCAA' + ctr2('-K', 22) + SIG
+        );
+        const atts = parse(stream).messages[0].attachments;
+        assertLike(atts[0], { code: '-_AAB', state: 'unknown', items: [] });
+        assert.equal(atts[1].code, '-K');
+    });
+
+    it('frames the -_AAA genus-version counter as a bodyless declaration', () => {
+        const stream = bytesOf(
+            mkMessageV2(V2ICP) + '-_AAACAA' + ctr2('-K', 22) + SIG
+        );
+        const atts = parse(stream).messages[0].attachments;
+        assertLike(atts[0], { code: '-_AAA', state: 'known', items: [] });
+        assert.equal(atts[1].code, '-K');
+    });
+
+    it('reports an unparseable v2 counter and stops', () => {
+        // "-C**": the soft count is all present, and is not base64 — bad bytes
+        const { errors } = parse(bytesOf(mkMessageV2(V2ICP) + '-C**'));
+        assertLike(errors[0], { code: 'unparseable-counter', permanent: true });
+    });
+
+    it('reports a v2 counter cut off by the end of the stream as incomplete', () => {
+        // a lone "-C" with no room for its 2-char soft count: absent, not wrong
+        const { errors } = parse(bytesOf(mkMessageV2(V2ICP) + '-C'));
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+    });
+
+    it('keeps a self-framed wrapper known when an inner GROUP overflows its bound', () => {
+        const corrupt = ctr2('-C', 1) + ctr2('-K', 22) + SIG; // -C claims 4 bytes
+        const w = asGroup(
+            parse(bytesOf(mkMessageV2(V2ICP) + corrupt)).messages[0]
+                .attachments[0]
+        );
+        assertLike(w, { code: '-C', state: 'known', items: [] });
+    });
+
+    it('keeps a self-framed group known when an inner primitive overflows or is malformed', () => {
+        const overflow = ctr2('-K', 1) + SIG; // claims 1 quadlet, 88-char sig
+        const kOver = asGroup(
+            parse(bytesOf(mkMessageV2(V2ICP) + overflow)).messages[0]
+                .attachments[0]
+        );
+        assertLike(kOver, { code: '-K', state: 'known', items: [] });
+        const malformed = ctr2('-K', 22) + '@'.repeat(88); // not a signature
+        const kBad = asGroup(
+            parse(bytesOf(mkMessageV2(V2ICP) + malformed)).messages[0]
+                .attachments[0]
+        );
+        assertLike(kBad, { code: '-K', state: 'known', items: [] });
+    });
+
+    it('keeps a self-framed wrapper known when inner bytes are not a valid counter', () => {
+        const corrupt = ctr2('-C', 1) + '-A..'; // non-base64 soft
+        const w = asGroup(
+            parse(bytesOf(mkMessageV2(V2ICP) + corrupt)).messages[0]
+                .attachments[0]
+        );
+        assertLike(w, { code: '-C', state: 'known', items: [] });
     });
 });
 
@@ -615,6 +785,11 @@ describe('parse — truncation sweep: every vector cut at every byte', () => {
         'replay couple': msg + '-EAB' + SEQNER + DAT,
         'message then attachments then message':
             msg + A_GROUP + mkMessage({ t: 'rot' }) + A_GROUP,
+        // v2 (genus 2): a real keripy OOBI, and two of it back to back — every v2
+        // group self-frames on count*4, which is exactly the declared length a
+        // truncated stream makes a lie of.
+        'v2 OOBI': V2_OOBI,
+        'two v2 OOBIs': V2_OOBI + V2_OOBI,
     };
 
     /** Every node in an attachment forest, groups and primitives alike. */
