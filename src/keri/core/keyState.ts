@@ -23,7 +23,12 @@ export type RandyKeyState = components['schemas']['RandyKeyState'];
 /**
  * Defining properties a multi-signature group identifier manager.
  */
-export type GroupKeyState = components['schemas']['GroupKeyState'];
+export type GroupKeyState = Omit<
+    components['schemas']['GroupKeyState'],
+    'mhab'
+> & {
+    mhab: HabState;
+};
 
 /**
  * Defining properties for an external module identifier manager that uses externally managed keys such as in an HSM or a KMS system.
@@ -31,11 +36,25 @@ export type GroupKeyState = components['schemas']['GroupKeyState'];
 export type ExternState = components['schemas']['ExternState'];
 
 /**
- * Defining properties of an identifier habitat, know as a Hab in KERIpy.
+ * Defining properties of an identifier habitat, known as a Hab in KERIpy.
  */
-export type HabState = components['schemas']['HabState'];
+export type PendingHabState = Pick<
+    components['schemas']['HabState'],
+    'name' | 'prefix' | 'icp_dt' | 'state' | 'transferable' | 'windexes'
+> &
+    (
+        | { salty: SaltyKeyState }
+        | { randy: RandyKeyState }
+        | { group: GroupKeyState }
+        | { extern: ExternState }
+    );
 
-export function requireKeyState(hab: HabState): KeyState {
+/**
+ * Defining properties of an accepted identifier habitat: key state is present.
+ */
+export type HabState = PendingHabState & { state: KeyState };
+
+export function requireKeyState(hab: PendingHabState): KeyState {
     if (hab.state === undefined) {
         throw new Error(`No key state for identifier ${hab.name}`);
     }

@@ -27,7 +27,6 @@ import {
     WitnessOperation,
     DoneOperation,
     HabState,
-    requireKeyState,
     RegistryOperation,
 } from '../core/keyState.ts';
 
@@ -346,8 +345,7 @@ export class Credentials {
         args: CredentialData
     ): Promise<IssueCredentialResult> {
         const hab = await this.client.identifiers().get(name);
-        const state = requireKeyState(hab);
-        const estOnly = state.c !== undefined && state.c.includes('EO');
+        const estOnly = hab.state.c !== undefined && hab.state.c.includes('EO');
         if (estOnly) {
             // TODO implement rotation event
             throw new Error('Establishment only not implemented');
@@ -386,7 +384,7 @@ export class Credentials {
             dt: subject.dt,
         });
 
-        const sn = parseInt(state.s, 16);
+        const sn = parseInt(hab.state.s, 16);
         const anc = interact({
             pre: hab.prefix,
             sn: sn + 1,
@@ -397,7 +395,7 @@ export class Credentials {
                     d: iss.d,
                 },
             ],
-            dig: state.d,
+            dig: hab.state.d,
             version: undefined,
             kind: undefined,
         });
@@ -474,7 +472,7 @@ export class Credentials {
         let ixn = {};
         let sigs = [];
 
-        const state = requireKeyState(hab);
+        const state = hab.state;
         if (state.c !== undefined && state.c.includes('EO')) {
             var estOnly = true;
         } else {
@@ -623,7 +621,7 @@ export class Registries {
             cnfg.push(TraitDex.NoBackers);
         }
 
-        const state = requireKeyState(hab);
+        const state = hab.state;
         const estOnly = state.c !== undefined && state.c.includes('EO');
         if (estOnly) {
             cnfg.push(TraitDex.EstOnly);
@@ -634,6 +632,7 @@ export class Registries {
         if (estOnly) {
             throw new Error('establishment only not implemented');
         } else {
+            const state = hab.state;
             const sn = parseInt(state.s, 16);
             const dig = state.d;
 

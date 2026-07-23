@@ -15,7 +15,6 @@ import {
     IdentifierManagerFactory,
     KeyState,
     randomPasscode,
-    requireKeyState,
     Siger,
     Tier,
     Verfer,
@@ -144,11 +143,34 @@ describe('Aiding', () => {
 
     it('Can get identifiers with special characters in the name', async () => {
         client.fetch.mockResolvedValue(Response.json({}));
-        await client.identifiers().get('a name with ñ!');
+        await client.identifiers().get('a name with ñ!', false);
 
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.method, 'GET');
         assert.equal(lastCall.path, '/identifiers/a%20name%20with%20%C3%B1!');
+    });
+
+    it('Get requires key state unless accepted is false', async () => {
+        const aid = await createMockIdentifierState(randomUUID(), bran);
+        client.fetch.mockImplementation(async () => Response.json(aid));
+        const hab = await client.identifiers().get(aid.name);
+        assert.equal(hab.state.i, aid.prefix);
+
+        // a group still collecting member signatures has no key state
+        const { state: _, ...pendingGroup } = aid;
+        client.fetch.mockImplementation(async () =>
+            Response.json(pendingGroup)
+        );
+        await expect(client.identifiers().get(aid.name)).rejects.toThrow(
+            `No key state for identifier ${aid.name}`
+        );
+        await expect(
+            client.identifiers().get(aid.name, true)
+        ).rejects.toThrow();
+
+        const pending = await client.identifiers().get(aid.name, false);
+        assert.isUndefined(pending.state);
+        assert.equal(pending.prefix, aid.prefix);
     });
 
     it('Can create salty AID with multiple signatures', async () => {
@@ -457,8 +479,8 @@ describe('Aiding', () => {
                 randomPasscode()
             );
 
-            const states = [member1, member2].map(requireKeyState);
-            const rstates = [member2, member3].map(requireKeyState);
+            const states = [member1.state, member2.state];
+            const rstates = [member2.state, member3.state];
 
             // Regression guard: member1 is authorized by current keys (`states`)
             // but intentionally absent from proposed next digests (`rstates`).
@@ -495,8 +517,8 @@ describe('Aiding', () => {
                 randomPasscode()
             );
 
-            const states = [member1, member2].map(requireKeyState);
-            const rstates = [member2, member3].map(requireKeyState);
+            const states = [member1.state, member2.state];
+            const rstates = [member2.state, member3.state];
             // Regression guard: interaction events have no prior-next threshold
             // to expose. Excluding member1 from proposed next digests proves ixn
             // signing does not consult rstates/gdigs for ondex.
@@ -535,16 +557,15 @@ describe('Aiding', () => {
                 {}
             );
 
-            const states = [member1, member2].map(requireKeyState);
             const group = await createMockIdentifierState(randomUUID(), bran, {
                 algo: Algos.group,
                 mhab: member1,
                 nsith: '1',
                 isith: '1',
-                states,
-                rstates: states,
+                states: [member1.state, member2.state],
+                rstates: [member1.state, member2.state],
             });
-            setGroupPriorNextDigests(group, states);
+            setGroupPriorNextDigests(group, [member1.state, member2.state]);
 
             client.fetch.mockResolvedValueOnce(
                 Response.json(group, { status: 200 })
@@ -555,8 +576,8 @@ describe('Aiding', () => {
 
             const args: RotateIdentifierArgs = {
                 nsith: '1',
-                states,
-                rstates: states,
+                states: [member1.state, member2.state],
+                rstates: [member1.state, member2.state],
             };
 
             await client.identifiers().rotate(group.name, args);
@@ -577,23 +598,22 @@ describe('Aiding', () => {
             );
 
             const nextThreshold = ['1/2', '1/2'];
-            const states = [member1, member2].map(requireKeyState);
             const group = await createMockIdentifierState(randomUUID(), bran, {
                 algo: Algos.group,
                 mhab: member1,
                 isith: ['1/3', '2/3'],
                 nsith: nextThreshold,
-                states,
-                rstates: states,
+                states: [member1.state, member2.state],
+                rstates: [member1.state, member2.state],
             });
-            setGroupPriorNextDigests(group, states);
+            setGroupPriorNextDigests(group, [member1.state, member2.state]);
 
             client.fetch.mockResolvedValueOnce(Response.json(group));
             client.fetch.mockResolvedValueOnce(Response.json({}));
             await client.identifiers().rotate(group.name, {
                 nsith: '1',
-                states,
-                rstates: states,
+                states: [member1.state, member2.state],
+                rstates: [member1.state, member2.state],
             });
             const request = client.getLastMockRequest();
             expect(request.body.rot).toMatchObject({
@@ -616,8 +636,8 @@ describe('Aiding', () => {
                 randomUUID(),
                 randomPasscode()
             );
-            const states = [member1, member2, member3].map(requireKeyState);
-            const rstates = [member1, member2, member4].map(requireKeyState);
+            const states = [member1.state, member2.state, member3.state];
+            const rstates = [member1.state, member2.state, member4.state];
 
             const group = await createMockIdentifierState(randomUUID(), bran, {
                 algo: Algos.group,
@@ -654,10 +674,11 @@ describe('Aiding', () => {
 
         it('Passes rotated=true when signing identifier rotation events', async () => {
             const aid = await createMockIdentifierState(randomUUID(), bran, {});
-            const state = requireKeyState(aid);
             const keeper = {
                 algo: Algos.salty,
-                rotate: vitest.fn().mockResolvedValue([state.k, state.n]),
+                rotate: vitest
+                    .fn()
+                    .mockResolvedValue([aid.state.k, aid.state.n]),
                 sign: vitest.fn().mockResolvedValue(['signature']),
                 params: vitest.fn().mockReturnValue({}),
             };
@@ -720,10 +741,9 @@ function setGroupPriorNextDigests(group: HabState, states: KeyState[]) {
         throw new Error('Expected mock identifier to be a group.');
     }
 
-    const state = requireKeyState(group);
     const priorNextDigests = states.map(
-        (s) => new Diger({}, new Verfer({ qb64: s.k[0] }).qb64b).qb64
+        (state) => new Diger({}, new Verfer({ qb64: state.k[0] }).qb64b).qb64
     );
-    state.n = priorNextDigests;
+    group.state.n = priorNextDigests;
     group.group.ndigs = priorNextDigests;
 }
