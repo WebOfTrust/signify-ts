@@ -7,7 +7,11 @@ import { MtrDex } from '../core/matter.ts';
 import { Serder } from '../core/serder.ts';
 import { parseRangeHeaders } from '../core/httping.ts';
 import { IdentifierManagerFactory } from '../core/keeping.ts';
-import { HabState, requireKeyState } from '../core/keyState.ts';
+import {
+    HabState,
+    PendingHabState,
+    requireKeyState,
+} from '../core/keyState.ts';
 import { components } from '../../types/keria-api-schema.ts';
 
 /** Arguments required to create an identfier */
@@ -127,14 +131,25 @@ export class Identifier {
      * Get information for a managed identifier
      * @async
      * @param {string} name Prefix or alias of the identifier
+     * @param {boolean} [accepted=true] When true, requires key state to be
+     *      present and throws otherwise. Key state is absent only for a
+     *      multisig group whose inception is still collecting member
+     *      signatures; pass false to fetch such a pending group.
      * @returns {Promise<HabState>} A promise to the identifier information
      */
-    async get(name: string): Promise<HabState> {
+    async get(name: string, accepted?: true): Promise<HabState>;
+    async get(name: string, accepted: false): Promise<PendingHabState>;
+    async get(name: string, accepted: boolean): Promise<PendingHabState>;
+    async get(name: string, accepted = true): Promise<PendingHabState> {
         const path = `/identifiers/${encodeURIComponent(name)}`;
         const data = null;
         const method = 'GET';
         const res = await this.client.fetch(path, method, data);
-        return await res.json();
+        const hab: PendingHabState = await res.json();
+        if (accepted) {
+            requireKeyState(hab);
+        }
+        return hab;
     }
 
     /**
@@ -142,9 +157,9 @@ export class Identifier {
      * @async
      * @param {string} name Prefix or alias of the identifier
      * @param {IdentifierInfo} info Information to update for the given identifier
-     * @returns {Promise<HabState>} A promise to the identifier information after updating
+     * @returns {Promise<PendingHabState>} A promise to the identifier information after updating
      */
-    async update(name: string, info: IdentifierInfo): Promise<HabState> {
+    async update(name: string, info: IdentifierInfo): Promise<PendingHabState> {
         const path = `/identifiers/${name}`;
         const method = 'PUT';
         const res = await this.client.fetch(path, method, info);
@@ -308,7 +323,7 @@ export class Identifier {
         const hab = await this.get(name);
         const pre: string = hab.prefix;
 
-        const state = requireKeyState(hab);
+        const state = hab.state;
         const sn = parseInt(state.s, 16);
         const dig = state.d;
 
@@ -349,9 +364,9 @@ export class Identifier {
 
         const hab = await this.get(name);
         const pre = hab.prefix;
+        const delegated = hab.state.di !== '';
 
-        const state = requireKeyState(hab);
-        const delegated = state.di !== '';
+        const state = hab.state;
         const count = state.k.length;
         const dig = state.d;
         const ridx = parseInt(state.s, 16) + 1;
