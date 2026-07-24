@@ -131,22 +131,33 @@ export class Identifier {
      * Get information for a managed identifier
      * @async
      * @param {string} name Prefix or alias of the identifier
-     * @param {boolean} [accepted=true] When true, requires key state to be
-     *      present and throws otherwise. Key state is absent only for a
+     * @param {boolean} [requireAccepted=true] When true, requires key state to
+     *      be present and throws otherwise. Key state is absent only for a
      *      multisig group whose inception is still collecting member
      *      signatures; pass false to fetch such a pending group.
-     * @returns {Promise<HabState>} A promise to the identifier information
+     * @returns {Promise<HabState | PendingHabState>} A promise to the
+     *      identifier information, narrowed to HabState unless requireAccepted
+     *      is false
      */
-    async get(name: string, accepted?: true): Promise<HabState>;
-    async get(name: string, accepted: false): Promise<PendingHabState>;
-    async get(name: string, accepted: boolean): Promise<PendingHabState>;
-    async get(name: string, accepted = true): Promise<PendingHabState> {
+    async get(name: string, requireAccepted?: true): Promise<HabState>;
+    async get(
+        name: string,
+        requireAccepted: false
+    ): Promise<HabState | PendingHabState>;
+    async get(
+        name: string,
+        requireAccepted: boolean
+    ): Promise<HabState | PendingHabState>;
+    async get(
+        name: string,
+        requireAccepted = true
+    ): Promise<HabState | PendingHabState> {
         const path = `/identifiers/${encodeURIComponent(name)}`;
         const data = null;
         const method = 'GET';
         const res = await this.client.fetch(path, method, data);
-        const hab: PendingHabState = await res.json();
-        if (accepted) {
+        const hab: HabState | PendingHabState = await res.json();
+        if (requireAccepted) {
             requireKeyState(hab);
         }
         return hab;
@@ -157,13 +168,41 @@ export class Identifier {
      * @async
      * @param {string} name Prefix or alias of the identifier
      * @param {IdentifierInfo} info Information to update for the given identifier
-     * @returns {Promise<PendingHabState>} A promise to the identifier information after updating
+     * @param {boolean} [requireAccepted=true] When true, requires key state to
+     *      be present on the updated identifier and throws otherwise; pass
+     *      false to update a still-pending multisig group.
+     * @returns {Promise<HabState | PendingHabState>} A promise to the
+     *      identifier information after updating, narrowed to HabState unless
+     *      requireAccepted is false
      */
-    async update(name: string, info: IdentifierInfo): Promise<PendingHabState> {
-        const path = `/identifiers/${name}`;
+    async update(
+        name: string,
+        info: IdentifierInfo,
+        requireAccepted?: true
+    ): Promise<HabState>;
+    async update(
+        name: string,
+        info: IdentifierInfo,
+        requireAccepted: false
+    ): Promise<HabState | PendingHabState>;
+    async update(
+        name: string,
+        info: IdentifierInfo,
+        requireAccepted: boolean
+    ): Promise<HabState | PendingHabState>;
+    async update(
+        name: string,
+        info: IdentifierInfo,
+        requireAccepted = true
+    ): Promise<HabState | PendingHabState> {
+        const path = `/identifiers/${encodeURIComponent(name)}`;
         const method = 'PUT';
         const res = await this.client.fetch(path, method, info);
-        return await res.json();
+        const hab: HabState | PendingHabState = await res.json();
+        if (requireAccepted) {
+            requireKeyState(hab);
+        }
+        return hab;
     }
 
     /**
