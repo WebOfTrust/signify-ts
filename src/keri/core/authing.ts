@@ -225,7 +225,10 @@ export class EssrAuthenticator extends Authenticator {
         headers.set('Content-Type', 'application/octet-stream');
 
         const requestStr = await EssrAuthenticator.serializeRequest(request);
-        const raw = libsodium.crypto_box_seal(requestStr, this.vx25519Pub);
+        const raw = libsodium.crypto_box_seal(
+            requestStr,
+            this.vx25519Pub
+        ) as Uint8Array<ArrayBuffer>;
 
         const diger = new Diger({ code: MtrDex.Blake3_256 }, raw);
         const payload = {
