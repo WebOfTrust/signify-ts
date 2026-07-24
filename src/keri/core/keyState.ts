@@ -27,6 +27,8 @@ export type GroupKeyState = Omit<
     components['schemas']['GroupKeyState'],
     'mhab'
 > & {
+    // The local member AID must be fully inceptioned before it can participate in the group,
+    // so its key state is always present even while the group's own state is not — hence HabState.
     mhab: HabState;
 };
 
@@ -35,12 +37,17 @@ export type GroupKeyState = Omit<
  */
 export type ExternState = components['schemas']['ExternState'];
 
+type SchemaHabState = components['schemas']['HabState'];
+
 /**
  * Defining properties of an identifier habitat, known as a Hab in KERIpy.
+ *
+ * Omitting `state` alone would erase the algo variants — `keyof` a union of disjoint objects is
+ * `never` — so they are re-spelled, which also points `group` at the local GroupKeyState above.
  */
-export type PendingHabState = Pick<
-    components['schemas']['HabState'],
-    'name' | 'prefix' | 'icp_dt' | 'state' | 'transferable' | 'windexes'
+type BaseHabState = Omit<
+    SchemaHabState,
+    'state' | 'salty' | 'randy' | 'group' | 'extern'
 > &
     (
         | { salty: SaltyKeyState }
@@ -49,13 +56,18 @@ export type PendingHabState = Pick<
         | { extern: ExternState }
     );
 
-/**
- * Defining properties of an accepted identifier habitat: key state is present.
- */
-export type HabState = PendingHabState & { state: KeyState };
+/** Multisig group whose inception is still collecting member signatures; no key state yet. */
+export type PendingHabState = BaseHabState & { state?: undefined };
 
-export function requireKeyState(hab: PendingHabState): KeyState {
-    if (hab.state === undefined) {
+/** Fully inceptioned identifier; key state present. */
+export type HabState = BaseHabState & { state: KeyState };
+
+export function isAccepted(hab: HabState | PendingHabState): hab is HabState {
+    return hab.state !== undefined;
+}
+
+export function requireKeyState(hab: HabState | PendingHabState): KeyState {
+    if (!isAccepted(hab)) {
         throw new Error(`No key state for identifier ${hab.name}`);
     }
     return hab.state;

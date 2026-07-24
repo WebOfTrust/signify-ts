@@ -14,6 +14,7 @@ import {
     IdentifierDeps,
     IdentifierManagerFactory,
     KeyState,
+    PendingHabState,
     randomPasscode,
     Siger,
     Tier,
@@ -142,8 +143,11 @@ describe('Aiding', () => {
     });
 
     it('Can get identifiers with special characters in the name', async () => {
-        client.fetch.mockResolvedValue(Response.json({}));
-        await client.identifiers().get('a name with ñ!', false);
+        const name = 'a name with ñ!';
+        client.fetch.mockResolvedValue(
+            Response.json(await createMockIdentifierState(name, bran))
+        );
+        await client.identifiers().get(name);
 
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.method, 'GET');
@@ -156,10 +160,8 @@ describe('Aiding', () => {
         const hab = await client.identifiers().get(aid.name);
         assert.equal(hab.state.i, aid.prefix);
 
-        // a group still collecting member signatures has no key state
-        const { state: _, ...pendingGroup } = aid;
         client.fetch.mockImplementation(async () =>
-            Response.json(pendingGroup)
+            Response.json(asPendingGroup(aid))
         );
         await expect(client.identifiers().get(aid.name)).rejects.toThrow(
             `No key state for identifier ${aid.name}`
@@ -169,6 +171,31 @@ describe('Aiding', () => {
         ).rejects.toThrow();
 
         const pending = await client.identifiers().get(aid.name, false);
+        assert.isUndefined(pending.state);
+        assert.equal(pending.prefix, aid.prefix);
+    });
+
+    it('Update requires key state unless accepted is false', async () => {
+        const aid = await createMockIdentifierState(randomUUID(), bran);
+        client.fetch.mockImplementation(async () => Response.json(aid));
+        const hab = await client.identifiers().update(aid.name, {
+            name: aid.name,
+        });
+        assert.equal(hab.state.i, aid.prefix);
+
+        client.fetch.mockImplementation(async () =>
+            Response.json(asPendingGroup(aid))
+        );
+        await expect(
+            client.identifiers().update(aid.name, { name: aid.name })
+        ).rejects.toThrow(`No key state for identifier ${aid.name}`);
+        await expect(
+            client.identifiers().update(aid.name, { name: aid.name }, true)
+        ).rejects.toThrow();
+
+        const pending = await client
+            .identifiers()
+            .update(aid.name, { name: aid.name }, false);
         assert.isUndefined(pending.state);
         assert.equal(pending.prefix, aid.prefix);
     });
@@ -459,7 +486,9 @@ describe('Aiding', () => {
     });
 
     it('Can rename identifier', async () => {
-        client.fetch.mockResolvedValue(Response.json({}));
+        client.fetch.mockResolvedValue(
+            Response.json(await createMockIdentifierState('aid2', bran))
+        );
         await client.identifiers().update('aid1', { name: 'aid2' });
         const lastCall = client.getLastMockRequest();
         assert.equal(lastCall.path, '/identifiers/aid1');
@@ -735,6 +764,14 @@ describe('Aiding', () => {
         });
     });
 });
+
+/**
+ * A group still collecting member signatures has no key state. Response.json drops the
+ * undefined `state`, mirroring KERIA omitting the key entirely.
+ */
+function asPendingGroup(hab: HabState): PendingHabState {
+    return { ...hab, state: undefined };
+}
 
 function setGroupPriorNextDigests(group: HabState, states: KeyState[]) {
     if (!('group' in group)) {
