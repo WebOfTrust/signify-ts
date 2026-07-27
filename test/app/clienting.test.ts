@@ -304,7 +304,7 @@ describe('SignifyClient', () => {
         );
         expect(request.headers.has(HEADER_SIG_TIME)).toBe(true);
         expect(request.headers.get('Content-Type')).toBe('application/json');
-        expect(request.headers.get('Content-Length')).toBe('95');
+        expect(request.headers.has('Content-Length')).toBe(false);
         expect(await request.json()).toEqual({
             url: 'http://localhost:5642/oobi/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha',
             alias: 'wit',
@@ -332,7 +332,7 @@ describe('SignifyClient', () => {
         );
         expect(request.headers.has(HEADER_SIG_TIME)).toBe(true);
         expect(request.headers.get('Content-Type')).toBe('application/json');
-        expect(request.headers.get('Content-Length')).toBe('95');
+        expect(request.headers.has('Content-Length')).toBe(false);
         expect(request.headers.get('A')).toBe('1');
         expect(request.headers.get('B')).toBe('2');
         expect(await request.json()).toEqual({

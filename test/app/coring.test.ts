@@ -85,8 +85,9 @@ describe('Coring', () => {
 
         await oobis.endroles(aid);
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + `/endroles/${aid}`);
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + `/endroles/${aid}`);
+        assert.equal(lastCall[0].method, 'GET');
     });
 
     it('Endroles with role filter', async () => {
@@ -103,8 +104,9 @@ describe('Coring', () => {
 
         await oobis.endroles(aid, 'agent');
         const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
-        assert.equal(lastCall[0]!, url + `/endroles/${aid}/agent`);
-        assert.equal(lastCall[1]!.method, 'GET');
+        assert.instanceOf(lastCall[0], Request);
+        assert.equal(lastCall[0].url, url + `/endroles/${aid}/agent`);
+        assert.equal(lastCall[0].method, 'GET');
     });
 
     it('Events and states', async () => {
