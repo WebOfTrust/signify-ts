@@ -43,6 +43,12 @@ export enum AuthMode {
     ESSR = 'ESSR',
 }
 
+function jsonBody(data: unknown): string | null {
+    // typed as string, but returns undefined for undefined/functions/symbols
+    const json: string | undefined = JSON.stringify(data);
+    return json ?? null;
+}
+
 /**
  * An in-memory key manager that can connect to a KERIA Agent and use it to
  * receive messages and act as a proxy for multi-signature operations and delegation operations.
@@ -207,14 +213,14 @@ export class SignifyClient {
      * @async
      * @param {string} path Path to the resource
      * @param {string} method HTTP method
-     * @param {any} data Data to be sent in the body of the resource
+     * @param {unknown} [data] Data to be sent in the body of the resource
      * @param {Headers} [extraHeaders] Optional extra headers to be sent with the request
      * @returns {Promise<Response>} A promise to the result of the fetch
      */
     async fetch(
         path: string,
         method: string,
-        data: any,
+        data?: unknown,
         extraHeaders?: Headers
     ): Promise<Response> {
         if (!this.authn) {
@@ -234,7 +240,7 @@ export class SignifyClient {
             });
         }
 
-        const body = method == 'GET' ? null : JSON.stringify(data);
+        const body = method == 'GET' ? null : jsonBody(data);
         if (body) {
             headers.set('Content-Type', 'application/json');
         }
