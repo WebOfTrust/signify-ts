@@ -255,8 +255,13 @@ test('delegation-multisig', async () => {
 
     console.log(`${delegatee2Name} joined multisig, waiting for delegator...`);
 
-    const agtee1 = await delegatee1Client.identifiers().get(delegateeGroupName);
-    const agtee2 = await delegatee2Client.identifiers().get(delegateeGroupName);
+    // delegated group is not accepted until the delegator anchors, so no key state yet
+    const agtee1 = await delegatee1Client
+        .identifiers()
+        .get(delegateeGroupName, false);
+    const agtee2 = await delegatee2Client
+        .identifiers()
+        .get(delegateeGroupName, false);
 
     assert.equal(agtee1.prefix, agtee2.prefix);
     assert.equal(agtee1.name, agtee2.name);
