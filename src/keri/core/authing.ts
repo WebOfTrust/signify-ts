@@ -278,9 +278,15 @@ export class EssrAuthenticator extends Authenticator {
 
         let body = '';
         if (request.method !== 'GET' && request.body) {
-            body = Buffer.from(await this.streamToBytes(request.body)).toString(
-                'utf-8'
-            );
+            const bytes = await this.streamToBytes(request.body);
+            try {
+                body = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch (e) {
+                throw new Error(
+                    'Failed to serialize ESSR request - body is not valid UTF-8',
+                    { cause: e }
+                );
+            }
         }
 
         return `${request.method} ${request.url} HTTP/1.1\r\n${headers}\r\n${body}`;
@@ -363,14 +369,9 @@ export class EssrAuthenticator extends Authenticator {
             throw new Error('Invalid signature');
         }
 
-        const plaintext = d(
-            libsodium.crypto_box_seal_open(
-                ciphertext,
-                this.cx25519Pub,
-                this.cx25519Priv
-            )
+        const response = EssrAuthenticator.deserializeResponse(
+            d(this.decrypt(ciphertext))
         );
-        const response = EssrAuthenticator.deserializeResponse(plaintext);
 
         if (response.headers.get(HEADER_SIG_SENDER) !== sender) {
             throw new Error(
@@ -381,35 +382,46 @@ export class EssrAuthenticator extends Authenticator {
         return response;
     }
 
-    static deserializeResponse(httpString: string): Response {
-        const lines = httpString.split('\r\n');
+    // KERIA seals the response to the client key it has in the controller's KEL
+    private decrypt(ciphertext: Uint8Array): Uint8Array {
+        try {
+            return libsodium.crypto_box_seal_open(
+                ciphertext,
+                this.cx25519Pub,
+                this.cx25519Priv
+            );
+        } catch (e) {
+            throw new Error(
+                'Failed to decrypt ESSR response - sealed to a different client key',
+                { cause: e }
+            );
+        }
+    }
 
-        const [_, statusCode, ...statusTextArr] = lines[0].split(' ');
-        const statusText = statusTextArr.join(' ');
-        const status = Number(statusCode);
+    static deserializeResponse(httpString: string): Response {
+        const sep = httpString.indexOf('\r\n\r\n');
+        const head =
+            sep === -1 ? httpString.trimEnd() : httpString.slice(0, sep);
+
+        const [statusLine, ...headerLines] = head.split('\r\n');
+        const [, statusCode, ...statusTextArr] = statusLine.split(' ');
+
+        const body = sep === -1 ? '' : httpString.slice(sep + 4);
 
         const headers = new Headers();
-        let body = '';
-        let bodyStart = false;
-
-        for (let i = 1; i < lines.length; i++) {
-            if (lines[i] === '') {
-                bodyStart = true;
-                continue;
+        for (const line of headerLines) {
+            const i = line.indexOf(':');
+            if (i !== -1) {
+                headers.append(
+                    line.slice(0, i).trim(),
+                    line.slice(i + 1).trim()
+                );
             }
-
-            if (bodyStart) {
-                body += lines[i] + '\n';
-                continue;
-            }
-
-            const [key, value] = lines[i].split(': ');
-            headers.append(key, value);
         }
 
-        return new Response(body ? body.trim() : null, {
-            status,
-            statusText,
+        return new Response(body.length ? body : null, {
+            status: Number(statusCode),
+            statusText: statusTextArr.join(' '),
             headers,
         });
     }

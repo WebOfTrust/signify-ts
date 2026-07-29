@@ -15,7 +15,7 @@ import {
     HEADER_SIG_SENDER,
     HEADER_SIG_TIME,
 } from '../../src/keri/core/httping.ts';
-import { designature } from '../../src/keri/end/ending.ts';
+import { designature, Signage, signature } from '../../src/keri/end/ending.ts';
 import { Diger } from '../../src/keri/core/diger.ts';
 import { Cigar } from '../../src/keri/core/cigar.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
@@ -496,8 +496,64 @@ content-type: text/plain;charset=UTF-8\r
             'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose',
             'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei'
         );
-        assert.equal(await unwrapped.text(), JSON.stringify({ a: 1 }));
+        assert.equal(await unwrapped.text(), '{"a":1}\n');
         assert.equal(unwrapped.status, 200);
+    });
+});
+
+describe('EssrAuthenticator decrypt failure', () => {
+    test('Wraps a key mismatch in an actionable error', async () => {
+        await libsodium.ready;
+        const salter = new Salter({ raw: b('0123456789abcdef') });
+        const signer = salter.signer();
+
+        const agentSalter = new Salter({ qb64: '0AAwMTIzNDU2Nzg5YWJjZGVm' });
+        const agentSigner = agentSalter.signer(
+            'A',
+            true,
+            'agentagent-ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose00',
+            Tier.low
+        );
+
+        const authn = new EssrAuthenticator(signer, agentSigner.verfer);
+
+        const stranger = libsodium.crypto_box_keypair();
+        const ciphertext = libsodium.crypto_box_seal(
+            b('HTTP/1.1 200 OK\r\n\r\n'),
+            stranger.publicKey
+        ) as Uint8Array<ArrayBuffer>;
+
+        const src = 'EEXekkGu9IAzav6pZVJhkLnjtjM5v3AcyA-pdKUcaGei';
+        const dest = 'ELI7pg979AdhmvrjDeam2eAO2SR5niCgnjAJXJHtJose';
+        const dt = '2025-01-17T12:00:18.260000+00:00';
+        const payload = {
+            src,
+            dest,
+            d: new Diger({ code: MtrDex.Blake3_256 }, ciphertext).qb64,
+            dt,
+        };
+
+        const markers = new Map([
+            ['signify', agentSigner.sign(b(JSON.stringify(payload)))],
+        ]);
+        const headers = new Headers();
+        headers.set(HEADER_SIG_SENDER, src);
+        headers.set(HEADER_SIG_DESTINATION, dest);
+        headers.set(HEADER_SIG_TIME, dt);
+        signature([new Signage(markers, false)]).forEach((value, key) =>
+            headers.set(key, value)
+        );
+
+        await expect(
+            authn.verify(
+                new Request('http://test.com'),
+                new Response(ciphertext, { status: 200, headers }),
+                dest,
+                src
+            )
+        ).rejects.toThrow(
+            'Failed to decrypt ESSR response - sealed to a different client key'
+        );
     });
 });
 
@@ -561,6 +617,47 @@ Hi`
 });
 
 describe('EssrAuthenticator.deserializeResponse', () => {
+    test('Preserves a body containing raw CRLF', async () => {
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
+content-type: application/json\r
+\r
+{"a":"x\r\ny"}`);
+        assert.equal(await response.text(), '{"a":"x\r\ny"}');
+    });
+
+    test('Preserves a body containing a blank line', async () => {
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
+content-type: text/plain\r
+\r
+one\r
+\r
+two`);
+        assert.equal(await response.text(), 'one\r\n\r\ntwo');
+    });
+
+    test('Preserves a header value containing a colon-space', async () => {
+        const response =
+            EssrAuthenticator.deserializeResponse(`HTTP/1.1 200 OK\r
+location: http://example.com: 8080\r
+\r
+`);
+        assert.equal(
+            response.headers.get('location'),
+            'http://example.com: 8080'
+        );
+    });
+
+    test('Parses a status-line-only payload with no separator', () => {
+        const response = EssrAuthenticator.deserializeResponse(
+            'HTTP/1.1 204 No Content\r\n'
+        );
+        assert.equal(response.status, 204);
+        assert.equal(response.statusText, 'No Content');
+        assert.equal(response.body, null);
+    });
+
     test('Can deserialise a GET response with no headers', async () => {
         const response =
             EssrAuthenticator.deserializeResponse(`HTTP/1.1 204 No Content\r
