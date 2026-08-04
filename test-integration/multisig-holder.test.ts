@@ -393,7 +393,7 @@ test('multisig', async function run() {
     const exnRes = assertIpexGrant(await client1.exchanges().get(grantMsgSaid));
 
     recp = [aid2['state']].map((state) => state['i']);
-    const exOp1 = await multisigAdmitCredential(
+    const admitResult1 = await multisigAdmitCredential(
         client1,
         'holder',
         'member1',
@@ -420,7 +420,7 @@ test('multisig', async function run() {
     console.log(`Member2 /exn/ipex/grant msg :  ` + JSON.stringify(exnRes2));
 
     const recp2 = [aid1['state']].map((state) => state['i']);
-    const exOp2 = await multisigAdmitCredential(
+    const admitResult2 = await multisigAdmitCredential(
         client2,
         'holder',
         'member2',
