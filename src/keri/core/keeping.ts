@@ -268,6 +268,38 @@ export class SaltyIdentifierManager implements IdentifierManager {
     public algo: Algos = Algos.salty;
     public signers: Signer[];
 
+    /**
+     * The verification keys the next rotation will reveal.
+     *
+     * `incept` and `rotate` both derive these in order to publish their digests,
+     * and this is that same derivation rather than a second copy of it. A caller
+     * that has to commit to the next key in a form KERI does not publish, a
+     * Cardano key hash for instance, would otherwise reimplement the index
+     * arithmetic; a copy that drifts commits to a key nobody holds, and the
+     * commitment is only discovered to be wrong at the rotation it blocks.
+     *
+     * The keys themselves never leave the keeper in normal use: callers are
+     * expected to hash or commit to them, not to publish them, since publishing
+     * one is what pre-rotation exists to avoid.
+     */
+    public nextSigners(): Signer[] {
+        return this.creator.create(
+            this.ncodes,
+            this.ncount,
+            this.ncode,
+            this.transferable,
+            this.pidx,
+            0,
+            this.kidx + (this.icodes?.length ?? 0),
+            false
+        ).signers;
+    }
+
+    /** Verfers of {@link nextSigners}, which is what a digest is taken over. */
+    public nextVerfers(): Verfer[] {
+        return this.nextSigners().map((signer) => signer.verfer);
+    }
+
     constructor(
         salter: Salter,
         pidx: number,
@@ -370,19 +402,9 @@ export class SaltyIdentifierManager implements IdentifierManager {
         );
         const verfers = signers.signers.map((signer) => signer.verfer.qb64);
 
-        const nsigners = this.creator.create(
-            this.ncodes,
-            this.ncount,
-            this.ncode,
-            this.transferable,
-            this.pidx,
-            0,
-            this.icodes?.length,
-            false
-        );
-        const digers = nsigners.signers.map(
-            (nsigner) =>
-                new Diger({ code: this.dcode }, nsigner.verfer.qb64b).qb64
+        // kidx is 0 here, so this is the same index the next keys live at
+        const digers = this.nextVerfers().map(
+            (nverfer) => new Diger({ code: this.dcode }, nverfer.qb64b).qb64
         );
 
         return [verfers, digers];
@@ -407,19 +429,8 @@ export class SaltyIdentifierManager implements IdentifierManager {
         const verfers = signers.signers.map((signer) => signer.verfer.qb64);
 
         this.kidx = this.kidx! + this.icodes!.length;
-        const nsigners = this.creator.create(
-            this.ncodes,
-            this.ncount,
-            this.ncode,
-            this.transferable,
-            this.pidx,
-            0,
-            this.kidx + this.icodes!.length,
-            false
-        );
-        const digers = nsigners.signers.map(
-            (nsigner) =>
-                new Diger({ code: this.dcode }, nsigner.verfer.qb64b).qb64
+        const digers = this.nextVerfers().map(
+            (nverfer) => new Diger({ code: this.dcode }, nverfer.qb64b).qb64
         );
 
         return [verfers, digers];
