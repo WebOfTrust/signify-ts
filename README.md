@@ -79,6 +79,19 @@ Typescript source files needs to be transpiled before running scripts or integra
     console.log(actualSignifyClient);
     ```
 
+### Agent signaling
+
+KERIA can publish transient server-sent events for the connected agent at
+`GET /signals/stream`. SignifyTS exposes this generic channel through
+`client.signals()`.
+
+- `client.signals().stream()` opens the authenticated SSE stream.
+- `client.signals().verifyReplyEnvelope(envelope, { route })` verifies that the
+  SSE payload is a KERI `rpy` envelope signed by the connected KERIA agent AID.
+
+SSE delivery is not durable. Topic resources should provide durable polling
+fallbacks for missed events and restarts.
+
 ### Unit testing
 
 To run unit tests

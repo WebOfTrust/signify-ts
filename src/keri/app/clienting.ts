@@ -14,6 +14,7 @@ import { Escrows } from './escrowing.ts';
 import { Exchanges } from './exchanging.ts';
 import { Groups } from './grouping.ts';
 import { Notifications } from './notifying.ts';
+import { AgentSignals } from './signaling.ts';
 
 const DEFAULT_BOOT_URL = 'http://localhost:3903';
 
@@ -56,6 +57,7 @@ export class SignifyClient {
     private _oobis = new Oobis(this);
     private _config = new Config(this);
     private _delegations = new Delegations(this);
+    private _signals = new AgentSignals(this);
     private _exchanges = new Exchanges(this);
     private _groups = new Groups(this);
     private _escrows = new Escrows(this);
@@ -501,6 +503,18 @@ export class SignifyClient {
      */
     delegations(): Delegations {
         return this._delegations;
+    }
+
+    /**
+     * Get the generic KERIA agent signaling resource.
+     *
+     * Topic modules use this for signed SSE transport and KERI `rpy` envelope
+     * verification, then apply their own durable polling and approval logic.
+     *
+     * @returns {AgentSignals}
+     */
+    signals(): AgentSignals {
+        return this._signals;
     }
 
     /**
