@@ -6,6 +6,7 @@ import {
 import { HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../core/httping.ts';
 import { components } from '../../types/keria-api-schema.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
+import { CesrNumber } from '../core/number.ts';
 import { Tier } from '../core/salter.ts';
 
 import { Identifier } from './aiding.ts';
@@ -166,13 +167,16 @@ export class SignifyClient {
         return state;
     }
 
-    /**  Connect to a KERIA agent
+    /**
+     * Connect to an existing KERIA Agent and restore its in-memory Controller,
+     * load agent state, and initialize authenticated client services.
+     *
      * @async
      */
     async connect() {
         const state = await this.state();
         this.pidx = state.pidx;
-        //Create controller representing the local client AID
+        // Restore the controller from KERIA's authoritative persisted state.
         this.controller = new Controller(
             this.bran,
             this.tier,
@@ -182,14 +186,23 @@ export class SignifyClient {
         this.controller.ridx = state.ridx !== undefined ? state.ridx : 0;
         // Create agent representing the AID of KERIA cloud agent
         this.agent = new Agent(state.agent);
-        if (this.agent.anchor != this.controller.pre) {
+        if (this.agent.anchor !== this.controller.pre) {
             throw Error(
                 'commitment to controller AID missing in agent inception event'
             );
         }
-        if (this.controller.serder.sad.s == 0) {
+
+        const controllerSequence = state.controller?.state?.s;
+        if (typeof controllerSequence !== 'string') {
+            throw new Error(
+                'KERIA controller state is missing a string sequence number'
+            );
+        }
+
+        if (new CesrNumber({}, controllerSequence).num === 0) {
             await this.approveDelegation();
         }
+
         this.manager = new IdentifierManagerFactory(
             this.controller.salter,
             this.exteralModules
@@ -240,7 +253,7 @@ export class SignifyClient {
             });
         }
 
-        const body = method == 'GET' ? null : jsonBody(data);
+        const body = method === 'GET' ? null : jsonBody(data);
         if (body) {
             headers.set('Content-Type', 'application/json');
         }
@@ -324,14 +337,14 @@ export class SignifyClient {
      * @returns {Promise<Response>} A promise to the result of the approval
      */
     private async approveDelegation(): Promise<Response> {
-        const sigs = this.controller.approveDelegation(this.agent!);
+        const approval = this.controller.approveDelegation(this.agent!);
 
         const data = {
-            ixn: this.controller.serder.sad,
-            sigs: sigs,
+            ixn: approval.event.sad,
+            sigs: approval.signatures,
         };
 
-        return await fetch(
+        const response = await fetch(
             this.url + '/agent/' + this.controller.pre + '?type=ixn',
             {
                 method: 'PUT',
@@ -341,6 +354,15 @@ export class SignifyClient {
                 },
             }
         );
+        if (!response.ok) {
+            const body = await response.text();
+            const details = body.length > 0 ? ` - ${body}` : '';
+            throw new Error(
+                `agent delegation approval failed: ${response.status} ${response.statusText}${details}`
+            );
+        }
+
+        return response;
     }
 
     /**
