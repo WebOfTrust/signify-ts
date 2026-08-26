@@ -25,6 +25,11 @@ const DEFAULT_BOOT_URL = 'http://localhost:3903';
 // Export type outside the class
 export type AgentResourceResult = components['schemas']['AgentResourceResult'];
 
+/** Cancellation options for booting or connecting a Signify client. */
+export interface ConnectionOptions {
+    signal?: AbortSignal;
+}
+
 class State {
     agent: any | null;
     controller: any | null;
@@ -124,9 +129,10 @@ export class SignifyClient {
     /**
      * Boot a KERIA agent
      * @async
+     * @param {ConnectionOptions} [options] Cancellation options
      * @returns {Promise<Response>} A promise to the result of the boot
      */
-    async boot(): Promise<Response> {
+    async boot(options: ConnectionOptions = {}): Promise<Response> {
         const [evt, sign] = this.controller?.event ?? [];
         const data = {
             icp: evt.sad,
@@ -142,18 +148,22 @@ export class SignifyClient {
             headers: {
                 'Content-Type': 'application/json',
             },
+            signal: options.signal,
         });
     }
 
     /**
      * Get state of the agent and the client
      * @async
+     * @param {ConnectionOptions} [options] Cancellation options
      * @returns {Promise<Response>} A promise to the state
      */
-    async state(): Promise<State> {
+    async state(options: ConnectionOptions = {}): Promise<State> {
         const caid = this.controller?.pre;
 
-        const res = await fetch(this.url + `/agent/${caid}`);
+        const res = await fetch(this.url + `/agent/${caid}`, {
+            signal: options.signal,
+        });
         if (res.status == 404) {
             throw new Error(`agent does not exist for controller ${caid}`);
         }
@@ -172,9 +182,10 @@ export class SignifyClient {
      * load agent state, and initialize authenticated client services.
      *
      * @async
+     * @param {ConnectionOptions} [options] Cancellation options
      */
-    async connect() {
-        const state = await this.state();
+    async connect(options: ConnectionOptions = {}) {
+        const state = await this.state(options);
         this.pidx = state.pidx;
         // Restore the controller from KERIA's authoritative persisted state.
         this.controller = new Controller(
@@ -200,7 +211,7 @@ export class SignifyClient {
         }
 
         if (new CesrNumber({}, controllerSequence).num === 0) {
-            await this.approveDelegation();
+            await this.approveDelegation(options);
         }
 
         this.manager = new IdentifierManagerFactory(
@@ -334,9 +345,13 @@ export class SignifyClient {
     /**
      * Approve the delegation of the client AID to the KERIA agent
      * @async
+     * @param {ConnectionOptions} [options] Cancellation options
      * @returns {Promise<Response>} A promise to the result of the approval
      */
-    private async approveDelegation(): Promise<Response> {
+    private async approveDelegation(
+        options: ConnectionOptions = {}
+    ): Promise<Response> {
+        options.signal?.throwIfAborted();
         const approval = this.controller.approveDelegation(this.agent!);
 
         const data = {
@@ -352,6 +367,7 @@ export class SignifyClient {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                signal: options.signal,
             }
         );
         if (!response.ok) {
