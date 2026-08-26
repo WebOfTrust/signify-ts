@@ -26,7 +26,7 @@ import {
     HEADER_SIG_SENDER,
 } from '../../src/keri/core/httping.ts';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
-import { createMockFetch } from './test-utils.ts';
+import { createMockFetch, mockConnect } from './test-utils.ts';
 import { Cigar } from '../../src/keri/core/cigar.ts';
 import { Siger } from '../../src/keri/core/siger.ts';
 import { Signage, signature } from '../../src/keri/end/ending.ts';
@@ -150,6 +150,61 @@ describe('SignifyClient', () => {
         await essrClient.boot();
         await essrClient.connect();
         assert(essrClient.authn instanceof EssrAuthenticator);
+    });
+
+    test('does not resubmit an existing Agent delegation', async () => {
+        await libsodium.ready;
+        const state = structuredClone(mockConnect);
+        state.controller.state.s = '1';
+        fetchMock.mockResolvedValueOnce(Response.json(state, { status: 200 }));
+
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+        const firstCall = fetchMock.mock.calls.length;
+
+        await client.connect();
+
+        const submittedApproval = fetchMock.mock.calls
+            .slice(firstCall)
+            .some(([input]) =>
+                (input instanceof Request
+                    ? input.url
+                    : input.toString()
+                ).includes('?type=ixn')
+            );
+        assert.equal(submittedApproval, false);
+        assert(client.authn !== null);
+    });
+
+    test('rejects a non-string authoritative controller sequence', async () => {
+        await libsodium.ready;
+        const state = structuredClone(mockConnect);
+        Reflect.set(state.controller.state, 's', 0);
+        fetchMock.mockResolvedValueOnce(Response.json(state, { status: 200 }));
+
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+        await expect(client.connect()).rejects.toThrow(
+            'KERIA controller state is missing a string sequence number'
+        );
+    });
+
+    test('requires KERIA to accept Agent delegation approval', async () => {
+        await libsodium.ready;
+        fetchMock.mockResolvedValueOnce(
+            Response.json(mockConnect, { status: 200 })
+        );
+        fetchMock.mockResolvedValueOnce(
+            new Response('approval rejected', {
+                status: 503,
+                statusText: 'Service Unavailable',
+            })
+        );
+
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+        await expect(client.connect()).rejects.toThrow(
+            'agent delegation approval failed: 503 Service Unavailable - approval rejected'
+        );
+        assert.equal(client.authn, null);
+        assert.equal(client.manager, null);
     });
 
     test('Passcode rotation', async () => {

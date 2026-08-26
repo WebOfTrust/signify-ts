@@ -210,7 +210,7 @@ export class Controller {
                 .qb64,
         ];
 
-        if (state == null || state['ee']['s'] == 0) {
+        if (state === null || state['ee']['s'] === '0') {
             this.serder = incept({
                 keys: this.keys,
                 isith: '1',
@@ -229,7 +229,7 @@ export class Controller {
         const seqner = new Seqner({ sn: _agent.sn });
         const anchor = { i: _agent.pre, s: seqner.snh, d: _agent.said };
         const sn = new CesrNumber({}, this.serder.sad['s']).num + 1;
-        this.serder = interact({
+        const event = interact({
             pre: this.serder.pre,
             dig: this.serder.sad['d'],
             sn: sn,
@@ -237,7 +237,12 @@ export class Controller {
             version: Vrsn_1_0,
             kind: Serials.JSON,
         });
-        return [this.signer.sign(this.serder.raw, 0).qb64];
+        this.serder = event;
+
+        return {
+            event,
+            signatures: [this.signer.sign(event.raw, 0).qb64],
+        };
     }
 
     get pre(): string {
