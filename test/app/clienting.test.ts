@@ -152,6 +152,22 @@ describe('SignifyClient', () => {
         assert(essrClient.authn instanceof EssrAuthenticator);
     });
 
+    test('forwards one cancellation signal through boot and connect', async () => {
+        await libsodium.ready;
+        const client = new SignifyClient(url, bran, Tier.low, boot_url);
+        const controller = new AbortController();
+        const firstCall = fetchMock.mock.calls.length;
+
+        await client.boot({ signal: controller.signal });
+        await client.connect({ signal: controller.signal });
+
+        const setupCalls = fetchMock.mock.calls.slice(firstCall);
+        assert.equal(setupCalls.length, 3);
+        for (const [, init] of setupCalls) {
+            assert.equal(init?.signal, controller.signal);
+        }
+    });
+
     test('does not resubmit an existing Agent delegation', async () => {
         await libsodium.ready;
         const state = structuredClone(mockConnect);
