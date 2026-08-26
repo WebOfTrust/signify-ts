@@ -52,15 +52,22 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   test:
-    name: Run integration test using keria:${{ matrix.keria-version }} and auth-mode ${{ matrix.auth-mode }}
-    runs-on: ${{ matrix.os }}
+    name: Run integration test using ${{ matrix.keria-image }}:${{ matrix.keria-version }} and auth-mode ${{ matrix.auth-mode }}
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        os: ['ubuntu-latest']
-        keria-version: ['0.4.0', 'latest']
-        node-version: ['20']
-        auth-mode: ['signed-headers', 'essr']
+        include:
+          - keria-image: gleif/keria
+            keria-version: '0.4.1-dev1'
+            node-version: '20'
+            auth-mode: signed-headers
+          - keria-image: gleif/keria
+            keria-version: '0.4.1-dev1'
+            node-version: '20'
+            auth-mode: essr
     env:
+      KERIA_IMAGE: ${{ matrix.keria-image }}
       KERIA_IMAGE_TAG: ${{ matrix.keria-version }}
       TEST_AUTH_MODE: ${{ matrix.auth-mode }}
     steps:
