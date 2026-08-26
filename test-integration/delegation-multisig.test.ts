@@ -89,6 +89,28 @@ test('delegation-multisig', async () => {
                 delegatee1Oobi.oobis[0],
                 delegatee1Name
             ),
+            // KERIA signs delegation requests with the local delegatee
+            // member's Agent AID, so each delegator must know either sender.
+            resolveOobi(
+                delegator1Client,
+                delegatee1Oobi.oobis[0],
+                delegatee1Name
+            ),
+            resolveOobi(
+                delegator1Client,
+                delegatee2Oobi.oobis[0],
+                delegatee2Name
+            ),
+            resolveOobi(
+                delegator2Client,
+                delegatee1Oobi.oobis[0],
+                delegatee1Name
+            ),
+            resolveOobi(
+                delegator2Client,
+                delegatee2Oobi.oobis[0],
+                delegatee2Name
+            ),
         ]);
     });
     console.log(
@@ -325,6 +347,16 @@ test('delegation-multisig', async () => {
 
     const teeDone1 = await waitOperation(delegatee1Client, opDelegatee1);
     const teeDone2 = await waitOperation(delegatee2Client, opDelegatee2);
+
+    const [[delegator1Request], [delegator2Request]] = await Promise.all([
+        waitForNotifications(delegator1Client, '/delegate/request'),
+        waitForNotifications(delegator2Client, '/delegate/request'),
+    ]);
+    await Promise.all([
+        markAndRemoveNotification(delegator1Client, delegator1Request),
+        markAndRemoveNotification(delegator2Client, delegator2Request),
+    ]);
+
     console.log('Delegated multisig created!');
 
     const agtee = await delegatee1Client.identifiers().get(delegateeGroupName);
