@@ -85,7 +85,7 @@ test('delegation', async () => {
     const contactId = await getOrCreateContact(
         client1,
         'delegate',
-        oobis.oobis[0].split('/agent/')[0]
+        oobis.oobis[0]
     );
 
     assert.equal(contactId, aid2.prefix);

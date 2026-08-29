@@ -41,6 +41,10 @@ type KeyState = components['schemas']['KeyStateRecord'];
 type KeyEventRecord = components['schemas']['KeyEventRecord'];
 type AgentConfig = components['schemas']['AgentConfig'];
 
+export interface OobiGetOptions {
+    includeEid?: boolean;
+}
+
 export function randomPasscode(): string {
     const raw = libsodium.randombytes_buf(16);
     const salter = new Salter({ raw: raw });
@@ -71,8 +75,17 @@ export class Oobis {
      * @param {string} role Authorized role
      * @returns {Promise<OOBI>} A promise to the OOBI(s)
      */
-    async get(name: string, role: string = 'agent'): Promise<OOBI> {
-        const path = `/identifiers/${name}/oobis?role=${role}`;
+    async get(
+        name: string,
+        role: string = 'agent',
+        options: OobiGetOptions = {}
+    ): Promise<OOBI> {
+        const params = new URLSearchParams();
+        params.append('role', role);
+        if (options.includeEid !== undefined) {
+            params.append('includeEid', String(options.includeEid));
+        }
+        const path = `/identifiers/${name}/oobis?${params.toString()}`;
         const method = 'GET';
         const res = await this.client.fetch(path, method, null);
         return await res.json();
