@@ -434,6 +434,83 @@ describe('parse — resilience', () => {
         assert.equal(group.items.length, 1); // only the first primitive framed
         assertLike(errors[0], { code: 'unframable-group', permanent: true });
     });
+
+    it('marks a group invalid when a primitive is the right SIZE but the wrong bytes', () => {
+        // A well-formed 44-char Matter 'E' digest by the size tables, so it passes
+        // the shortage probe and fails inside the constructor on non-zero prepad
+        // bits: the probe's blind spot is sizing says yes, decoding says no.
+        const badDigest = 'E' + 'Q' + 'A'.repeat(42);
+        const stream = bytesOf(mkMessage({ t: 'ixn' }) + '-IAB' + badDigest);
+        const { messages, errors } = parse(stream);
+        assertLike(messages[0].attachments[0], {
+            code: '-I',
+            state: 'invalid',
+        });
+        assertLike(errors[0], { code: 'unframable-group', permanent: true });
+    });
+
+    it('reports a counter whose bytes are present but are not ASCII', () => {
+        // 5 BYTES ('-A' + a 3-byte '€') but only 3 CHARS, so the byte-length check
+        // passes and Counter still cannot read a 4-char header. Bad, not short.
+        const { errors } = parse(bytesOf(mkMessage({ t: 'ixn' }) + '-A€'));
+        assertLike(errors[0], {
+            code: 'unparseable-counter',
+            permanent: true,
+        });
+    });
+
+    it('marks a compound group invalid when its NESTED group is malformed', () => {
+        // -F is prefixer, seqner, saider, then a nested -A; '####' is no counter
+        const stream = bytesOf(
+            mkMessage({ t: 'ixn' }) + '-FAB' + SAID + SEQNER + SAID + '####'
+        );
+        const { messages, errors } = parse(stream);
+        assertLike(messages[0].attachments[0], {
+            code: '-F',
+            state: 'invalid',
+        });
+        assertLike(errors[0], { code: 'unframable-group', permanent: true });
+    });
+
+    it('separates a primitive that is cut off from one whose code is unusable', () => {
+        const at = mkMessage({ t: 'ixn' }) + '-IAB' + SAID + SEQNER; // -I wants a 3rd
+        // '0' selects a 2-char hard code and one byte is left: short, so the walk waits
+        assertLike(parse(bytesOf(at + '0')).errors[0], {
+            code: 'incomplete',
+            permanent: false,
+        });
+        // '0Z' is a well-formed selector whose 2-char code is in no size table: bad
+        assertLike(parse(bytesOf(at + '0Z' + 'A'.repeat(22))).errors[0], {
+            code: 'unframable-group',
+            permanent: true,
+        });
+        // '4A' IS in the table, as a variable-size code with no full size: also bad
+        assertLike(parse(bytesOf(at + '4A' + 'A'.repeat(22))).errors[0], {
+            code: 'unframable-group',
+            permanent: true,
+        });
+    });
+
+    it('reports a big counter whose 3-character hard code is cut off as incomplete', () => {
+        // '-0' selects a 3-char hard code (-0V and friends) and 2 bytes are here
+        const { errors } = parse(bytesOf(mkMessage({ t: 'ixn' }) + '-0'));
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+    });
+
+    it('keeps a -V known when an inner group is wholly present but OVERFLOWS the wrapper', () => {
+        // -V claims 1 quadlet (4 bytes) and encloses a 72-byte -G that is entirely
+        // in the stream: not short — it simply belongs to no one — so decomposition
+        // stops and the wrapper stands.
+        const stream = bytesOf(mkMessage({ t: 'ixn' }) + '-VAB' + G_GROUP);
+        const { messages, errors } = parse(stream);
+        const v = messages[0].attachments[0];
+        assertLike(v, { code: '-V', state: 'known', items: [] });
+        assert.equal(v.span.end, v.span.start + 8); // header(4) + count*4(4)
+        assert.deepStrictEqual(
+            errors.filter((e) => e.code === 'incomplete'),
+            []
+        );
+    });
 });
 
 describe('parse — truncation is incomplete, not complete and not condemned', () => {
@@ -492,6 +569,18 @@ describe('parse — truncation is incomplete, not complete and not condemned', (
         // -A says 2 signatures; one is present
         const stream = bytesOf(mkMessage({ t: 'ixn' }) + '-AAC' + SIG);
         const { errors } = parse(stream);
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+    });
+
+    it('reports a compound group whose NESTED group is cut off as incomplete', () => {
+        // the same shape as the malformed-nested case above, but the nested counter
+        // runs out of bytes rather than being wrong: the shortfall propagates out
+        // through the compound group instead of condemning it
+        const stream = bytesOf(
+            mkMessage({ t: 'ixn' }) + '-FAB' + SAID + SEQNER + SAID + '-A'
+        );
+        const { messages, errors } = parse(stream);
+        assert.deepStrictEqual(messages, []);
         assertLike(errors[0], { code: 'incomplete', permanent: false });
     });
 
