@@ -435,3 +435,150 @@ describe('parse — resilience', () => {
         assertLike(errors[0], { code: 'unframable-group', permanent: true });
     });
 });
+
+describe('parse — truncation is incomplete, not complete and not condemned', () => {
+    it('does not frame a body whose declared size runs past the end of the stream', () => {
+        // 25 bytes claiming 0x100000: subarray clamps silently and the clamped
+        // slice is valid JSON, so this framed as one COMPLETE message.
+        const stream = bytesOf('{"v":"KERI10JSON100000_"}');
+        const { messages, errors, consumed } = parse(stream);
+        assert.deepStrictEqual(messages, []);
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+        assert.equal(consumed, 0); // the caller resumes here once more bytes arrive
+    });
+
+    it('does not frame a truncated body that is not accidentally valid JSON either', () => {
+        const stream = bytesOf('{"v":"KERI10JSON0000f0_","t":"icp"}'); // claims 240, has 35
+        const { messages, errors } = parse(stream);
+        assert.deepStrictEqual(messages, []);
+        // NOT malformed-body: the bytes present are fine, there are just too few
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+    });
+
+    it('rejects a size too small to hold the version string, rather than looping forever', () => {
+        // Size 0 with a serialization that has no decoder: bodyEnd === i, no
+        // counter follows, so the cursor never advanced and the loop allocated a
+        // message per pass until the heap died.
+        const stream = bytesOf('{"v":"KERI10XXXX000000_"}');
+        const { messages, errors } = parse(stream);
+        assert.deepStrictEqual(messages, []);
+        assertLike(errors[0], {
+            code: 'invalid-version-size',
+            permanent: true,
+        });
+    });
+
+    it('reports a truncated self-framing wrapper as incomplete, not as a framed one', () => {
+        // -V claims 19 quadlets (76 bytes) and only 30 are present
+        const stream = bytesOf(
+            mkMessage({ t: 'ixn' }) + '-VAS' + G_GROUP.slice(0, 30)
+        );
+        const { messages, errors, consumed } = parse(stream);
+        assert.deepStrictEqual(messages, []);
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+        assert.equal(consumed, 0);
+    });
+
+    it('reports a counted group cut off mid-item as incomplete, not unframable', () => {
+        // -A count 1 with 40 of the signature's 88 bytes: absent, not wrong
+        const stream = bytesOf(
+            mkMessage({ t: 'ixn' }) + '-AAB' + SIG.slice(0, 40)
+        );
+        const { errors } = parse(stream);
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+    });
+
+    it('reports a counted group short of its own count as incomplete', () => {
+        // -A says 2 signatures; one is present
+        const stream = bytesOf(mkMessage({ t: 'ixn' }) + '-AAC' + SIG);
+        const { errors } = parse(stream);
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+    });
+
+    it('resumes exactly where consumed left off when the missing bytes arrive', () => {
+        const whole = bytesOf(mkMessage({ t: 'ixn' }) + A_GROUP);
+        const first = parse(whole.slice(0, whole.length - 20));
+        assertLike(first.errors[0], { code: 'incomplete', permanent: false });
+        assert.equal(first.messages.length, 0);
+        // the contract: keep from `consumed`, append the rest, parse again —
+        // nothing is emitted twice
+        const second = parse(whole.slice(first.consumed));
+        assert.deepStrictEqual(second.errors, []);
+        assert.equal(second.messages.length, 1);
+        assert.equal(second.consumed, whole.length - first.consumed);
+    });
+});
+
+describe('parse — truncation sweep: every vector cut at every byte', () => {
+    // The class of bug, not the one example, is what went undetected: a truncated
+    // body, a truncated wrapper and a size-0 loop were three faces of one missing
+    // bounds check. This sweeps the whole class — every prefix of every vector
+    // must terminate, never throw, and never claim bytes the caller did not pass.
+    const msg = mkMessage({ t: 'ixn' });
+    const VECTORS: Record<string, string> = {
+        'bare message': msg,
+        'two messages': msg + mkMessage({ t: 'rot' }),
+        'controller sigs': msg + A_GROUP,
+        '-V wrapper': msg + '-VAS' + G_GROUP,
+        'nested -V wrappers': msg + '-VAT' + '-VAS' + G_GROUP,
+        '-F with a nested -A': msg + '-FAB' + SAID + SEQNER + SAID + A_GROUP,
+        'receipt couple': msg + '-CAB' + VER + CIG,
+        'replay couple': msg + '-EAB' + SEQNER + DAT,
+        'message then attachments then message':
+            msg + A_GROUP + mkMessage({ t: 'rot' }) + A_GROUP,
+    };
+
+    /** Every node in an attachment forest, groups and primitives alike. */
+    const nodesOf = (n: AttachmentNode): AttachmentNode[] =>
+        n.kind === 'group' ? [n, ...n.items.flatMap(nodesOf)] : [n];
+
+    for (const [name, text] of Object.entries(VECTORS)) {
+        it(`holds its invariants for every prefix of the ${name} vector`, () => {
+            const whole = bytesOf(text);
+            for (let cut = 1; cut <= whole.length; cut++) {
+                const prefix = whole.slice(0, cut);
+                // must not throw, and must terminate
+                const { messages, errors, consumed } = parse(prefix);
+                assert.ok(consumed <= cut, `consumed ${consumed} > ${cut}`);
+                for (const m of messages) {
+                    assert.ok(m.span.end <= cut, `message span past ${cut}`);
+                    for (const node of m.attachments.flatMap(nodesOf)) {
+                        assert.ok(
+                            node.span.end <= cut,
+                            `${node.kind} span past ${cut}`
+                        );
+                    }
+                }
+                // A prefix of a VALID stream can fail only by running out, so
+                // every error is `incomplete` — except where the cut lands inside
+                // a version string, which is still reported as no-version-string.
+                // That one remaining corner is pinned here rather than waved at:
+                // it may happen ONLY with the token's own span left in the buffer.
+                for (const e of errors) {
+                    if (e.code === 'no-version-string') {
+                        assert.ok(
+                            cut - e.span.start < 32,
+                            `no-version-string with ${cut - e.span.start} bytes left`
+                        );
+                    } else {
+                        assertLike(e, {
+                            code: 'incomplete',
+                            permanent: false,
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    it('parses each vector whole with no incomplete error', () => {
+        for (const text of Object.values(VECTORS)) {
+            const { errors, consumed } = parse(bytesOf(text));
+            assert.deepStrictEqual(
+                errors.filter((e) => e.code === 'incomplete'),
+                []
+            );
+            assert.equal(consumed, bytesOf(text).length);
+        }
+    });
+});

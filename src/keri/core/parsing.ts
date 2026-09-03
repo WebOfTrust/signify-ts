@@ -86,18 +86,22 @@ export interface ParseOptions {
 /** A stable symbolic code for a framing failure — branch on this, not the prose. */
 export type ParseErrorCode =
     | 'no-version-string' // no CESR version string — not a recognizable message
+    | 'invalid-version-size' // a size too small to contain the version string itself
     | 'malformed-body' // the version size is claimed but the body does not decode
     | 'unparseable-counter' // a '-' counter code that could not be parsed
-    | 'unframable-group'; // a recognized counter whose group could not be framed
+    | 'unframable-group' // a recognized counter whose group could not be framed
+    | 'incomplete'; // the stream ends inside an element — RECOVERABLE, more bytes may complete it
 
 /** A framing failure, with a stable code, the byte position, and its permanence. */
 export interface ParseError {
     code: ParseErrorCode;
     message: string;
     span: ByteSpan;
-    /** The parser is pure and deterministic — the same bytes always fail the
-     * same way. */
-    permanent: true;
+    /** False only for `incomplete`, the one failure more bytes can cure. Every
+     * other code is a verdict on bytes that are all present, and the parser is
+     * pure, so re-parsing them fails identically. A caller feeding a growing
+     * buffer must branch on this: wait, or give up. */
+    permanent: boolean;
 }
 
 /** The result of parsing a stream: what parsed, what failed, and how far we got. */
@@ -121,6 +125,8 @@ interface Version {
     version: string;
     kind: string;
     size: number;
+    /** The version-string TOKEN's own length; a message cannot be shorter. */
+    length: number;
 }
 
 /** Parse the version string at `at`, or null if none is present in the leading
@@ -134,6 +140,7 @@ export function parseVersion(bytes: Uint8Array, at: number): Version | null {
         version: `${m[2]}.${m[3]}`,
         kind: m[4],
         size: parseInt(m[5], 16),
+        length: m[0].length,
     };
 }
 
@@ -170,11 +177,45 @@ interface FramedGroup {
     end: number;
 }
 
+/** Why an element could not be framed: `short` = the stream ends inside it, so
+ * more bytes would complete it; `bad` = the bytes that ARE present cannot be
+ * framed. Nothing but the size tables can tell these apart, which is why sizing
+ * is probed before construction. */
+type Shortfall = 'short' | 'bad';
+/** A framing attempt: the framed node, or why it failed. */
+type Attempt<T> = { node: T } | { fail: Shortfall };
+const failed = <T>(a: Attempt<T>): a is { fail: Shortfall } => 'fail' in a;
+
 /** The outcome of framing a run of attachment groups over a byte window. */
 interface GroupSequence {
     items: AttachmentGroup[];
     end: number; // where framing stopped
     error?: ParseError; // set when framing halted on a group it could not frame
+    short?: true; // the window ends inside an element — the caller decides whether that is an error
+}
+
+/** The full byte length of the primitive at `at`, read from the Matter/Indexer
+ * size tables BEFORE construction. Probing rather than catching is what
+ * separates a truncated primitive from a malformed one: the constructor throws
+ * for both. */
+function probePrimitive(
+    bytes: Uint8Array,
+    at: number,
+    part: PrimitivePart
+): Attempt<number> {
+    const hards = part === 'sig' ? Indexer.Hards : Matter.Hards;
+    const sizes = part === 'sig' ? Indexer.Sizes : Matter.Sizes;
+    const avail = bytes.length - at;
+    if (avail <= 0) return { fail: 'short' };
+    const head = td().decode(bytes.subarray(at, at + 8));
+    const hs = hards.get(head[0]);
+    if (hs === undefined) return { fail: 'bad' }; // an unrecognized selector is wrong, not short
+    if (avail < hs) return { fail: 'short' }; // the hard code itself is cut off
+    const sizage = sizes.get(head.slice(0, hs));
+    if (!sizage) return { fail: 'bad' };
+    const fs = sizage.fs;
+    if (fs === undefined || fs < 0) return { fail: 'bad' }; // variable-size codes are unsupported
+    return avail < fs ? { fail: 'short' } : { node: fs };
 }
 
 /** Frame one primitive of the given part kind at `at`, delegating sizing to the
@@ -183,33 +224,46 @@ function framePrimitive(
     bytes: Uint8Array,
     at: number,
     part: PrimitivePart
-): Primitive | null {
-    const q = td().decode(bytes.subarray(at, at + 128));
+): Attempt<Primitive> {
+    const probe = probePrimitive(bytes, at, part);
+    if (failed(probe)) return probe;
+    const q = td().decode(bytes.subarray(at, at + probe.node));
     try {
         const prim =
             part === 'sig' ? new Indexer({ qb64: q }) : new Matter({ qb64: q });
         const cls = part === 'sig' ? 'indexer' : 'matter';
         return {
-            kind: 'primitive',
-            code: prim.code,
-            class: cls,
-            span: { start: at, end: at + prim.qb64.length },
+            node: {
+                kind: 'primitive',
+                code: prim.code,
+                class: cls,
+                span: { start: at, end: at + prim.qb64.length },
+            },
         };
     } catch {
-        return null;
+        return { fail: 'bad' };
     }
 }
 
-/** Frame one attachment group at `at`. Returns null if the counter itself is
- * unparseable. */
-function frameGroup(bytes: Uint8Array, at: number): FramedGroup | null {
+/** Frame one attachment group at `at`. */
+function frameGroup(bytes: Uint8Array, at: number): Attempt<FramedGroup> {
+    // A counter header cut off by the end of the stream is short, not
+    // unparseable, so the header's own length is checked against the tables
+    // before Counter is asked to parse it.
+    const avail = bytes.length - at;
+    const head = td().decode(bytes.subarray(at, at + 8));
+    if (avail < 2) return { fail: 'short' }; // not even the two-character selector is here
+    const hs = Counter.Hards.get(head.slice(0, 2));
+    if (hs === undefined) return { fail: 'bad' };
+    if (avail < hs) return { fail: 'short' };
+    const sizage = Counter.Sizes.get(head.slice(0, hs));
+    if (!sizage) return { fail: 'bad' };
+    if (avail < sizage.hs + sizage.ss) return { fail: 'short' };
     let counter: Counter;
     try {
-        counter = new Counter({
-            qb64: td().decode(bytes.subarray(at, at + 8)),
-        });
+        counter = new Counter({ qb64: head });
     } catch {
-        return null;
+        return { fail: 'bad' };
     }
     const { code, count } = counter;
     const headerLen = counter.qb64.length;
@@ -222,13 +276,15 @@ function frameGroup(bytes: Uint8Array, at: number): FramedGroup | null {
         // unknown so the walk stays resilient rather than halting.
         const end = at + headerLen;
         return {
-            group: {
-                ...base,
-                span: { start: at, end },
-                state: 'unknown',
-                items: [],
+            node: {
+                group: {
+                    ...base,
+                    span: { start: at, end },
+                    state: 'unknown',
+                    items: [],
+                },
+                end,
             },
-            end,
         };
     }
 
@@ -238,18 +294,23 @@ function frameGroup(bytes: Uint8Array, at: number): FramedGroup | null {
         // decompose it.
         const innerStart = at + headerLen;
         const innerEnd = innerStart + count * 4;
+        // ...unless the declared quadlets run past the end of the stream, in
+        // which case the wrapper is not all here yet: short, not framed.
+        if (innerEnd > bytes.length) return { fail: 'short' };
         if (code === '-L') {
             // -L (PathedMaterialQuadlets) leads with a path primitive, not a
             // plain group run; its inner decomposition is deferred, so the
             // quadlet body stays opaque for now.
             return {
-                group: {
-                    ...base,
-                    span: { start: at, end: innerEnd },
-                    state: 'known',
-                    items: [],
+                node: {
+                    group: {
+                        ...base,
+                        span: { start: at, end: innerEnd },
+                        state: 'known',
+                        items: [],
+                    },
+                    end: innerEnd,
                 },
-                end: innerEnd,
             };
         }
         // -V / -0V universal wrappers: recurse into a typed nested group
@@ -260,18 +321,35 @@ function frameGroup(bytes: Uint8Array, at: number): FramedGroup | null {
         // resilient than leaving it opaque.
         const seq = frameGroupSequence(bytes, innerStart, innerEnd);
         return {
-            group: {
-                ...base,
-                span: { start: at, end: innerEnd },
-                state: 'known',
-                items: seq.items,
+            node: {
+                group: {
+                    ...base,
+                    span: { start: at, end: innerEnd },
+                    state: 'known',
+                    items: seq.items,
+                },
+                end: innerEnd,
             },
-            end: innerEnd,
         };
     }
 
+    // A counted group is NOT self-framing: its length is the sum of its items',
+    // so running out of bytes partway through is indistinguishable from a bad
+    // item unless the shortfall says which. A shortfall propagates; a bad item
+    // leaves the group invalid, as before.
     const parts = spec.parts as Part[];
     const items: AttachmentNode[] = [];
+    const invalid = (p: number): Attempt<FramedGroup> => ({
+        node: {
+            group: {
+                ...base,
+                span: { start: at, end: p },
+                state: 'invalid',
+                items,
+            },
+            end: p,
+        },
+    });
     let p = at + headerLen;
     for (let k = 0; k < count; k++) {
         for (const part of parts) {
@@ -280,46 +358,34 @@ function frameGroup(bytes: Uint8Array, at: number): FramedGroup | null {
                 // -F/-H); frame it recursively and require it fully known, else
                 // this item — and so this group — cannot be framed.
                 const nested = frameGroup(bytes, p);
-                if (!nested || nested.group.state !== 'known') {
-                    return {
-                        group: {
-                            ...base,
-                            span: { start: at, end: p },
-                            state: 'invalid',
-                            items,
-                        },
-                        end: p,
-                    };
+                if (failed(nested)) {
+                    if (nested.fail === 'short') return nested;
+                    return invalid(p);
                 }
-                items.push(nested.group);
-                p = nested.end;
+                if (nested.node.group.state !== 'known') return invalid(p);
+                items.push(nested.node.group);
+                p = nested.node.end;
             } else {
                 const prim = framePrimitive(bytes, p, part);
-                if (!prim) {
-                    // A malformed item — we can no longer frame this group.
-                    return {
-                        group: {
-                            ...base,
-                            span: { start: at, end: p },
-                            state: 'invalid',
-                            items,
-                        },
-                        end: p,
-                    };
+                if (failed(prim)) {
+                    if (prim.fail === 'short') return prim;
+                    return invalid(p); // a malformed item — this group cannot be framed
                 }
-                items.push(prim);
-                p = prim.span.end;
+                items.push(prim.node);
+                p = prim.node.span.end;
             }
         }
     }
     return {
-        group: {
-            ...base,
-            span: { start: at, end: p },
-            state: 'known',
-            items,
+        node: {
+            group: {
+                ...base,
+                span: { start: at, end: p },
+                state: 'known',
+                items,
+            },
+            end: p,
         },
-        end: p,
     };
 }
 
@@ -336,7 +402,14 @@ function frameGroupSequence(
     let pos = start;
     while (pos < limit && bytes[pos] === DASH) {
         const framed = frameGroup(bytes, pos);
-        if (!framed) {
+        if (failed(framed)) {
+            // A group the stream ends inside is reported as a shortfall, not an
+            // error: only the caller knows whether this window is the live end
+            // of the stream (incomplete) or the inside of a sized wrapper,
+            // where the wrapper's own bytes are all present.
+            if (framed.fail === 'short') {
+                return { items, end: pos, short: true };
+            }
             return {
                 items,
                 end: pos,
@@ -348,20 +421,25 @@ function frameGroupSequence(
                 },
             };
         }
-        items.push(framed.group);
-        if (framed.group.state !== 'known') {
+        // A group that frames past this window belongs to no one: stop, and let
+        // the enclosing wrapper's declared size carry the walk forward. At the
+        // top level `limit` is the end of the stream, and frameGroup has already
+        // reported that case as short.
+        if (framed.node.end > limit) break;
+        items.push(framed.node.group);
+        if (framed.node.group.state !== 'known') {
             return {
                 items,
                 end: pos,
                 error: {
                     code: 'unframable-group',
-                    message: `The ${framed.group.code} group at byte ${pos} could not be framed.`,
+                    message: `The ${framed.node.group.code} group at byte ${pos} could not be framed.`,
                     span: { start: pos, end: limit },
                     permanent: true,
                 },
             };
         }
-        pos = framed.end;
+        pos = framed.node.end;
     }
     return { items, end: pos };
 }
@@ -394,7 +472,32 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
             });
             break;
         }
+        if (ver.size < ver.length) {
+            // A message cannot be shorter than the version string inside it.
+            // Rejecting this is also what guarantees the loop ADVANCES:
+            // bodyEnd > i on every iteration, so a size of 0 can no longer spin
+            // here forever, allocating a message per pass.
+            errors.push({
+                code: 'invalid-version-size',
+                message: `The version string at byte ${i} declares a size of ${ver.size} bytes, too small to contain the version string itself.`,
+                span: { start: i, end: n },
+                permanent: true,
+            });
+            break;
+        }
         const bodyEnd = i + ver.size;
+        if (bodyEnd > n) {
+            // The declared size runs past the end of the stream. Note that
+            // `subarray` would have CLAMPED silently here, so without this check
+            // a truncated message decodes as a whole one.
+            errors.push({
+                code: 'incomplete',
+                message: `The message at byte ${i} declares ${ver.size} bytes but only ${n - i} are present.`,
+                span: { start: i, end: n },
+                permanent: false,
+            });
+            break; // `i` is left at the message start, so a caller can append bytes and re-parse
+        }
         const decoder = decoders[ver.kind]; // undefined if none for this kind
         let sad: Record<string, unknown> | null = null;
         if (decoder) {
@@ -414,6 +517,19 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
         // left undecoded (sad = null).
 
         const seq = frameGroupSequence(bytes, bodyEnd, n);
+        if (seq.short) {
+            // The stream ends inside this message's attachments. The message
+            // body is whole, but emitting it would double-emit when the caller
+            // comes back with the rest, so the whole message waits and
+            // `consumed` stays at its first byte.
+            errors.push({
+                code: 'incomplete',
+                message: `The attachments of the message at byte ${i} end mid-element at byte ${n}.`,
+                span: { start: i, end: n },
+                permanent: false,
+            });
+            break;
+        }
         messages.push({
             proto: ver.proto,
             version: ver.version,
