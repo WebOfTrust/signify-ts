@@ -213,8 +213,12 @@ function probePrimitive(
     if (avail < hs) return { fail: 'short' }; // the hard code itself is cut off
     const sizage = sizes.get(head.slice(0, hs));
     if (!sizage) return { fail: 'bad' };
+    // A variable-size code carries no full size — the Sizes tables store that as
+    // null, which their own `fs?: number` type does not admit, so this tests the
+    // VALUE rather than trusting the type. `fs < 0` alone would let null through
+    // (null >= 0 is true) and hand back a null length.
     const fs = sizage.fs;
-    if (fs === undefined || fs < 0) return { fail: 'bad' }; // variable-size codes are unsupported
+    if (typeof fs !== 'number' || fs < 0) return { fail: 'bad' }; // variable-size: unsupported
     return avail < fs ? { fail: 'short' } : { node: fs };
 }
 
