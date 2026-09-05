@@ -165,8 +165,44 @@ export class Matter {
             '1AAH': new Sizage(4, 0, 100, 0),
             '1AAI': new Sizage(4, 0, 48, 0),
             '1AAJ': new Sizage(4, 0, 48, 0),
-            '2AAA': new Sizage(4, 0, 8, 1),
-            '3AAA': new Sizage(4, 0, 8, 2),
+            // CESR 1.1 post-quantum codes. Every post-quantum primitive is
+            // large — the smallest signature here is 666 B and the largest
+            // 29,792 B — so the spec requires them all in the four-character
+            // fixed tables rather than spending scarce one- and two-character
+            // entries. The selector fixes the lead size: 1 -> 0, 2 -> 1, 3 -> 2.
+            '1AAQ': new Sizage(4, 0, 1200, 0), // FN-DSA-512 public verification key, 897 B
+            '1AAR': new Sizage(4, 0, 892, 0), // FN-DSA-512 signature, 666 B
+            '1AAS': new Sizage(4, 0, 3460, 0), // ML-DSA-87 public verification key, 2592 B
+            '1AAT': new Sizage(4, 0, 4416, 0), // ML-DSA-65 signature, 3309 B
+            '1AAU': new Sizage(4, 0, 68, 0), // SLH-DSA-SHA2-192s public verification key, 48 B
+            '1AAV': new Sizage(4, 0, 68, 0), // SLH-DSA-SHAKE-192s public verification key, 48 B
+            '1AAW': new Sizage(4, 0, 21636, 0), // SLH-DSA-SHA2-192s signature, 16224 B
+            '1AAX': new Sizage(4, 0, 21636, 0), // SLH-DSA-SHAKE-192s signature, 16224 B
+            '1AAY': new Sizage(4, 0, 68, 0), // Seed of SLH-DSA-SHA2-128s private key, 48 B
+            '1AAZ': new Sizage(4, 0, 68, 0), // Seed of SLH-DSA-SHAKE-128s private key, 48 B
+            '1AAa': new Sizage(4, 0, 100, 0), // Seed of SLH-DSA-SHA2-192s private key, 72 B
+            '1AAb': new Sizage(4, 0, 100, 0), // Seed of SLH-DSA-SHAKE-192s private key, 72 B
+            '1AAc': new Sizage(4, 0, 132, 0), // Seed of SLH-DSA-SHA2-256s private key, 96 B
+            '1AAd': new Sizage(4, 0, 132, 0), // Seed of SLH-DSA-SHAKE-256s private key, 96 B
+            '2AAA': new Sizage(4, 0, 2396, 1), // FN-DSA-1024 public verification key, 1793 B
+            '2AAB': new Sizage(4, 0, 1712, 1), // FN-DSA-1024 signature, 1280 B
+            '2AAC': new Sizage(4, 0, 48, 1), // Seed of FN-DSA-512 private key, 32 B
+            '2AAD': new Sizage(4, 0, 48, 1), // Seed of FN-DSA-1024 private key, 32 B
+            '2AAE': new Sizage(4, 0, 2608, 1), // ML-DSA-65 public verification key, 1952 B
+            '2AAF': new Sizage(4, 0, 3232, 1), // ML-DSA-44 signature, 2420 B
+            '2AAG': new Sizage(4, 0, 48, 1), // Seed of ML-DSA-44 private key, 32 B
+            '2AAH': new Sizage(4, 0, 48, 1), // Seed of ML-DSA-65 private key, 32 B
+            '2AAI': new Sizage(4, 0, 48, 1), // Seed of ML-DSA-87 private key, 32 B
+            '2AAJ': new Sizage(4, 0, 48, 1), // SLH-DSA-SHA2-128s public verification key, 32 B
+            '2AAK': new Sizage(4, 0, 48, 1), // SLH-DSA-SHAKE-128s public verification key, 32 B
+            '2AAL': new Sizage(4, 0, 10480, 1), // SLH-DSA-SHA2-128s signature, 7856 B
+            '2AAM': new Sizage(4, 0, 10480, 1), // SLH-DSA-SHAKE-128s signature, 7856 B
+            '2AAN': new Sizage(4, 0, 39728, 1), // SLH-DSA-SHA2-256s signature, 29792 B
+            '2AAO': new Sizage(4, 0, 39728, 1), // SLH-DSA-SHAKE-256s signature, 29792 B
+            '3AAA': new Sizage(4, 0, 1756, 2), // ML-DSA-44 public verification key, 1312 B
+            '3AAB': new Sizage(4, 0, 6176, 2), // ML-DSA-87 signature, 4627 B
+            '3AAC': new Sizage(4, 0, 92, 2), // SLH-DSA-SHA2-256s public verification key, 64 B
+            '3AAD': new Sizage(4, 0, 92, 2), // SLH-DSA-SHAKE-256s public verification key, 64 B
             '4A': new Sizage(2, 2, undefined, 0),
             '5A': new Sizage(2, 2, undefined, 1),
             '6A': new Sizage(2, 2, undefined, 2),
