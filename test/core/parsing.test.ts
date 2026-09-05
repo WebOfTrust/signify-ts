@@ -97,6 +97,12 @@ function mkMessageV2(fields: Record<string, unknown>): string {
 const V2_OOBI =
     '{"v":"KERICAACAAJSONAAD_.","t":"icp","d":"EP16vD37O8CcvmgKRrjI5WbrtAioC34lY-eXX7-VTxt6","i":"BBDzeCI8m9Ls3OBw_LTOnJSEUyWXMD-Xggp4ufqeAE_9","s":"0","kt":"1","k":["BBDzeCI8m9Ls3OBw_LTOnJSEUyWXMD-Xggp4ufqeAE_9"],"nt":"0","n":[],"bt":"0","b":[],"c":[],"a":[]}-CAi-KAWAADx_HNvu67xglnKrv21Y9foLfEAOCyraOvsonbDvhXeEMxwmQgj6afrUxSJGs-MA_YFlc59_aO0rMp0pD-kHSEE-OAKMAAA1AAG2026-07-21T19c49c46d674250p00c00';
 
+/** The SAD-path example from the CESR spec (§ SAD Path Examples,
+ * https://trustoverip.github.io/kswg-cesr-specification/#sad-path-examples):
+ * a bare genus-2 ACDC, no attachments. Reported by @daidoji on PR #403. */
+const V2_ACDC_SAD =
+    '{"v":"ACDCCAACAAJSONAAIe.","t":"acm","d":"EO3117lnAbjDt66qe2PtgHooXKAYQT_C6SIbESMcJ5lN","i":"EEDGM_DvZ9qFEAPf_FX08J3HX49ycrVvYVXe9isaP5SW","s":"EGU_SHY-8ywNBJOqPKHr4sXV9tOtOwpYzYOM63_zUCDW","a":{"d":"ED1wMKzV72L7YI1yJ3NXlClPUgvEerw4jRocOYxaZGtH","i":"ECsGDKWAYtHBCkiDrzajkxs3Iw2g-dls3bLUsRP4yVdT","dt":"2025-06-09T17:35:54.169967+00:00","personal":{"name":"John Doe","home":"Atlanta"},"p":[{"ref0":{"name":"Amy","i":"ECmiMVHTfZIjhA_rovnfx73T3G_FJzIQtzDn1meBVLAz"}},{"ref1":{"name":"Bob","i":"ECWJZFBtllh99fESUOrBvT3EtBujWtDKCmyzDAXWhYmf"}}]}}';
+
 describe('parseVersion', () => {
     it('reads proto, version, kind, size and CESR genus 1 from a v1 version string', () => {
         const v = parseVersion(bytesOf(mkMessage({ t: 'ixn' })), 0);
@@ -157,6 +163,41 @@ describe('parse — CESR 2.0 framing (keripy sample)', () => {
         // byte-alignment invariant: inner groups tile the wrapper exactly
         assert.equal(inner[0].span.start, c.span.start + 4); // past the -C header
         assert.equal(inner[inner.length - 1].span.end, c.span.end);
+    });
+});
+
+describe('parse — CESR 2.0 ACDC (CESR spec SAD-path example)', () => {
+    it('reads the v2 ACDC version string, including the base64 size', () => {
+        // AAIe base64 = 2*4096 + 8*64 + 30 = 542, the byte length of the SAD.
+        assertLike(parseVersion(bytesOf(V2_ACDC_SAD), 0), {
+            proto: 'ACDC',
+            version: '2.0',
+            kind: 'JSON',
+            size: 542,
+            genus: 2,
+        });
+    });
+
+    it('frames the whole SAD as one attachment-free message', () => {
+        const bytes = bytesOf(V2_ACDC_SAD);
+        const { messages, errors, consumed } = parse(bytes);
+        assert.deepEqual(errors, []);
+        assert.equal(consumed, bytes.length); // delta 0
+        assert.equal(messages.length, 1);
+        assertLike(messages[0], {
+            proto: 'ACDC',
+            version: '2.0',
+            kind: 'JSON',
+            ilk: 'acm',
+            said: 'EO3117lnAbjDt66qe2PtgHooXKAYQT_C6SIbESMcJ5lN',
+            sn: null, // `s` here is the schema SAID, not a sequence number
+            span: { start: 0, end: bytes.length },
+        });
+        assert.deepEqual(messages[0].attachments, []);
+        // the nested attribute block survives the round trip intact
+        const a = messages[0].sad?.a as Record<string, unknown>;
+        assert.equal(a.i, 'ECsGDKWAYtHBCkiDrzajkxs3Iw2g-dls3bLUsRP4yVdT');
+        assert.equal((a.p as unknown[]).length, 2);
     });
 });
 
