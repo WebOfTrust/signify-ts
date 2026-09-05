@@ -67,7 +67,11 @@ export interface CesrMessage {
     version: string; // e.g. '1.0'
     kind: string; // serialization, e.g. 'JSON'
     ilk: string | null; // the `t` field, null for ACDCs
-    sn: string | null; // the `s` field (hex sequence number), where present
+    /** The sequence number — a hex-encoded integer — from the `s` field of a
+     * KERI event, where present. Null under any other protocol: an ACDC also
+     * carries an `s` field, but it holds the schema SAID, which is not a
+     * sequence number and must not be read as one. Take that from `sad.s`. */
+    sn: string | null;
     said: string | null; // the `d` field
     /** The deserialized body, or null when framed but not decoded. */
     sad: Record<string, unknown> | null;
@@ -715,7 +719,12 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
             version: ver.version,
             kind: ver.kind,
             ilk: sad && typeof sad.t === 'string' ? sad.t : null,
-            sn: sad && typeof sad.s === 'string' ? sad.s : null,
+            // `s` is the sequence number under KERI and the schema SAID under
+            // ACDC — same field name, unrelated meanings — so gate on the proto.
+            sn:
+                ver.proto === 'KERI' && sad && typeof sad.s === 'string'
+                    ? sad.s
+                    : null,
             said: sad && typeof sad.d === 'string' ? sad.d : null,
             sad,
             span: { start: i, end: bodyEnd },
