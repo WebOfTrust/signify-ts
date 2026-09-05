@@ -543,6 +543,14 @@ describe('parse — synthetic structure', () => {
             proto: 'ACDC',
         });
     });
+
+    it("does not read an ACDC's `s` (the schema SAID) as a sequence number", () => {
+        const { messages } = parse(
+            bytesOf(mkMessage({ i: SAID, s: SAID }, 'ACDC'))
+        );
+        assert.equal(messages[0].sn, null);
+        assert.equal(messages[0].sad?.s, SAID); // still available on the body
+    });
 });
 
 describe('parse — resilience', () => {
