@@ -207,6 +207,36 @@ describe('key event function', () => {
         );
     });
 
+    it('messagize should attach seal sequence numbers as hex', async () => {
+        const signer0 = new Signer({ transferable: true });
+        const signer1 = new Signer({ transferable: true });
+        const serder0 = incept({
+            keys: [signer0.verfer.qb64],
+            ndigs: [new Diger({}, signer1.verfer.qb64b).qb64],
+        });
+        const siger = signer0.sign(b(serder0.raw), 0) as Siger;
+        const pre = serder0.sad['i'];
+        const dig = serder0.sad['d'];
+
+        const cases: Array<[string, string]> = [
+            ['0', '0AAAAAAAAAAAAAAAAAAAAAAA'],
+            ['9', '0AAAAAAAAAAAAAAAAAAAAAAJ'],
+            ['a', '0AAAAAAAAAAAAAAAAAAAAAAK'],
+            ['10', '0AAAAAAAAAAAAAAAAAAAAAAQ'],
+            ['ff', '0AAAAAAAAAAAAAAAAAAAAAD_'],
+        ];
+
+        for (const [snh, seqner] of cases) {
+            const seal = ['SealEvent', { i: pre, s: snh, d: dig }];
+            const msg = d(messagize(serder0, [siger], seal));
+            assert.equal(
+                msg.includes(`-FAB${pre}${seqner}${dig}`),
+                true,
+                `seal sn '${snh}' should encode as ${seqner}`
+            );
+        }
+    });
+
     describe('rotate', () => {
         const icp = createIdentifier();
 
