@@ -125,7 +125,12 @@ beforeAll(async () => {
 
 beforeAll(async () => {
     const groupOobi = await client1.oobis().get(groupName, 'agent');
-    const oobiUrl = groupOobi.oobis[0].split('/agent/')[0];
+    const qualifiedGroupOobi = await client1
+        .oobis()
+        .get(groupName, 'agent', { includeEid: true });
+    expect(groupOobi.oobis[0].endsWith('/agent')).toBe(true);
+    expect(qualifiedGroupOobi.oobis[0]).toContain('/agent/');
+    const oobiUrl = groupOobi.oobis[0];
     await resolveOobi(aliceClient, oobiUrl, groupName);
 });
 

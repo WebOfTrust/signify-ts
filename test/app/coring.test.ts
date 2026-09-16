@@ -53,6 +53,14 @@ describe('Coring', () => {
         );
         assert.equal(lastCall[0].method, 'GET');
 
+        await oobis.get('aid', 'agent', { includeEid: true });
+        lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
+        assert.equal(
+            lastCall[0]!,
+            url + '/identifiers/aid/oobis?role=agent&includeEid=true'
+        );
+        assert.equal(lastCall[1]!.method, 'GET');
+
         await oobis.resolve('http://oobiurl.com');
         lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1]!;
         assert.instanceOf(lastCall[0], Request);
