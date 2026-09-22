@@ -23,6 +23,7 @@ export * from './keri/core/diger.ts';
 export * from './keri/core/encrypter.ts';
 export * from './keri/core/eventing.ts';
 export * from './keri/core/httping.ts';
+export * from './keri/core/httpsig.ts';
 export * from './keri/core/indexer.ts';
 export * from './keri/core/keeping.ts';
 export * from './keri/core/kering.ts';
