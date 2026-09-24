@@ -572,6 +572,28 @@ describe('verifyResponse (profile §8)', () => {
         ]);
     });
 
+    it('reads the response Content-Digest once when the body is supplied', async () => {
+        const req = request();
+        let reads = 0;
+        class Counting extends Headers {
+            get(name: string) {
+                if (name.toLowerCase() === 'content-digest') reads++;
+                return super.get(name);
+            }
+        }
+        await verifyResponse({
+            status: 200,
+            headers: new Counting(respond(req)),
+            body: '{"done": true}',
+            request: req,
+            keyid: AGENT,
+            resolver,
+            now: NOW,
+        });
+        // Once for the signature base, once for the digest check.
+        expect(reads).toBe(2);
+    });
+
     it('refuses a response signed by another AID', async () => {
         const req = request();
         expect(

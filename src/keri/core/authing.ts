@@ -239,7 +239,10 @@ export class HttpSigAuthenticator extends Authenticator {
                 'HttpSigAuthenticator.verify needs the Request that prepare signed; its content is not known.'
             );
         }
-        const body = new Uint8Array(await response.clone().arrayBuffer());
+        // Read the body once and hand back a response rebuilt over the same
+        // bytes, rather than teeing it with clone().
+        const bytes = await response.arrayBuffer();
+        const body = new Uint8Array(bytes);
         await verifyResponse({
             status: response.status,
             headers: response.headers,
@@ -255,7 +258,14 @@ export class HttpSigAuthenticator extends Authenticator {
             policy: this.options.policy,
             now: this.options.clock,
         });
-        return response;
+        // A null-body status (204, 205, 304) cannot be constructed with a
+        // body, even an empty one.
+        const nullBody = [204, 205, 304].includes(response.status);
+        return new Response(nullBody ? null : bytes, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        });
     }
 }
 

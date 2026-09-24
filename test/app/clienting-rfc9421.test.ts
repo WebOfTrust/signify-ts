@@ -295,6 +295,56 @@ describe('HttpSigAuthenticator', () => {
     });
 });
 
+describe('HttpSigAuthenticator.verify', () => {
+    const authn = () =>
+        new HttpSigAuthenticator(
+            new Controller(bran, Tier.low).signer,
+            agentSigner.verfer,
+            { clock: () => 1700000000 }
+        );
+    const reply = (req: Request, status: number, body: string | null) => {
+        const headers = new Headers({ 'X-Kept': 'yes' });
+        const fields = signResponse({
+            status,
+            headers,
+            body,
+            request: {
+                method: req.method,
+                url: req.url,
+                headers: req.headers,
+                body: '',
+            },
+            signer: agentSigner,
+            keyid: AGENT,
+            created: 1700000000,
+        });
+        for (const [k, v] of Object.entries(fields)) headers.set(k, v);
+        return new Response(body, { status, statusText: 'Fine', headers });
+    };
+
+    test('reads the body once and hands back an equivalent response', async () => {
+        const a = authn();
+        for (const [status, body] of [
+            [200, '{"done":true}'],
+            [204, null],
+        ] as const) {
+            const req = await a.prepare(
+                new Request(url + '/identifiers', { method: 'GET' }),
+                CONTROLLER,
+                AGENT
+            );
+            const response = reply(req, status, body);
+            const clone = vi.spyOn(response, 'clone');
+            const out = await a.verify(req, response, CONTROLLER, AGENT);
+            expect(clone).not.toHaveBeenCalled();
+            assert.equal(out.status, status);
+            assert.equal(out.statusText, 'Fine');
+            assert.equal(out.headers.get('X-Kept'), 'yes');
+            assert.equal(await out.text(), body ?? '');
+        }
+    });
+});
+
 describe('HttpSigAuthenticator clock', () => {
     test('floors a fractional clock to whole seconds for created', async () => {
         const authn = new HttpSigAuthenticator(

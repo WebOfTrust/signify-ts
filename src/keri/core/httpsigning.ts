@@ -940,13 +940,6 @@ function compareDigest(
     }
 }
 
-function checkDigest(
-    headers: Headers,
-    body: Uint8Array | string | null | undefined
-): void {
-    compareDigest(parseDigest(headers), body);
-}
-
 function covers(verified: HttpSigVerified, component: string): boolean {
     return verified.components.includes(component);
 }
@@ -965,6 +958,19 @@ export function checkBody(
     headers: HttpSigHeaders,
     body: Uint8Array | string | null
 ): HttpSigVerified {
+    return bodyStage(verified, toHeaders(headers), body);
+}
+
+/**
+ * {@link checkBody}, taking the message's own digests when the caller has
+ * already parsed them, so that the field is not parsed twice.
+ */
+function bodyStage(
+    verified: HttpSigVerified,
+    headers: Headers,
+    body: Uint8Array | string | null,
+    digests?: Map<string, Uint8Array>
+): HttpSigVerified {
     if (verified.mode === 'canonical') {
         const covered = covers(verified, `"${CONTENT_DIGEST}"`);
         if (!covered && bytesOf(body).length > 0) {
@@ -973,7 +979,7 @@ export function checkBody(
                 'A body arrived and its content-digest is not covered.'
             );
         }
-        if (covered) checkDigest(toHeaders(headers), body);
+        if (covered) compareDigest(digests ?? parseDigest(headers), body);
     }
     return { ...verified, bodyOwed: false };
 }
@@ -1221,7 +1227,7 @@ export async function verifyRequest(
         args.now
     );
     if (args.body === undefined) return { ...verified, bodyOwed: true };
-    return checkBody(verified, headers, args.body);
+    return bodyStage(verified, headers, args.body);
 }
 
 /**
@@ -1316,7 +1322,9 @@ export async function verifyResponse(
     // Body: parse every covered digest before comparing any. The request's
     // is recomputed over the content the client sent, now, even when the
     // response body is deferred; the response's own is compared by checkBody.
-    if (covers(verified, `"${CONTENT_DIGEST}"`)) parseDigest(headers);
+    const digests = covers(verified, `"${CONTENT_DIGEST}"`)
+        ? parseDigest(headers)
+        : undefined;
     if (covers(verified, REQUEST_DIGEST)) {
         compareDigest(
             parseDigest(
@@ -1328,7 +1336,7 @@ export async function verifyResponse(
         );
     }
     if (args.body === undefined) return { ...verified, bodyOwed: true };
-    return checkBody(verified, headers, args.body);
+    return bodyStage(verified, headers, args.body, digests);
 }
 
 function sign(
