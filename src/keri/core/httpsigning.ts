@@ -25,7 +25,7 @@ import {
     serializeDictionary,
     serializeItem,
 } from 'structured-headers';
-import { fromByteArray, toByteArray } from 'base64-js';
+import { fromByteArray } from 'base64-js';
 import { Signer } from './signer.ts';
 import { Verfer } from './verfer.ts';
 import { DigiDex, Matter, MtrDex, NonTransDex } from './matter.ts';
@@ -39,13 +39,16 @@ import { Tholder } from './tholder.ts';
 import type { KeyState } from './keyState.ts';
 import {
     ComponentIdentifier,
+    HTTPSIG_REQUEST_DERIVED,
     HttpSigError,
     HttpSigHeaders,
     HttpSigRequest,
     HttpSigResponse,
+    byteSequenceBytes,
     componentIdentifier,
     componentIdentity,
     contentDigest,
+    isAbsoluteUrl,
     matchContentDigest,
     normalizeAuthority,
     parseContentDigest,
@@ -338,7 +341,6 @@ const CANONICAL_PARAMS = new Set([
     'keyid',
     'tag',
 ]);
-const REQUEST_DERIVED = new Set(['@method', '@authority', '@path', '@query']);
 const REQUEST_DIGEST = '"content-digest";req';
 const RESPONSE_MINIMUM = [
     '"@status"',
@@ -573,11 +575,8 @@ function parseCanonical(signature: string, input: string): Parsed {
         );
     }
     const value = (sigMember as Item)[0] as ByteSequence;
-    let raw: Uint8Array;
-    try {
-        const b64 = value.toBase64();
-        raw = toByteArray(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
-    } catch {
+    const raw = byteSequenceBytes(value);
+    if (raw === null) {
         refuse(
             'malformed-signature-value',
             `The signature for "${label}" is not valid base64.`
@@ -631,7 +630,7 @@ function checkComponents(items: Item[], target: Target): void {
                     `${shown}: @status is valid only for the response itself.`
                 );
             }
-        } else if (REQUEST_DERIVED.has(name)) {
+        } else if (HTTPSIG_REQUEST_DERIVED.has(name)) {
             if (target === 'response' && !req) {
                 refuse(
                     'unsupported-component',
@@ -1146,10 +1145,15 @@ async function resolveLegacy(
     return verfer;
 }
 
+/**
+ * The WHATWG-normalized path, which is what legacy mode signs: the legacy
+ * signer takes `new URL(request.url).pathname`.
+ */
 function pathOf(url: string): string {
-    const relative = !/^[a-z][a-z0-9+.-]*:/i.test(url);
-    return new URL(url, relative ? 'http://relative.invalid' : undefined)
-        .pathname;
+    return new URL(
+        url,
+        isAbsoluteUrl(url) ? undefined : 'http://relative.invalid'
+    ).pathname;
 }
 
 /**

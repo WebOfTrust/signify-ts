@@ -62,7 +62,12 @@ export const HTTPSIG_DERIVED_COMPONENTS = [
 export const HTTPSIG_COMPONENT_PARAMS = ['req', 'key'] as const;
 
 /** Derived components that target a request message (RFC 9421 §2.2). */
-const REQUEST_DERIVED = new Set(['@method', '@authority', '@path', '@query']);
+export const HTTPSIG_REQUEST_DERIVED: ReadonlySet<string> = new Set([
+    '@method',
+    '@authority',
+    '@path',
+    '@query',
+]);
 
 /**
  * A covered component identifier.
@@ -418,7 +423,7 @@ function derivedValue(
         }
         return String(status);
     }
-    if (!REQUEST_DERIVED.has(name)) {
+    if (!HTTPSIG_REQUEST_DERIVED.has(name)) {
         fail(
             `The derived component "${name}" is not supported; supported: ${HTTPSIG_DERIVED_COMPONENTS.join(', ')}.`,
             UNSUPPORTED
@@ -575,19 +580,16 @@ export function contentDigest(
     return `${algorithm}=:${fromByteArray(fn(bodyBytes(body)))}:`;
 }
 
-function decodeByteSequence(
-    value: ByteSequence,
-    algorithm: string
-): Uint8Array {
-    // RFC 8941 §4.2.7 asks parsers to tolerate missing padding.
+/**
+ * The bytes of an RFC 8941 Byte Sequence, or null when its content is not
+ * valid base64. Missing padding is tolerated, as RFC 8941 §4.2.7 asks.
+ */
+export function byteSequenceBytes(value: ByteSequence): Uint8Array | null {
     const b64 = value.toBase64();
     try {
         return toByteArray(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
     } catch {
-        fail(
-            `Content-Digest member "${algorithm}" is not valid base64.`,
-            'malformed-digest'
-        );
+        return null;
     }
 }
 
@@ -628,10 +630,14 @@ export function parseContentDigest(header: string): Map<string, Uint8Array> {
                 'malformed-digest'
             );
         }
-        digests.set(
-            algorithm,
-            decodeByteSequence(value as ByteSequence, algorithm)
-        );
+        const bytes = byteSequenceBytes(value as ByteSequence);
+        if (bytes === null) {
+            fail(
+                `Content-Digest member "${algorithm}" is not valid base64.`,
+                'malformed-digest'
+            );
+        }
+        digests.set(algorithm, bytes);
     }
     if (digests.size === 0) {
         fail(
