@@ -17,6 +17,7 @@ import { Siger } from './siger.ts';
 import { Diger } from './diger.ts';
 import { MtrDex } from './matter.ts';
 import { b, d } from './core.ts';
+import { HttpSigPolicy, signRequest, verifyResponse } from './httpsigning.ts';
 
 export abstract class Authenticator {
     protected verfer: Verfer;
@@ -151,6 +152,93 @@ export class SignedHeaderAuthenticator extends Authenticator {
         });
 
         return headers;
+    }
+}
+
+/** Options for {@link HttpSigAuthenticator}. */
+export interface HttpSigAuthenticatorOptions {
+    /** Freshness and coverage policy for responses. Default profile §3, §6. */
+    policy?: HttpSigPolicy;
+    /**
+     * Seconds since the epoch, used for `created` and for response
+     * freshness. Default: the system clock.
+     */
+    clock?: () => number;
+}
+
+/**
+ * Canonical mode: signs requests and verifies responses under the KERI
+ * profile of RFC 9421 (see `httpsigning.ts`).
+ *
+ * `prepare` signs with `keyid` = `local`, the signer's AID, covering
+ * `@method @authority @path @query` and, for a non-empty body,
+ * `content-digest`. It does not use `Signify-Resource` or
+ * `Signify-Timestamp`. `verify` requires the response to be signed in
+ * canonical mode by `remote`, whose key is `verfer`; an unsigned 401 is
+ * refused as `unauthenticated`, and every other failure is an
+ * {@link HttpSigRefusal} carrying the profile's neutral code. Nothing here
+ * retries in legacy mode after a refusal (profile §8).
+ */
+export class HttpSigAuthenticator extends Authenticator {
+    private readonly options: HttpSigAuthenticatorOptions;
+    // The content each prepared request was signed over, so that verify can
+    // tell whether the response must cover "content-digest";req.
+    private readonly bodies = new WeakMap<Request, Uint8Array>();
+
+    constructor(
+        csig: Signer,
+        verfer: Verfer,
+        options: HttpSigAuthenticatorOptions = {}
+    ) {
+        super(csig, verfer);
+        this.options = options;
+    }
+
+    async prepare(
+        request: Request,
+        local: string,
+        _remote: string
+    ): Promise<Request> {
+        const body = new Uint8Array(await request.clone().arrayBuffer());
+        const fields = signRequest({
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
+            body,
+            signer: this.csig,
+            keyid: local,
+            created: this.options.clock?.(),
+        });
+        for (const [name, value] of Object.entries(fields)) {
+            request.headers.set(name, value);
+        }
+        this.bodies.set(request, body);
+        return request;
+    }
+
+    async verify(
+        request: Request,
+        response: Response,
+        _local: string,
+        remote: string
+    ): Promise<Response> {
+        const body = new Uint8Array(await response.clone().arrayBuffer());
+        await verifyResponse({
+            status: response.status,
+            headers: response.headers,
+            body,
+            request: {
+                method: request.method,
+                url: request.url,
+                headers: request.headers,
+                body: this.bodies.get(request) ?? null,
+            },
+            keyid: remote,
+            resolver: (keyid) => (keyid === remote ? this.verfer : null),
+            policy: this.options.policy,
+            now: this.options.clock,
+        });
+        return response;
     }
 }
 
