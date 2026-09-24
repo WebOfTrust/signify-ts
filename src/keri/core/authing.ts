@@ -8,7 +8,7 @@ import {
     HEADER_SIG_INPUT,
     HEADER_SIG_SENDER,
     HEADER_SIG_TIME,
-    normalize,
+    legacySignatureBase,
     siginput,
 } from './httping.ts';
 import { Signage, signature, designature } from '../end/ending.ts';
@@ -115,42 +115,7 @@ export class SignedHeaderAuthenticator extends Authenticator {
             return false;
         }
         inputs.forEach((input) => {
-            const items = new Array<string>();
-            input.fields!.forEach((field: string) => {
-                if (field.startsWith('@')) {
-                    if (field == '@method') {
-                        items.push(`"${field}": ${method}`);
-                    } else if (field == '@path') {
-                        items.push(`"${field}": ${path}`);
-                    }
-                } else {
-                    if (headers.has(field)) {
-                        const value = normalize(headers.get(field) as string);
-                        items.push(`"${field}": ${value}`);
-                    }
-                }
-            });
-            const values = new Array<string>();
-            values.push(`(${input.fields!.join(' ')})`);
-            values.push(`created=${input.created}`);
-            if (input.expires != undefined) {
-                values.push(`expires=${input.expires}`);
-            }
-            if (input.nonce != undefined) {
-                values.push(`nonce=${input.nonce}`);
-            }
-            if (input.keyid != undefined) {
-                values.push(`keyid=${input.keyid}`);
-            }
-            if (input.context != undefined) {
-                values.push(`context=${input.context}`);
-            }
-            if (input.alg != undefined) {
-                values.push(`alg=${input.alg}`);
-            }
-            const params = values.join(';');
-            items.push(`"@signature-params: ${params}"`);
-            const ser = items.join('\n');
+            const ser = legacySignatureBase(input, headers, method, path);
             const signage = designature(signature!);
             const markers = signage[0].markers as Map<string, Siger | Cigar>;
             const cig = markers.get(input.name);

@@ -151,6 +151,57 @@ export class Inputage {
     public context: any;
 }
 
+/**
+ * The legacy Signify signature base for one parsed Signature-Input member,
+ * as KERIA and the legacy {@link SignedHeaderAuthenticator} build it. It is
+ * not the RFC 9421 base: the quote sits before `@signature-params`,
+ * identifiers and string parameters are unquoted, and a covered field absent
+ * from `headers` is skipped. Kept byte-for-byte so legacy signatures verify.
+ */
+export function legacySignatureBase(
+    input: Inputage,
+    headers: Headers,
+    method: string,
+    path: string
+): string {
+    const items = new Array<string>();
+    input.fields!.forEach((field: string) => {
+        if (field.startsWith('@')) {
+            if (field == '@method') {
+                items.push(`"${field}": ${method}`);
+            } else if (field == '@path') {
+                items.push(`"${field}": ${path}`);
+            }
+        } else {
+            if (headers.has(field)) {
+                const value = normalize(headers.get(field) as string);
+                items.push(`"${field}": ${value}`);
+            }
+        }
+    });
+    const values = new Array<string>();
+    values.push(`(${input.fields!.join(' ')})`);
+    values.push(`created=${input.created}`);
+    if (input.expires != undefined) {
+        values.push(`expires=${input.expires}`);
+    }
+    if (input.nonce != undefined) {
+        values.push(`nonce=${input.nonce}`);
+    }
+    if (input.keyid != undefined) {
+        values.push(`keyid=${input.keyid}`);
+    }
+    if (input.context != undefined) {
+        values.push(`context=${input.context}`);
+    }
+    if (input.alg != undefined) {
+        values.push(`alg=${input.alg}`);
+    }
+    const params = values.join(';');
+    items.push(`"@signature-params: ${params}"`);
+    return items.join('\n');
+}
+
 export function desiginput(value: string): Array<Inputage> {
     const sid = parseDictionary(value);
     const siginputs = new Array<Inputage>();
