@@ -304,7 +304,7 @@ describe('checkPolicy (profile §3, §6)', () => {
                 status: 200,
                 headers: {},
                 body: null,
-                request: { method: 'GET', url: URL_, headers: {} },
+                request: { method: 'GET', url: URL_, headers: {}, body: null },
                 keyid: AGENT,
                 policy: { skew: 0 },
             })
@@ -630,6 +630,115 @@ describe('the response minimum reads the request content (profile §3, version 1
                 })
             )
         ).toBe('insufficient-coverage');
+    });
+});
+
+describe('the request a response answers carries the content sent', () => {
+    const request = () => ({
+        method: 'POST',
+        url: URL_,
+        headers: signed(),
+        body: BODY as string | undefined,
+    });
+    const respond = (
+        req: ReturnType<typeof request>
+    ): Record<string, string> => ({
+        ...signResponse({
+            status: 200,
+            body: '{"done": true}',
+            request: req,
+            signer: agent,
+            keyid: AGENT,
+            created: NOW,
+        }),
+    });
+
+    it('refuses, as a caller error, a request whose content is not known', async () => {
+        const req = request();
+        const headers = respond(req);
+        const unknown = { ...req, body: undefined };
+        for (const attempt of [
+            () => respond(unknown),
+            () => responseComponents(unknown),
+            () =>
+                verifyResponse({
+                    status: 200,
+                    headers,
+                    body: '{"done": true}',
+                    request: unknown,
+                    keyid: AGENT,
+                    resolver,
+                    now: NOW,
+                }),
+            // Up front: before the unsigned-401 check.
+            () =>
+                verifyResponse({
+                    status: 401,
+                    headers: {},
+                    body: null,
+                    request: unknown,
+                    keyid: AGENT,
+                    resolver,
+                    now: NOW,
+                }),
+        ]) {
+            let thrown: unknown;
+            try {
+                await attempt();
+            } catch (e) {
+                thrown = e;
+            }
+            assert.instanceOf(thrown, Error);
+            assert.notInstanceOf(thrown, HttpSigRefusal);
+            assert.match(
+                (thrown as Error).message,
+                /request\.body must be the request content/
+            );
+        }
+    });
+
+    it('recomputes the request digest over the content the client kept', async () => {
+        const req = request();
+        const headers = respond(req);
+        const misbooked = { ...req, body: '{"name": "mallory"}' };
+        expect(
+            await code(
+                verifyResponse({
+                    status: 200,
+                    headers,
+                    body: '{"done": true}',
+                    request: misbooked,
+                    keyid: AGENT,
+                    resolver,
+                    now: NOW,
+                })
+            )
+        ).toBe('digest-mismatch');
+        // Still at header time when the response body is deferred.
+        expect(
+            await code(
+                verifyResponse({
+                    status: 200,
+                    headers,
+                    request: misbooked,
+                    keyid: AGENT,
+                    resolver,
+                    now: NOW,
+                })
+            )
+        ).toBe('digest-mismatch');
+    });
+
+    it('refuses to sign a response bound to a digest the request content contradicts', async () => {
+        const req = request();
+        expect(
+            await code(() => respond({ ...req, body: '{"name": "mallory"}' }))
+        ).toBe('digest-mismatch');
+        const malformed = {
+            ...req,
+            headers: { ...req.headers, 'Content-Digest': 'sha-256=?1' },
+        };
+        expect(await code(() => respond(malformed))).toBe('malformed-digest');
     });
 });
 

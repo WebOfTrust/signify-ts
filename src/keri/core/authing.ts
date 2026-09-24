@@ -182,7 +182,7 @@ export interface HttpSigAuthenticatorOptions {
 export class HttpSigAuthenticator extends Authenticator {
     private readonly options: HttpSigAuthenticatorOptions;
     // The content each prepared request was signed over, so that verify can
-    // tell whether the response must cover "content-digest";req.
+    // bind the response to exactly what was sent.
     private readonly bodies = new WeakMap<Request, Uint8Array>();
 
     constructor(
@@ -222,6 +222,15 @@ export class HttpSigAuthenticator extends Authenticator {
         _local: string,
         remote: string
     ): Promise<Response> {
+        // The exact content prepare signed over: the response is bound to it
+        // (profile §3), so a request this authenticator did not prepare is an
+        // error rather than a request assumed to have had no body.
+        const sent = this.bodies.get(request);
+        if (sent === undefined) {
+            throw new Error(
+                'HttpSigAuthenticator.verify needs the Request that prepare signed; its content is not known.'
+            );
+        }
         const body = new Uint8Array(await response.clone().arrayBuffer());
         await verifyResponse({
             status: response.status,
@@ -231,7 +240,7 @@ export class HttpSigAuthenticator extends Authenticator {
                 method: request.method,
                 url: request.url,
                 headers: request.headers,
-                body: this.bodies.get(request) ?? null,
+                body: sent,
             },
             keyid: remote,
             resolver: (keyid) => (keyid === remote ? this.verfer : null),

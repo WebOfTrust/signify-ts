@@ -46,9 +46,10 @@ import {
     componentIdentifier,
     componentIdentity,
     contentDigest,
+    matchContentDigest,
+    parseContentDigest,
     signatureBase,
     signatureParameters,
-    verifyContentDigest,
 } from './httpsig.ts';
 
 /**
@@ -183,9 +184,17 @@ export interface HttpSigKeyResolver {
     legacy?: (aid: string) => HttpSigKeyLookup;
 }
 
-/** A request, with its content when the caller has it. */
+/**
+ * The request a response answers, with the content that was actually sent.
+ * {@link signResponse}, {@link verifyResponse} and {@link responseComponents}
+ * refuse, as a caller error, a request whose content is not known.
+ */
 export interface HttpSigMessageRequest extends HttpSigRequest {
-    /** The content as sent. `null` is no content; `undefined` is not known. */
+    /**
+     * The content exactly as sent: empty bytes, `''` or `null` when the
+     * request had none. `undefined` means not known, which is an error
+     * wherever a response is bound to the request.
+     */
     body?: Uint8Array | string | null;
 }
 
@@ -287,7 +296,11 @@ export interface HttpSigVerifyResponseArgs {
      * must follow, as for {@link verifyRequest}.
      */
     body?: Uint8Array | string | null;
-    /** The request this response answers, as the client sent it. */
+    /**
+     * The request this response answers, as the client sent it, with
+     * `body` the content sent (empty or `null` for none). A `body` left
+     * `undefined` is an error.
+     */
     request: HttpSigMessageRequest;
     /** The AID the client expects to be talking to (profile §7, R1). */
     keyid: string;
@@ -660,6 +673,21 @@ function requestMinimum(
 }
 
 /**
+ * The content of the request a response answers, which the caller must
+ * supply as sent (profile §3): without it, neither the response minimum nor
+ * the request's `Content-Digest` can be checked. A caller error, not a
+ * refusal.
+ */
+function sentContent(request: HttpSigMessageRequest): Uint8Array {
+    if (request.body === undefined) {
+        throw new Error(
+            'request.body must be the request content as sent (empty bytes or null for none); a response cannot be bound to a request whose content is not known.'
+        );
+    }
+    return bytesOf(request.body);
+}
+
+/**
  * A response's body is its content: its Content-Length is no evidence, since
  * a HEAD or 304 response announces a length it does not send. A deferred
  * body adds nothing here; {@link checkBody} catches uncovered content.
@@ -674,7 +702,7 @@ function responseMinimum(
 ): string[] {
     const required = [...RESPONSE_MINIMUM];
     if (bytesOf(body).length > 0) required.push(`"${CONTENT_DIGEST}"`);
-    if (bytesOf(request.body).length > 0) required.push(REQUEST_DIGEST);
+    if (sentContent(request).length > 0) required.push(REQUEST_DIGEST);
     return required;
 }
 
@@ -682,7 +710,8 @@ function responseMinimum(
  * The components a response covers by default: `@status`, its own
  * `content-digest` when it has a body, and the request's `@method`, `@path`
  * and `@query` marked `req`, plus `"content-digest";req` when the request's
- * content was non-empty (profile §3).
+ * content was non-empty (profile §3). `request.body` must be the content
+ * sent.
  */
 export function responseComponents(
     request: HttpSigMessageRequest,
@@ -888,23 +917,36 @@ function checkFreshness(
     }
 }
 
+function parseDigest(
+    headers: Headers,
+    whose = 'Content-Digest'
+): Map<string, Uint8Array> {
+    const header = headers.get(CONTENT_DIGEST);
+    if (header === null) {
+        refuse('missing-component', `${whose} is covered and absent.`);
+    }
+    try {
+        return parseContentDigest(header);
+    } catch (e) {
+        refuse('malformed-digest', `${whose}: ${(e as Error).message}`);
+    }
+}
+
+function compareDigest(
+    digests: Map<string, Uint8Array>,
+    body: Uint8Array | string | null | undefined,
+    whose = 'The content'
+): void {
+    if (!matchContentDigest(digests, bytesOf(body))) {
+        refuse('digest-mismatch', `${whose} does not match its digest.`);
+    }
+}
+
 function checkDigest(
     headers: Headers,
     body: Uint8Array | string | null | undefined
 ): void {
-    const header = headers.get(CONTENT_DIGEST);
-    if (header === null) {
-        refuse('missing-component', 'Content-Digest is covered and absent.');
-    }
-    let ok: boolean;
-    try {
-        ok = verifyContentDigest(header, bytesOf(body));
-    } catch (e) {
-        refuse('malformed-digest', (e as Error).message);
-    }
-    if (!ok) {
-        refuse('digest-mismatch', 'The content does not match its digest.');
-    }
+    compareDigest(parseDigest(headers), body);
 }
 
 function covers(verified: HttpSigVerified, component: string): boolean {
@@ -1180,12 +1222,16 @@ function modeOfRequest(request: HttpSigMessageRequest): HttpSigMode {
  * `missing-signature`. A response in the other mode than the request, in
  * either direction, is `mode-mismatch`, with no fallback (profile §8).
  * A canonical response must be signed by `keyid`, cover the response
- * minimum set, be fresh, and match its digest. After a legacy request, the
+ * minimum set, be fresh, and match its digest. When it covers
+ * `"content-digest";req`, the request's `Content-Digest` is recomputed over
+ * `request.body`, which must be the content the client sent. Every covered
+ * digest is parsed before any is compared. After a legacy request, the
  * legacy response is verified as {@link SignedHeaderAuthenticator} does.
  */
 export async function verifyResponse(
     args: HttpSigVerifyResponseArgs
 ): Promise<HttpSigVerified> {
+    const sent = sentContent(args.request);
     const headers = toHeaders(args.headers);
     const policy = args.policy ?? {};
     checkPolicy(policy);
@@ -1243,6 +1289,20 @@ export async function verifyResponse(
         policy,
         args.now
     );
+    // Body: parse every covered digest before comparing any. The request's
+    // is recomputed over the content the client sent, now, even when the
+    // response body is deferred; the response's own is compared by checkBody.
+    if (covers(verified, `"${CONTENT_DIGEST}"`)) parseDigest(headers);
+    if (covers(verified, REQUEST_DIGEST)) {
+        compareDigest(
+            parseDigest(
+                toHeaders(args.request.headers),
+                "The request's Content-Digest"
+            ),
+            sent,
+            'The request content'
+        );
+    }
     if (args.body === undefined) return { ...verified, bodyOwed: true };
     return checkBody(verified, headers, args.body);
 }
@@ -1255,7 +1315,8 @@ function sign(
     headers: Headers,
     body: Uint8Array,
     request: HttpSigRequest,
-    response: HttpSigResponse | undefined
+    response: HttpSigResponse | undefined,
+    requestContent?: Uint8Array
 ): HttpSigSignedFields {
     const items = components.map(identifierOf);
     checkComponents(items, target);
@@ -1268,6 +1329,20 @@ function sign(
         );
     }
     checkCoverage(items, required);
+    if (
+        requestContent !== undefined &&
+        covered.has(componentIdentity(componentIdentifier(REQUEST_DIGEST)))
+    ) {
+        // Never bind a request digest that the request content contradicts.
+        compareDigest(
+            parseDigest(
+                toHeaders(request.headers),
+                "The request's Content-Digest"
+            ),
+            requestContent,
+            'The request content'
+        );
+    }
 
     const alg = args.alg === undefined ? ED25519 : args.alg;
     if (alg !== null && alg !== ED25519) {
@@ -1340,10 +1415,14 @@ export function signRequest(args: HttpSigSignRequestArgs): HttpSigSignedFields {
 /**
  * Sign a response in canonical mode, bound to the request it answers
  * (profile §3). The default covered set is {@link responseComponents}.
+ * `request.body` must be the request content as received; when
+ * `"content-digest";req` is covered, a request `Content-Digest` that the
+ * content contradicts is refused (`malformed-digest`, `digest-mismatch`).
  */
 export function signResponse(
     args: HttpSigSignResponseArgs
 ): HttpSigSignedFields {
+    const requestContent = sentContent(args.request);
     const headers = new Headers(toHeaders(args.headers));
     const body = bytesOf(args.body);
     const required = responseMinimum(body, args.request);
@@ -1360,6 +1439,7 @@ export function signResponse(
             url: args.request.url,
             headers: args.request.headers,
         },
-        { status: args.status, headers }
+        { status: args.status, headers },
+        requestContent
     );
 }

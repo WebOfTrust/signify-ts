@@ -247,6 +247,54 @@ describe('SignifyClient.fetch in canonical mode', () => {
     });
 });
 
+describe('HttpSigAuthenticator', () => {
+    test('binds the reply to the content it signed, and knows no other request', async () => {
+        const authn = new HttpSigAuthenticator(
+            new Controller(bran, Tier.low).signer,
+            agentSigner.verfer,
+            { clock: () => 1700000000 }
+        );
+        const request = await authn.prepare(
+            new Request(url + '/oobis', { method: 'POST', body: '{"a":1}' }),
+            CONTROLLER,
+            AGENT
+        );
+        const reply = (req: Request, sent: string) => {
+            const headers = new Headers();
+            const fields = signResponse({
+                status: 200,
+                headers,
+                body: '{}',
+                request: {
+                    method: req.method,
+                    url: req.url,
+                    headers: req.headers,
+                    body: sent,
+                },
+                signer: agentSigner,
+                keyid: AGENT,
+                created: 1700000000,
+            });
+            for (const [k, v] of Object.entries(fields)) headers.set(k, v);
+            return new Response('{}', { status: 200, headers });
+        };
+        const ok = await authn.verify(
+            request,
+            reply(request, '{"a":1}'),
+            CONTROLLER,
+            AGENT
+        );
+        assert.equal(ok.status, 200);
+
+        // A Request that prepare did not sign has no known content, so its
+        // reply cannot be bound to it: an error, not a request assumed empty.
+        const stranger = new Request(url + '/oobis', { method: 'GET' });
+        await expect(
+            authn.verify(stranger, reply(request, '{"a":1}'), CONTROLLER, AGENT)
+        ).rejects.toThrowError(/needs the Request that prepare signed/);
+    });
+});
+
 describe('createSignedRequest', () => {
     const init = () => ({
         headers: new Headers({ 'Content-Type': 'application/json' }),

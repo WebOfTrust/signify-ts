@@ -439,11 +439,20 @@ describe('legacy.json', () => {
                 )
             ).toBe('malformed-signature');
         } else {
+            // The vector does not record the request's content. Legacy mode
+            // never uses it, but verifyResponse requires the content sent, so
+            // the record says empty.
+            const request = {
+                method: c.method,
+                url,
+                headers: {},
+                body: new Uint8Array(),
+            };
             const r = await verifyResponse({
                 status: c.status,
                 headers,
                 body: null,
-                request: { method: c.method, url, headers: {} },
+                request,
                 keyid: c.keyid,
                 resolver,
                 requestMode: 'legacy',
@@ -456,7 +465,7 @@ describe('legacy.json', () => {
                         status: c.status,
                         headers,
                         body: null,
-                        request: { method: c.method, url, headers: {} },
+                        request,
                         keyid: c.keyid,
                         resolver,
                     })
