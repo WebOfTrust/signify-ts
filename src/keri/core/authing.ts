@@ -160,8 +160,10 @@ export interface HttpSigAuthenticatorOptions {
     /** Freshness and coverage policy for responses. Default profile §3, §6. */
     policy?: HttpSigPolicy;
     /**
-     * Seconds since the epoch, used for `created` and for response
-     * freshness. Default: the system clock.
+     * The current time in seconds since the epoch (not milliseconds), used
+     * for `created` and for response freshness. A fractional value is
+     * floored for `created`, which RFC 9421 §2.3 makes an Integer. Default:
+     * the system clock.
      */
     clock?: () => number;
 }
@@ -207,13 +209,19 @@ export class HttpSigAuthenticator extends Authenticator {
             body,
             signer: this.csig,
             keyid: local,
-            created: this.options.clock?.(),
+            created: this.created(),
         });
         for (const [name, value] of Object.entries(fields)) {
             request.headers.set(name, value);
         }
         this.bodies.set(request, body);
         return request;
+    }
+
+    /** `created` from the clock, in whole seconds; undefined for now. */
+    private created(): number | undefined {
+        const clock = this.options.clock;
+        return clock === undefined ? undefined : Math.floor(clock());
     }
 
     async verify(

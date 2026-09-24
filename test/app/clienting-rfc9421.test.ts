@@ -295,6 +295,25 @@ describe('HttpSigAuthenticator', () => {
     });
 });
 
+describe('HttpSigAuthenticator clock', () => {
+    test('floors a fractional clock to whole seconds for created', async () => {
+        const authn = new HttpSigAuthenticator(
+            new Controller(bran, Tier.low).signer,
+            agentSigner.verfer,
+            { clock: () => 1700000000.7 }
+        );
+        const request = await authn.prepare(
+            new Request(url + '/identifiers', { method: 'GET' }),
+            CONTROLLER,
+            AGENT
+        );
+        assert.match(
+            request.headers.get(HEADER_SIG_INPUT)!,
+            /;created=1700000000;/
+        );
+    });
+});
+
 describe('createSignedRequest', () => {
     const init = () => ({
         headers: new Headers({ 'Content-Type': 'application/json' }),
