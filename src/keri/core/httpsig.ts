@@ -366,9 +366,21 @@ export function rawTarget(url: string): RawTarget {
 }
 
 /**
+ * An authority as the profile compares it: lowercased, with `:80` or `:443`
+ * removed whatever the scheme.
+ */
+export function normalizeAuthority(authority: string): string {
+    return authority
+        .trim()
+        .toLowerCase()
+        .replace(/:(80|443)$/, '');
+}
+
+/**
  * The `@authority` of a request (RFC 9421 §2.2.3): an absolute URL's host,
- * lowercased with the scheme's default port omitted, else the Host header;
- * null when neither is there.
+ * lowercased with the scheme's default port omitted, else the Host header,
+ * lowercased with `:80` or `:443` omitted ({@link normalizeAuthority}),
+ * since a Host header carries no scheme; null when neither is there.
  */
 export function requestAuthority(
     url: string,
@@ -384,7 +396,7 @@ export function requestAuthority(
         }
     }
     const host = fieldValue(headers, 'host');
-    return host === null || host === '' ? null : host.toLowerCase();
+    return host === null || host === '' ? null : normalizeAuthority(host);
 }
 
 function derivedValue(

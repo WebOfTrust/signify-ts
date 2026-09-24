@@ -354,6 +354,22 @@ describe('RFC 9421 §2.2 derived components', () => {
         assert.equal(line('@path', get('https://x.test?q')), '"@path": /');
     });
 
+    it('@authority from Host drops a default port, as from a URL (§2.2.3)', () => {
+        const relative = (host: string) => ({
+            method: 'GET',
+            url: '/p',
+            headers: { Host: host },
+        });
+        assert.equal(
+            line('@authority', relative('API.example:443')),
+            '"@authority": api.example'
+        );
+        assert.equal(
+            line('@authority', relative('api.example:80')),
+            '"@authority": api.example'
+        );
+    });
+
     it('@method is not case-normalized (§2.2.1)', () => {
         assert.equal(
             line('@method', get('https://x.test/', 'patch')),

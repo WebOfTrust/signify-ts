@@ -264,6 +264,25 @@ describe('verifyRequest', () => {
         );
     });
 
+    it('verifies a relative URL whose Host carries the default port', async () => {
+        const headers = signed({
+            method: 'GET',
+            body: null,
+            url: 'https://api.example/p',
+        });
+        expect(
+            await code(
+                verifyRequest({
+                    method: 'GET',
+                    url: '/p',
+                    headers: { ...headers, Host: 'api.example:443' },
+                    resolver,
+                    now: NOW,
+                })
+            )
+        ).toBe('accepted');
+    });
+
     it('enforces @authority against the authorities served', async () => {
         const policy = {
             requireAuthority: true,

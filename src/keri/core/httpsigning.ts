@@ -47,7 +47,9 @@ import {
     componentIdentity,
     contentDigest,
     matchContentDigest,
+    normalizeAuthority,
     parseContentDigest,
+    requestAuthority,
     signatureBase,
     signatureParameters,
 } from './httpsig.ts';
@@ -390,11 +392,6 @@ function hasBody(
     const length = headers.get('content-length');
     if (length === null) return false;
     return !/^[0-9]+$/.test(length.trim()) || Number(length) > 0;
-}
-
-/** Lowercase, with `:80` or `:443` removed whatever the scheme. */
-function normalizeAuthority(authority: string): string {
-    return authority.toLowerCase().replace(/:(80|443)$/, '');
 }
 
 /**
@@ -890,11 +887,8 @@ function buildBase(
 }
 
 function authorityOf(url: string, headers: Headers): string | null {
-    if (/^[a-z][a-z0-9+.-]*:/i.test(url)) {
-        return normalizeAuthority(new URL(url).host);
-    }
-    const host = headers.get('host');
-    return host === null ? null : normalizeAuthority(host.trim());
+    const authority = requestAuthority(url, headers);
+    return authority === null ? null : normalizeAuthority(authority);
 }
 
 function checkFreshness(
