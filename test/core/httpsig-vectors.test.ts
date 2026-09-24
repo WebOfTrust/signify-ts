@@ -49,6 +49,11 @@ const responses = load('responses');
 const refusals = load('refusals');
 const legacy = load('legacy');
 
+/** Cases as [id, case] tuples, typed for it.each. */
+function cases(file: Json): [string, Json][] {
+    return file.cases.map((c: Json): [string, Json] => [c.id, c]);
+}
+
 function hex(s: string): Uint8Array {
     return Uint8Array.from(s.match(/../g)!.map((h) => parseInt(h, 16)));
 }
@@ -145,58 +150,49 @@ describe('vector files', () => {
 });
 
 describe('rfc9421.json', () => {
-    it.each(rfc9421.cases.map((c: Json) => [c.id, c]))(
-        '%s',
-        (_id: string, c: Json) => {
-            const base = signatureBase({
-                components: c.covered,
-                params: { created: c.created, keyid: c.keyid },
-                request: c.request,
-            });
-            assert.equal(base, c.expected.base);
-            const signer = signerFromSeed(c.seed_hex);
-            assert.equal(
-                Buffer.from(signer.verfer.raw).toString('base64url'),
-                c.public_key
-            );
-            const sig = signer.sign(new TextEncoder().encode(base)).raw;
-            assert.equal(
-                Buffer.from(sig).toString('base64'),
-                c.expected.signature
-            );
-        }
-    );
+    it.each(cases(rfc9421))('%s', (_id: string, c: Json) => {
+        const base = signatureBase({
+            components: c.covered,
+            params: { created: c.created, keyid: c.keyid },
+            request: c.request,
+        });
+        assert.equal(base, c.expected.base);
+        const signer = signerFromSeed(c.seed_hex);
+        assert.equal(
+            Buffer.from(signer.verfer.raw).toString('base64url'),
+            c.public_key
+        );
+        const sig = signer.sign(new TextEncoder().encode(base)).raw;
+        assert.equal(Buffer.from(sig).toString('base64'), c.expected.signature);
+    });
 });
 
 describe('requests.json', () => {
     const resolver = keyTableResolver(requests.keys);
 
-    it.each(requests.cases.map((c: Json) => [c.id, c]))(
-        '%s verifies',
-        async (_id: string, c: Json) => {
-            const v = await verifyRequest({
-                method: c.request.method,
-                url: c.request.url,
-                headers: c.request.headers,
-                body: c.request.body,
-                resolver,
-                now: c.now,
-            });
-            assert.equal(v.mode, 'canonical');
-            assert.equal(v.keyid, c.expected.keyid);
-            assert.deepEqual(v.components, c.expected.covered);
-            assert.equal(v.base, c.expected.base);
-            const [member] = Array.from(
-                parseDictionary(c.request.headers.Signature).values()
-            );
-            assert.equal(
-                ((member as Item)[0] as ByteSequence).toBase64(),
-                c.expected.signature
-            );
-        }
-    );
+    it.each(cases(requests))('%s verifies', async (_id: string, c: Json) => {
+        const v = await verifyRequest({
+            method: c.request.method,
+            url: c.request.url,
+            headers: c.request.headers,
+            body: c.request.body,
+            resolver,
+            now: c.now,
+        });
+        assert.equal(v.mode, 'canonical');
+        assert.equal(v.keyid, c.expected.keyid);
+        assert.deepEqual(v.components, c.expected.covered);
+        assert.equal(v.base, c.expected.base);
+        const [member] = Array.from(
+            parseDictionary(c.request.headers.Signature).values()
+        );
+        assert.equal(
+            ((member as Item)[0] as ByteSequence).toBase64(),
+            c.expected.signature
+        );
+    });
 
-    it.each(requests.cases.map((c: Json) => [c.id, c]))(
+    it.each(cases(requests))(
         '%s is reproduced by the signer',
         (_id: string, c: Json) => {
             const headers = c.request.headers;
@@ -224,26 +220,23 @@ describe('requests.json', () => {
 describe('responses.json', () => {
     const resolver = keyTableResolver(responses.keys);
 
-    it.each(responses.cases.map((c: Json) => [c.id, c]))(
-        '%s verifies',
-        async (_id: string, c: Json) => {
-            const v = await verifyResponse({
-                status: c.response.status,
-                headers: c.response.headers,
-                body: c.response.body,
-                request: c.request,
-                keyid: agentKeyid,
-                resolver,
-                now: c.now,
-            });
-            assert.equal(v.mode, 'canonical');
-            assert.equal(v.keyid, c.expected.keyid);
-            assert.deepEqual(v.components, c.expected.covered);
-            assert.equal(v.base, c.expected.base);
-        }
-    );
+    it.each(cases(responses))('%s verifies', async (_id: string, c: Json) => {
+        const v = await verifyResponse({
+            status: c.response.status,
+            headers: c.response.headers,
+            body: c.response.body,
+            request: c.request,
+            keyid: agentKeyid,
+            resolver,
+            now: c.now,
+        });
+        assert.equal(v.mode, 'canonical');
+        assert.equal(v.keyid, c.expected.keyid);
+        assert.deepEqual(v.components, c.expected.covered);
+        assert.equal(v.base, c.expected.base);
+    });
 
-    it.each(responses.cases.map((c: Json) => [c.id, c]))(
+    it.each(cases(responses))(
         '%s is reproduced by the signer',
         (_id: string, c: Json) => {
             const headers = c.response.headers;
@@ -292,122 +285,122 @@ describe('refusals.json', () => {
         );
     });
 
-    it.each(refusals.cases.map((c: Json) => [c.id, c.error, c]))(
-        '%s is refused as %s',
-        async (_id: string, error: string, c: Json) => {
-            let outcome: Promise<unknown>;
-            if (c.kind === 'request') {
-                outcome = verifyRequest({
+    it.each(
+        (refusals.cases as Json[]).map((c: Json): [string, string, Json] => [
+            c.id,
+            c.error,
+            c,
+        ])
+    )('%s is refused as %s', async (_id: string, error: string, c: Json) => {
+        let outcome: Promise<unknown>;
+        if (c.kind === 'request') {
+            outcome = verifyRequest({
+                method: c.request.method,
+                url: c.request.url,
+                headers: c.request.headers,
+                body: c.request.body,
+                resolver,
+                now: c.now,
+            });
+        } else if (c.kind === 'response') {
+            outcome = verifyResponse({
+                status: c.response.status,
+                headers: c.response.headers,
+                body: c.response.body,
+                request: c.request,
+                keyid: agentKeyid,
+                resolver,
+                now: c.now,
+            });
+        } else if (c.kind === 'sign-request') {
+            outcome = (async () =>
+                signRequest({
                     method: c.request.method,
                     url: c.request.url,
                     headers: c.request.headers,
                     body: c.request.body,
-                    resolver,
-                    now: c.now,
-                });
-            } else if (c.kind === 'response') {
-                outcome = verifyResponse({
-                    status: c.response.status,
-                    headers: c.response.headers,
-                    body: c.response.body,
-                    request: c.request,
-                    keyid: agentKeyid,
-                    resolver,
-                    now: c.now,
-                });
-            } else if (c.kind === 'sign-request') {
-                outcome = (async () =>
-                    signRequest({
-                        method: c.request.method,
-                        url: c.request.url,
-                        headers: c.request.headers,
-                        body: c.request.body,
-                        components: c.covered,
-                        keyid: c.keyid,
-                        signer: signerFromSeed(c.seed_hex),
-                    }))();
-            } else {
-                throw new Error(`unknown case kind ${c.kind}`);
-            }
-            expect(await refusalOf(outcome)).toBe(error);
+                    components: c.covered,
+                    keyid: c.keyid,
+                    signer: signerFromSeed(c.seed_hex),
+                }))();
+        } else {
+            throw new Error(`unknown case kind ${c.kind}`);
         }
-    );
+        expect(await refusalOf(outcome)).toBe(error);
+    });
 });
 
 describe('legacy.json', () => {
-    it.each(legacy.cases.map((c: Json) => [c.id, c]))(
-        '%s',
-        async (_id: string, c: Json) => {
-            const headers = new Headers(c.headers);
-            assert.equal(detectMode(headers.get('Signature')!), 'legacy');
+    it.each(cases(legacy))('%s', async (_id: string, c: Json) => {
+        const headers = new Headers(c.headers);
+        assert.equal(detectMode(headers.get('Signature')!), 'legacy');
 
-            const [input] = desiginput(headers.get('Signature-Input')!).filter(
-                (i) => i.name === 'signify'
-            );
-            assert.equal(
-                legacySignatureBase(input, headers, c.method, c.path),
-                c.base
-            );
+        const [input] = desiginput(headers.get('Signature-Input')!).filter(
+            (i) => i.name === 'signify'
+        );
+        assert.equal(
+            legacySignatureBase(input, headers, c.method, c.path),
+            c.base
+        );
 
-            const verfer = new Verfer({ qb64: c.key });
-            const v = verifyLegacy({
+        const verfer = new Verfer({ qb64: c.key });
+        const v = verifyLegacy({
+            method: c.method,
+            path: c.path,
+            headers,
+            verfer,
+        });
+        assert.equal(v.mode, 'legacy');
+        assert.equal(v.base, c.base);
+
+        // Legacy verification resolves Signify-Resource (the case's own
+        // keyid may be the signer's verfer rather than an AID).
+        const resource = headers.get('Signify-Resource');
+        const resolver = (k: string) => (k === resource ? verfer : null);
+        const url = c.url ?? `http://127.0.0.1${c.path}`;
+        if (c.kind === 'request') {
+            const r = await verifyRequest({
                 method: c.method,
-                path: c.path,
+                url,
                 headers,
-                verfer,
+                resolver,
             });
-            assert.equal(v.mode, 'legacy');
-            assert.equal(v.base, c.base);
-
-            // Legacy verification resolves Signify-Resource (the case's own
-            // keyid may be the signer's verfer rather than an AID).
-            const resource = headers.get('Signify-Resource');
-            const resolver = (k: string) => (k === resource ? verfer : null);
-            const url = c.url ?? `http://127.0.0.1${c.path}`;
-            if (c.kind === 'request') {
-                const r = await verifyRequest({
-                    method: c.method,
-                    url,
-                    headers,
-                    resolver,
-                });
-                assert.equal(r.mode, 'legacy');
-                expect(
-                    await refusalOf(
-                        verifyRequest({
-                            method: c.method,
-                            url,
-                            headers,
-                            resolver,
-                            acceptLegacy: false,
-                        })
-                    )
-                ).toBe('malformed-signature');
-            } else {
-                const r = await verifyResponse({
-                    status: c.status,
-                    headers,
-                    body: null,
-                    request: { method: c.method, url, headers: {} },
-                    keyid: c.keyid,
-                    resolver,
-                    requestMode: 'legacy',
-                });
-                assert.equal(r.mode, 'legacy');
-                // A client that sent a canonical request refuses it (§8).
-                expect(
-                    await refusalOf(
-                        verifyResponse({
-                            status: c.status,
-                            headers,
-                            body: null,
-                            request: { method: c.method, url, headers: {} },
-                            keyid: c.keyid,
-                            resolver,
-                        })
-                    )
-                ).toBe('mode-mismatch');
-            }
+            assert.equal(r.mode, 'legacy');
+            expect(
+                await refusalOf(
+                    verifyRequest({
+                        method: c.method,
+                        url,
+                        headers,
+                        resolver,
+                        acceptLegacy: false,
+                    })
+                )
+            ).toBe('malformed-signature');
+        } else {
+            const r = await verifyResponse({
+                status: c.status,
+                headers,
+                body: null,
+                request: { method: c.method, url, headers: {} },
+                keyid: c.keyid,
+                resolver,
+                requestMode: 'legacy',
+            });
+            assert.equal(r.mode, 'legacy');
+            // A client that sent a canonical request refuses it (§8).
+            expect(
+                await refusalOf(
+                    verifyResponse({
+                        status: c.status,
+                        headers,
+                        body: null,
+                        request: { method: c.method, url, headers: {} },
+                        keyid: c.keyid,
+                        resolver,
+                    })
+                )
+            ).toBe('mode-mismatch');
         }
-    );
+    });
 });
