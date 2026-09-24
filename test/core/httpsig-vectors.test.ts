@@ -1,7 +1,7 @@
 /**
  * Runs every case of the shared KERI-profile RFC 9421 vectors in
- * test/vectors/keri-rfc9421/ (bakobo/fiki 34f37a0, keri_vectors_format 2,
- * profile draft 6). The vectors are verbatim copies; see the README beside
+ * test/vectors/keri-rfc9421/ (bakobo/fiki c6ec3b5, keri_vectors_format 2,
+ * profile version 1). The vectors are verbatim copies; see the README beside
  * them.
  */
 import { readFileSync } from 'node:fs';
@@ -157,10 +157,10 @@ beforeAll(async () => {
 });
 
 describe('vector files', () => {
-    it('are the frozen format 2 set, for profile draft 6', () => {
+    it('are the frozen format 2 set, for profile version 1', () => {
         for (const file of [rfc9421, requests, responses, refusals, legacy]) {
             assert.equal(file.keri_vectors_format, 2);
-            assert.equal(file.profile.draft, 6);
+            assert.equal(file.profile.version, 1);
         }
     });
 
