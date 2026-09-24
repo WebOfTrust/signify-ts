@@ -999,6 +999,10 @@ async function verifyCanonical(
     checkAlgorithm(verfer, params);
 
     const base = buildBase(items, params, request, response);
+    // TODO(profile ruling pending: @authority in the minimum set without
+    // requireAuthority): the covered @authority is compared with the
+    // served authorities only under requireAuthority, not when a policy
+    // puts @authority in its request set; the profile is to say which.
     if (target === 'request' && policy.requireAuthority) {
         const authority = authorityOf(request.url, toHeaders(request.headers));
         const served = (policy.authorities ?? []).map(normalizeAuthority);
