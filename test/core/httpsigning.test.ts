@@ -237,6 +237,33 @@ describe('verifyRequest', () => {
         );
     });
 
+    it('verifies the path and query as received, not normalized (profile §2)', async () => {
+        const over = (url: string) =>
+            signed({ method: 'GET', body: null, url });
+        const verify = (url: string, headers: Record<string, string>) =>
+            code(
+                verifyRequest({
+                    method: 'GET',
+                    url,
+                    headers,
+                    resolver,
+                    now: NOW,
+                })
+            );
+        const plain = over('https://x.example/b');
+        expect(await verify('https://x.example/b', plain)).toBe('accepted');
+        expect(await verify('https://x.example/a/%2e%2e/b', plain)).toBe(
+            'signature-mismatch'
+        );
+        const quoted = over("https://x.example/p?a='b'");
+        expect(await verify("https://x.example/p?a='b'", quoted)).toBe(
+            'accepted'
+        );
+        expect(await verify('https://x.example/p?a=%27b%27', quoted)).toBe(
+            'signature-mismatch'
+        );
+    });
+
     it('enforces @authority against the authorities served', async () => {
         const policy = {
             requireAuthority: true,

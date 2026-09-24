@@ -254,7 +254,12 @@ export interface HttpSigSignArgs {
 export interface HttpSigSignRequestArgs extends HttpSigSignArgs {
     /** The method exactly as it will go on the wire. */
     method: string;
-    /** The absolute target URL, as it will be sent. */
+    /**
+     * The absolute target URL, exactly as it will be sent: `@path` and
+     * `@query` are taken from it unnormalized (profile §2). `fetch()` sends
+     * the WHATWG serialization, so for a request that `fetch()` will send,
+     * pass `new URL(url).href` here and to `fetch()`, or a `Request`'s `url`.
+     */
     url: string;
     headers?: HttpSigHeaders;
     body?: Uint8Array | string | null;

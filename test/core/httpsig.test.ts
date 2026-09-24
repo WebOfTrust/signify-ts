@@ -320,6 +320,40 @@ describe('RFC 9421 §2.2 derived components', () => {
         );
     });
 
+    it('@path and @query are the target as sent, unnormalized (profile §2)', () => {
+        // WHATWG URL parsing would remove the dot segments, turn "\" into
+        // "/", and percent-encode the quotes; the base must not.
+        assert.equal(
+            line('@path', get('https://x.example/a/%2e%2e/b')),
+            '"@path": /a/%2e%2e/b'
+        );
+        assert.equal(
+            line('@path', get('https://x.example/a/../b')),
+            '"@path": /a/../b'
+        );
+        assert.equal(
+            line('@path', get('https://x.example/a\\b')),
+            '"@path": /a\\b'
+        );
+        assert.equal(
+            line('@query', get("https://x.example/p?a='b'#frag")),
+            '"@query": ?a=\'b\''
+        );
+        assert.equal(
+            line('@path', get("https://x.example/p?a='b'")),
+            '"@path": /p'
+        );
+        assert.equal(
+            line('@path', get('/a/%2e%2e/b?x={y}')),
+            '"@path": /a/%2e%2e/b'
+        );
+        assert.equal(
+            line('@query', get('/a/%2e%2e/b?x={y}')),
+            '"@query": ?x={y}'
+        );
+        assert.equal(line('@path', get('https://x.test?q')), '"@path": /');
+    });
+
     it('@method is not case-normalized (§2.2.1)', () => {
         assert.equal(
             line('@method', get('https://x.test/', 'patch')),

@@ -312,21 +312,79 @@ function fieldValue(headers: HttpSigHeaders, name: string): string | null {
     return values.map((v) => v.replace(/\r?\n[ \t]+/g, ' ').trim()).join(', ');
 }
 
-function parsedUrl(url: string): { parsed: URL; relative: boolean } {
-    const relative = !/^[a-z][a-z0-9+.-]*:/i.test(url);
-    try {
-        // A relative URL needs a base to parse; only its path and query are
-        // read, and @authority then comes from the Host header instead.
-        return {
-            parsed: new URL(
-                url,
-                relative ? 'http://relative.invalid' : undefined
-            ),
-            relative,
-        };
-    } catch {
-        fail(`Cannot parse the request URL "${url}".`);
+/** A URL with a scheme, as opposed to a relative reference. */
+const ABSOLUTE_URL = /^[a-z][a-z0-9+.-]*:/i;
+
+/** Whether a URL is absolute, that is, starts with a scheme. */
+export function isAbsoluteUrl(url: string): boolean {
+    return ABSOLUTE_URL.test(url);
+}
+
+/** The path and query of a target URL, as written. */
+export interface RawTarget {
+    /** The path exactly as written, `/` when empty. */
+    path: string;
+    /** The query with its leading `?`, or `?` alone when there is none. */
+    query: string;
+}
+
+/**
+ * Take the path and query from a target URL without normalizing
+ * anything (profile §2, RFC 9421 §2.2.6 and §2.2.7). WHATWG `new URL()`
+ * removes dot segments, `%2e` included, turns `\` into `/`, and re-encodes
+ * characters such as `'` and `{`, so that a signature over one path would
+ * verify against another. Here the path runs from the end of the authority
+ * to the first `?` or `#`, and the query from that `?` to the first `#`.
+ *
+ * A signer must derive these from the URL exactly as it will go on the
+ * wire. `fetch()` sends the WHATWG serialization, which a `Request`'s `url`
+ * already is.
+ */
+export function rawTarget(url: string): RawTarget {
+    let rest = url;
+    const scheme = ABSOLUTE_URL.exec(rest);
+    if (scheme !== null) {
+        rest = rest.slice(scheme[0].length);
+        if (!rest.startsWith('//')) {
+            fail(`The request URL "${url}" has no authority.`);
+        }
     }
+    if (rest.startsWith('//')) {
+        // Skip the authority, which ends at the first "/", "?" or "#".
+        const end = rest.slice(2).search(/[/?#]/);
+        rest = end === -1 ? '' : rest.slice(2 + end);
+    }
+    const hash = rest.indexOf('#');
+    if (hash !== -1) rest = rest.slice(0, hash);
+    const mark = rest.indexOf('?');
+    const path = mark === -1 ? rest : rest.slice(0, mark);
+    const query = mark === -1 ? '?' : rest.slice(mark);
+    if (path !== '' && !path.startsWith('/')) {
+        fail(`The request URL "${url}" does not have an absolute path.`);
+    }
+    return { path: path === '' ? '/' : path, query };
+}
+
+/**
+ * The `@authority` of a request (RFC 9421 §2.2.3): an absolute URL's host,
+ * lowercased with the scheme's default port omitted, else the Host header;
+ * null when neither is there.
+ */
+export function requestAuthority(
+    url: string,
+    headers: HttpSigHeaders
+): string | null {
+    if (isAbsoluteUrl(url)) {
+        try {
+            // WHATWG parsing lowercases the host, drops userinfo and the
+            // scheme's default port, and puts an IDN in ASCII form.
+            return new URL(url).host.toLowerCase();
+        } catch {
+            fail(`Cannot parse the request URL "${url}".`);
+        }
+    }
+    const host = fieldValue(headers, 'host');
+    return host === null || host === '' ? null : host.toLowerCase();
 }
 
 function derivedValue(
@@ -367,26 +425,19 @@ function derivedValue(
         // RFC 9421 §2.2.1: no transformation of the method's case.
         return request.method;
     }
-    const { parsed, relative } = parsedUrl(request.url);
     if (name === '@authority') {
-        // RFC 9421 §2.2.3: lowercase host, default port omitted. WHATWG URL
-        // parsing does both for http(s).
-        if (!relative) return parsed.host.toLowerCase();
-        const host = fieldValue(request.headers, 'host');
-        if (host === null || host === '') {
+        const authority = requestAuthority(request.url, request.headers);
+        if (authority === null) {
             fail(
                 '"@authority" is covered, but the URL is relative and there is no Host header.',
                 MISSING
             );
         }
-        return host.toLowerCase();
+        return authority;
     }
-    if (name === '@path') {
-        // RFC 9421 §2.2.6: percent-encoding preserved, empty path is "/".
-        return parsed.pathname === '' ? '/' : parsed.pathname;
-    }
-    // @query, RFC 9421 §2.2.7: the query with its leading "?", or "?" alone.
-    return `?${parsed.search.slice(1)}`;
+    const target = rawTarget(request.url);
+    // RFC 9421 §2.2.6 and §2.2.7, profile §2: as sent, unnormalized.
+    return name === '@path' ? target.path : target.query;
 }
 
 function memberValue(value: string, name: string, key: string): string {

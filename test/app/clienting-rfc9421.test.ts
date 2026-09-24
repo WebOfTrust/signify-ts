@@ -336,6 +336,23 @@ describe('createSignedRequest', () => {
         assert.equal(await request.text(), '{"foo":true}');
     });
 
+    test('signs the target exactly as fetch will send it', async () => {
+        // fetch() puts the WHATWG-serialized URL on the wire, dot segments
+        // removed and quotes encoded; the signature must cover that form.
+        mockKeria({ mode: 'legacy' });
+        const c = await client(AuthMode.SignedHeaders);
+        const request = await c.createSignedRequest(
+            'aid1',
+            "http://example.com/a/%2e%2e/test?q='1'",
+            init(),
+            { authMode: AuthMode.RFC9421 }
+        );
+        assert.equal(request.url, 'http://example.com/test?q=%271%27');
+        const v = await verifyThirdParty(request);
+        assert.include(v.base, '"@path": /test\n');
+        assert.include(v.base, '"@query": ?q=%271%27\n');
+    });
+
     test('follows the client mode by default', async () => {
         mockKeria({ mode: 'canonical' });
         const c = await client();
