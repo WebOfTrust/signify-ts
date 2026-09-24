@@ -742,6 +742,71 @@ describe('the request a response answers carries the content sent', () => {
     });
 });
 
+describe('the expected-AID check on a response (profile §9)', () => {
+    const request = () => ({
+        method: 'GET',
+        url: URL_,
+        headers: signed({ method: 'GET', body: null }),
+        body: null,
+    });
+    const respondAs = (keyid: string): Record<string, string> => ({
+        ...signResponse({
+            status: 200,
+            body: '{"done": true}',
+            request: request(),
+            signer: agent,
+            keyid,
+            created: NOW,
+        }),
+    });
+
+    it('runs after malformed-key and before resolution', async () => {
+        const calls: string[] = [];
+        const recording = (keyid: string) => {
+            calls.push(keyid);
+            return resolver(keyid);
+        };
+        const verify = (keyid: string) =>
+            verifyResponse({
+                status: 200,
+                headers: respondAs(keyid),
+                body: '{"done": true}',
+                request: request(),
+                keyid: AGENT,
+                resolver: recording,
+                now: NOW,
+            });
+        // Malformed and unexpected: malformed-key comes first.
+        expect(await code(verify('not-an-aid'))).toBe('malformed-key');
+        // Well formed and unexpected: unknown-key, and the key state of the
+        // unexpected AID is never consulted, even for an AID the resolver
+        // knows (CONTROLLER) or would refuse (an R4 failure).
+        expect(await code(verify(CONTROLLER))).toBe('unknown-key');
+        const multi = keyStateResolver((aid) => {
+            calls.push(aid);
+            return {
+                i: aid,
+                k: [controller.verfer.qb64, agent.verfer.qb64],
+                kt: '1',
+            } as unknown as KeyState;
+        });
+        expect(
+            await code(
+                verifyResponse({
+                    status: 200,
+                    headers: respondAs(CONTROLLER),
+                    body: '{"done": true}',
+                    request: request(),
+                    keyid: AGENT,
+                    resolver: multi,
+                    now: NOW,
+                })
+            )
+        ).toBe('unknown-key');
+        assert.deepEqual(calls, []);
+    });
+});
+
 describe('HttpSigRefusal', () => {
     it('carries the code and is an Error', async () => {
         try {
