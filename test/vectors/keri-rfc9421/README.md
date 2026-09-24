@@ -6,16 +6,17 @@ These five JSON files are verbatim copies of the KERI-profile vector set generat
 | ---------- | ----------------------- |
 | Repository | `bakobo/fiki`           |
 | Branch     | `keri-profile-vectors`  |
-| Commit     | `530cd8c`               |
+| Profile    | draft 6                 |
+| Commit     | `34f37a0`               |
 | Path       | `vectors/keri/`         |
-| Format     | `keri_vectors_format` 1 |
+| Format     | `keri_vectors_format` 2 |
 
-Each file states its own encoding, policy and keys in its header. `test/core/httpsig-vectors.test.ts` runs every case in all five:
+Each file states its own encoding, policy and keys in its header. A key's `key_state` is reduced to its single effective signer (profile R4) by `keyStateResolver`, and checked against the table's `effective_key`. `test/core/httpsig-vectors.test.ts` runs every case in all five:
 
 - `rfc9421.json`: RFC 9421 Appendix B.2.6 reproduced byte for byte.
-- `requests.json`: signed requests a canonical verifier must accept.
+- `requests.json`: signed requests a canonical verifier must accept. The cases its header lists as `verify_only` carry a digest a sha-256-only signer does not emit, so the signer does not reproduce them.
 - `responses.json`: signed responses a canonical client must accept, each with its request.
-- `refusals.json`: messages a canonical verifier must refuse, with the neutral refusal code.
+- `refusals.json`: messages a canonical verifier must refuse, with the neutral refusal code. The two `mode-mismatch` cases are marked `verified_by_fiki: false`, since fiki has no legacy mode; signify-ts verifies them.
 - `legacy.json`: legacy-mode messages pinned in KERIA's and signify-ts's tests, which must still verify.
 
 The JSON files are listed in `.prettierignore` so that formatting never rewrites them.
