@@ -31,11 +31,21 @@ import { fromByteArray, toByteArray } from 'base64-js';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
 
-/** Raised for any input the signature base or digest cannot be built from. */
+/**
+ * Raised for any input the signature base or digest cannot be built from.
+ *
+ * `code`, when set, is the neutral refusal code of the KERI profile of
+ * RFC 9421 (profile §9) that the failure corresponds to, such as
+ * `missing-component` or `unsupported-component`. It is unset for failures
+ * the profile has no code for.
+ */
 export class HttpSigError extends Error {
-    constructor(message: string) {
+    readonly code?: string;
+
+    constructor(message: string, code?: string) {
         super(message);
         this.name = 'HttpSigError';
+        this.code = code;
     }
 }
 
@@ -134,8 +144,12 @@ export interface SignatureBaseArgs {
     response?: HttpSigResponse;
 }
 
-function fail(message: string): never {
-    throw new HttpSigError(message);
+const MALFORMED_INPUT = 'malformed-signature-input';
+const UNSUPPORTED = 'unsupported-component';
+const MISSING = 'missing-component';
+
+function fail(message: string, code?: string): never {
+    throw new HttpSigError(message, code);
 }
 
 /**
@@ -151,7 +165,8 @@ export function componentIdentifier(component: ComponentIdentifier): Item {
                 item = parseItem(component);
             } catch (e) {
                 fail(
-                    `Component identifier ${component} is not a valid structured field item: ${(e as Error).message}`
+                    `Component identifier ${component} is not a valid structured field item: ${(e as Error).message}`,
+                    MALFORMED_INPUT
                 );
             }
         } else {
@@ -163,41 +178,60 @@ export function componentIdentifier(component: ComponentIdentifier): Item {
 
     const [name, params] = item;
     if (typeof name !== 'string') {
-        fail('A component name must be a structured field String.');
+        fail(
+            'A component name must be a structured field String.',
+            MALFORMED_INPUT
+        );
     }
     if (name === '' || name !== name.toLowerCase()) {
-        fail(`Component name "${name}" must be non-empty and lowercase.`);
+        fail(
+            `Component name "${name}" must be non-empty and lowercase.`,
+            MALFORMED_INPUT
+        );
     }
     if (name === '@signature-params') {
-        fail('"@signature-params" cannot be listed as a covered component.');
+        fail(
+            '"@signature-params" cannot be listed as a covered component.',
+            UNSUPPORTED
+        );
     }
     for (const [key, value] of params) {
         if (key === 'req') {
             if (value !== true) {
-                fail(`Component "${name}" has a req parameter that is not ?1.`);
+                fail(
+                    `Component "${name}" has a req parameter that is not ?1.`,
+                    UNSUPPORTED
+                );
             }
         } else if (key === 'key') {
             if (typeof value !== 'string') {
                 fail(
-                    `Component "${name}" has a key parameter that is not a String.`
+                    `Component "${name}" has a key parameter that is not a String.`,
+                    UNSUPPORTED
                 );
             }
             if (name.startsWith('@')) {
                 fail(
-                    `The key parameter applies only to fields, not "${name}".`
+                    `The key parameter applies only to fields, not "${name}".`,
+                    UNSUPPORTED
                 );
             }
         } else {
             fail(
-                `Component "${name}" has the parameter "${key}", which is not supported; supported: ${HTTPSIG_COMPONENT_PARAMS.join(', ')}.`
+                `Component "${name}" has the parameter "${key}", which is not supported; supported: ${HTTPSIG_COMPONENT_PARAMS.join(', ')}.`,
+                UNSUPPORTED
             );
         }
     }
     return item;
 }
 
-/** Order-insensitive identity of a component, for duplicate detection. */
-function identity([name, params]: Item): string {
+/**
+ * Order-insensitive identity of a component, for duplicate detection: two
+ * identifiers with the same name and the same parameters in any order have
+ * the same identity.
+ */
+export function componentIdentity([name, params]: Item): string {
     const keys = Array.from(params.entries())
         .map(([k, v]) => `${k}=${String(v)}`)
         .sort();
@@ -303,7 +337,10 @@ function derivedValue(
 ): string {
     if (name === '@status') {
         if (fromRequest || response === undefined) {
-            fail('"@status" applies only to a response (RFC 9421 §2.2.9).');
+            fail(
+                '"@status" applies only to a response (RFC 9421 §2.2.9).',
+                UNSUPPORTED
+            );
         }
         const status = response.status;
         if (!Number.isInteger(status) || status < 100 || status > 999) {
@@ -313,16 +350,18 @@ function derivedValue(
     }
     if (!REQUEST_DERIVED.has(name)) {
         fail(
-            `The derived component "${name}" is not supported; supported: ${HTTPSIG_DERIVED_COMPONENTS.join(', ')}.`
+            `The derived component "${name}" is not supported; supported: ${HTTPSIG_DERIVED_COMPONENTS.join(', ')}.`,
+            UNSUPPORTED
         );
     }
     if (!fromRequest) {
         fail(
-            `"${name}" targets a request; in a response it must carry req (RFC 9421 §2.4).`
+            `"${name}" targets a request; in a response it must carry req (RFC 9421 §2.4).`,
+            UNSUPPORTED
         );
     }
     if (request === undefined) {
-        fail(`"${name}" needs the request, and none was given.`);
+        fail(`"${name}" needs the request, and none was given.`, MISSING);
     }
     if (name === '@method') {
         // RFC 9421 §2.2.1: no transformation of the method's case.
@@ -336,7 +375,8 @@ function derivedValue(
         const host = fieldValue(request.headers, 'host');
         if (host === null || host === '') {
             fail(
-                '"@authority" is covered, but the URL is relative and there is no Host header.'
+                '"@authority" is covered, but the URL is relative and there is no Host header.',
+                MISSING
             );
         }
         return host.toLowerCase();
@@ -360,7 +400,10 @@ function memberValue(value: string, name: string, key: string): string {
     }
     const member = dict.get(key);
     if (member === undefined) {
-        fail(`Field "${name}" has no member "${key}" (RFC 9421 §2.1.2).`);
+        fail(
+            `Field "${name}" has no member "${key}" (RFC 9421 §2.1.2).`,
+            MISSING
+        );
     }
     return isInnerList(member)
         ? serializeInnerList(member)
@@ -385,9 +428,12 @@ export function signatureBase(args: SignatureBaseArgs): string {
     const seen = new Set<string>();
 
     for (const item of items) {
-        const id = identity(item);
+        const id = componentIdentity(item);
         if (seen.has(id)) {
-            fail(`Component ${serializeItem(item)} is covered more than once.`);
+            fail(
+                `Component ${serializeItem(item)} is covered more than once.`,
+                'duplicate-component'
+            );
         }
         seen.add(id);
 
@@ -395,7 +441,8 @@ export function signatureBase(args: SignatureBaseArgs): string {
         const req = cparams.get('req') === true;
         if (req && response === undefined) {
             fail(
-                `Component ${serializeItem(item)} carries req, but the signature targets a request (RFC 9421 §2.4).`
+                `Component ${serializeItem(item)} carries req, but the signature targets a request (RFC 9421 §2.4).`,
+                UNSUPPORTED
             );
         }
         const fromRequest = req || response === undefined;
@@ -407,13 +454,15 @@ export function signatureBase(args: SignatureBaseArgs): string {
             const message = fromRequest ? request : response;
             if (message === undefined) {
                 fail(
-                    `${serializeItem(item)} needs the request, and none was given.`
+                    `${serializeItem(item)} needs the request, and none was given.`,
+                    MISSING
                 );
             }
             const raw = fieldValue(message.headers, name);
             if (raw === null) {
                 fail(
-                    `${serializeItem(item)} is covered, but the ${fromRequest ? 'request' : 'response'} has no "${name}" field.`
+                    `${serializeItem(item)} is covered, but the ${fromRequest ? 'request' : 'response'} has no "${name}" field.`,
+                    MISSING
                 );
             }
             const key = cparams.get('key') as string | undefined;
@@ -472,7 +521,10 @@ function decodeByteSequence(
     try {
         return toByteArray(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
     } catch {
-        fail(`Content-Digest member "${algorithm}" is not valid base64.`);
+        fail(
+            `Content-Digest member "${algorithm}" is not valid base64.`,
+            'malformed-digest'
+        );
     }
 }
 
@@ -499,7 +551,10 @@ export function verifyContentDigest(
     try {
         dict = parseDictionary(header);
     } catch (e) {
-        fail(`Content-Digest is not a Dictionary: ${(e as Error).message}`);
+        fail(
+            `Content-Digest is not a Dictionary: ${(e as Error).message}`,
+            'malformed-digest'
+        );
     }
     const bytes = bodyBytes(body);
     let checked = 0;
@@ -511,7 +566,8 @@ export function verifyContentDigest(
             : member[0];
         if (value === undefined || !isByteSequence(value)) {
             fail(
-                `Content-Digest member "${algorithm}" is not a Byte Sequence.`
+                `Content-Digest member "${algorithm}" is not a Byte Sequence.`,
+                'malformed-digest'
             );
         }
         const received = decodeByteSequence(value as ByteSequence, algorithm);
@@ -522,7 +578,8 @@ export function verifyContentDigest(
     }
     if (checked === 0) {
         fail(
-            `Content-Digest carries no supported algorithm; supported: ${Object.keys(DIGESTS).join(', ')}.`
+            `Content-Digest carries no supported algorithm; supported: ${Object.keys(DIGESTS).join(', ')}.`,
+            'malformed-digest'
         );
     }
     return true;
