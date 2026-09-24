@@ -13,6 +13,8 @@ import { KeyState } from '../../src/keri/core/keyState.ts';
 import {
     HttpSigRefusal,
     checkBody,
+    checkPolicy,
+    effectiveKeyIndex,
     keyStateResolver,
     resolveKeyid,
     signRequest,
@@ -204,10 +206,22 @@ describe('verifyRequest', () => {
             resolver,
             now: NOW,
         });
-        checkBody(v, headers, BODY);
+        assert.isTrue(v.bodyOwed);
+        const done = checkBody(v, headers, BODY);
+        assert.isFalse(done.bodyOwed);
+        assert.isTrue(v.bodyOwed, 'the deferred result is left as it was');
         expect(await code(() => checkBody(v, headers, '{"x":1}'))).toBe(
             'digest-mismatch'
         );
+        const whole = await verifyRequest({
+            method: 'POST',
+            url: URL_,
+            headers,
+            body: BODY,
+            resolver,
+            now: NOW,
+        });
+        assert.isFalse(whole.bodyOwed);
 
         const bare = signed({ method: 'GET', body: null });
         const w = await verifyRequest({
@@ -258,6 +272,45 @@ describe('verifyRequest', () => {
     });
 });
 
+describe('checkPolicy (profile §3, §6)', () => {
+    it('refuses a policy below the minimum set or with a non-positive window', () => {
+        checkPolicy({});
+        checkPolicy({ request: ['@method', '@path', '@query', '@authority'] });
+        assert.throws(() => checkPolicy({ request: ['@method', '@path'] }));
+        assert.throws(() => checkPolicy({ maxAge: 0 }));
+        assert.throws(() => checkPolicy({ skew: -1 }));
+        assert.throws(() => checkPolicy({ maxAge: 1.5 }));
+        assert.throws(() => checkPolicy({ requireAuthority: true }));
+        assert.throws(() =>
+            checkPolicy({ authorities: 'keria.example.com' as never })
+        );
+    });
+
+    it('is applied by verifyRequest and verifyResponse', async () => {
+        await expect(
+            verifyRequest({
+                method: 'POST',
+                url: URL_,
+                headers: signed(),
+                body: BODY,
+                resolver,
+                now: NOW,
+                policy: { request: ['@method'] },
+            })
+        ).rejects.toThrow(/minimum set/);
+        await expect(
+            verifyResponse({
+                status: 200,
+                headers: {},
+                body: null,
+                request: { method: 'GET', url: URL_, headers: {} },
+                keyid: AGENT,
+                policy: { skew: 0 },
+            })
+        ).rejects.toThrow(/positive/);
+    });
+});
+
 describe('keyid resolution (profile §7)', () => {
     it('derives a non-transferable Ed25519 key without a resolver', async () => {
         const nt = new Signer({
@@ -283,7 +336,7 @@ describe('keyid resolution (profile §7)', () => {
         expect(await code(resolveKeyid(k1))).toBe('unsupported-algorithm');
     });
 
-    it('resolves key state and refuses multi-key signers', async () => {
+    it('resolves key state to its single effective signer (R4)', async () => {
         const state = (k: string[], kt: string | string[]) =>
             ({ i: CONTROLLER, k, kt }) as unknown as KeyState;
         const one = keyStateResolver(() =>
@@ -302,11 +355,59 @@ describe('keyid resolution (profile §7)', () => {
         const weighted = keyStateResolver(() =>
             state([controller.verfer.qb64], ['1'])
         );
-        expect(await code(resolveKeyid(CONTROLLER, weighted))).toBe(
+        assert.equal(
+            (await resolveKeyid(CONTROLLER, weighted)).qb64,
+            controller.verfer.qb64
+        );
+        // Signify's passcode rotation: [new, prior-next] with ['1','0'].
+        const rotated = keyStateResolver(() =>
+            state([controller.verfer.qb64, agent.verfer.qb64], ['1', '0'])
+        );
+        assert.equal(
+            (await resolveKeyid(CONTROLLER, rotated)).qb64,
+            controller.verfer.qb64
+        );
+        const group = keyStateResolver(() =>
+            state(
+                [controller.verfer.qb64, agent.verfer.qb64, agent.verfer.qb64],
+                '2'
+            )
+        );
+        expect(await code(resolveKeyid(CONTROLLER, group))).toBe(
             'unsupported-signer'
         );
         const none = keyStateResolver(() => undefined);
         expect(await code(resolveKeyid(CONTROLLER, none))).toBe('unknown-key');
+    });
+
+    it('names the effective key index', async () => {
+        const keys = ['a', 'b'];
+        assert.equal(effectiveKeyIndex(['a'], '1'), 0);
+        assert.equal(effectiveKeyIndex(keys, ['1', '0']), 0);
+        assert.equal(effectiveKeyIndex(keys, ['0', '1']), 1);
+        expect(await code(() => effectiveKeyIndex(keys, '1'))).toBe(
+            'unsupported-signer'
+        );
+        expect(await code(() => effectiveKeyIndex(keys, ['1/2', '1/2']))).toBe(
+            'unsupported-signer'
+        );
+    });
+
+    it('looks legacy Signify-Resource up by its first key, without R4', async () => {
+        const multi = keyStateResolver(
+            () =>
+                ({
+                    i: CONTROLLER,
+                    k: [controller.verfer.qb64, agent.verfer.qb64],
+                    kt: '1',
+                }) as unknown as KeyState
+        );
+        assert.equal(
+            (await multi.legacy!(CONTROLLER))!.qb64,
+            controller.verfer.qb64
+        );
+        const none = keyStateResolver(() => undefined);
+        assert.isNull(await none.legacy!(CONTROLLER));
     });
 
     it('surfaces unsupported-signer through verifyRequest', async () => {
@@ -396,6 +497,24 @@ describe('verifyResponse (profile §8)', () => {
         expect(
             await code(verifyResponse({ ...base, status: 500, headers: {} }))
         ).toBe('missing-signature');
+    });
+
+    it('defers a response body check visibly', async () => {
+        const req = request();
+        const headers = respond(req);
+        const v = await verifyResponse({
+            status: 200,
+            headers,
+            request: req,
+            keyid: AGENT,
+            resolver,
+            now: NOW,
+        });
+        assert.isTrue(v.bodyOwed);
+        assert.isFalse(checkBody(v, headers, '{"done": true}').bodyOwed);
+        expect(await code(() => checkBody(v, headers, '{"done": 0}'))).toBe(
+            'digest-mismatch'
+        );
     });
 
     it('refuses a canonical response to a legacy request', async () => {

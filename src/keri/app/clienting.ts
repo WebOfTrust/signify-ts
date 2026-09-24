@@ -4,7 +4,7 @@ import {
     SignedHeaderAuthenticator,
     Authenticator,
 } from '../core/authing.ts';
-import { HttpSigRefusal } from '../core/httpsigning.ts';
+import { HttpSigRefusal, effectiveKeyIndex } from '../core/httpsigning.ts';
 import { HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../core/httping.ts';
 import { components } from '../../types/keria-api-schema.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
@@ -358,21 +358,20 @@ export class SignifyClient {
                 : AuthMode.SignedHeaders);
 
         if (mode === AuthMode.RFC9421) {
+            // Profile R4: sign with the single effective signer, the one
+            // current key that satisfies the threshold alone.
             const state = hab.state;
-            if (
-                state.k.length !== 1 ||
-                Array.isArray(state.kt) ||
-                state.kt !== '1' ||
-                keeper.signers.length !== 1
-            ) {
+            const index = effectiveKeyIndex(state.k, state.kt);
+            const signer = keeper.signers[index];
+            if (signer?.verfer.qb64 !== state.k[index]) {
                 throw new HttpSigRefusal(
                     'unsupported-signer',
-                    `${hab.prefix} is not a single-key signer; canonical mode signs only for those.`
+                    `${hab.prefix}'s keeper does not hold its effective signing key ${state.k[index]}.`
                 );
             }
             const authenticator = new HttpSigAuthenticator(
-                keeper.signers[0],
-                keeper.signers[0].verfer
+                signer,
+                signer.verfer
             );
             return await authenticator.prepare(
                 new Request(url, {

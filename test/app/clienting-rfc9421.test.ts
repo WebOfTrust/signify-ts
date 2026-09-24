@@ -314,6 +314,31 @@ describe('createSignedRequest', () => {
         );
     });
 
+    test('signs with the single effective signer (profile R4)', async () => {
+        mockKeria({ mode: 'legacy' });
+        const c = await client(AuthMode.SignedHeaders);
+        const state = mockGetAID.state as { k: string[]; kt: unknown };
+        const saved = { k: state.k, kt: state.kt };
+        const other = 'DGd-3Zx6b7ql1gnccAXOgBHVTgMUrPicoXIFe8FA7eYq';
+        const sign = () =>
+            c.createSignedRequest('aid1', 'http://example.com/test', init(), {
+                authMode: AuthMode.RFC9421,
+            });
+        try {
+            // A passcode-rotated shape: only key 0 satisfies ['1','0'].
+            state.k = [saved.k[0], other];
+            state.kt = ['1', '0'];
+            const v = await verifyThirdParty(await sign());
+            assert.equal(v.verfer.qb64, saved.k[0]);
+            // Either of two keys suffices: no single effective signer.
+            state.kt = '1';
+            expect(await refusal(sign())).toBe('unsupported-signer');
+        } finally {
+            state.k = saved.k;
+            state.kt = saved.kt;
+        }
+    });
+
     test('refuses ESSR', async () => {
         mockKeria({ mode: 'legacy' });
         const c = await client(AuthMode.SignedHeaders);

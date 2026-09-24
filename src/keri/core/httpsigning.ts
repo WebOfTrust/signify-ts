@@ -35,6 +35,7 @@ import { desiginput, Inputage, legacySignatureBase } from './httping.ts';
 import { designature } from '../end/ending.ts';
 import { Cigar } from './cigar.ts';
 import { Siger } from './siger.ts';
+import { Tholder } from './tholder.ts';
 import type { KeyState } from './keyState.ts';
 import {
     ComponentIdentifier,
@@ -51,9 +52,11 @@ import {
 } from './httpsig.ts';
 
 /**
- * The refusal codes of profile §9, in the order a verifier checks them. A
- * message with several defects is refused with the first code that applies.
- * `uncovered-body` is the one signer-side code.
+ * The refusal codes of profile §9, in the order §9 lists them. A message with
+ * several defects is refused with the first code that applies, except that
+ * `unauthenticated` (an unsigned 401 answering a canonical request) is
+ * response-only and checked before anything else. `uncovered-body` is the
+ * one signer-side code.
  */
 export const HTTPSIG_REFUSAL_CODES = [
     'missing-signature',
@@ -75,19 +78,18 @@ export const HTTPSIG_REFUSAL_CODES = [
     'signature-mismatch',
     'signature-stale',
     'signature-expired',
+    'unauthenticated',
     'malformed-digest',
     'digest-mismatch',
     'uncovered-body',
 ] as const;
 
 /**
- * A neutral refusal code. Besides the §9 codes, `unauthenticated` reports an
- * unsigned 401 answering a canonical request (profile §8): the caller learns
- * that authentication failed, and the response body is not trusted.
+ * A neutral refusal code of profile §9. `unauthenticated` reports an unsigned
+ * 401 answering a canonical request (profile §8): the caller learns that
+ * authentication failed, and the response body is not trusted.
  */
-export type HttpSigCode =
-    | (typeof HTTPSIG_REFUSAL_CODES)[number]
-    | 'unauthenticated';
+export type HttpSigCode = (typeof HTTPSIG_REFUSAL_CODES)[number];
 
 /**
  * A message refused under the profile. `code` is the neutral code, which is
@@ -127,9 +129,16 @@ export const HTTPSIG_REQUEST_DEFAULT: readonly string[] = [
     '@query',
 ];
 
-/** Verifier policy. Every field is optional; defaults are profile §3 and §6. */
+/**
+ * Verifier policy. Every field is optional; defaults are profile §3 and §6.
+ * A policy may add to the minimum set but never go below it, and a policy
+ * that tries is a caller error (`Error`), not a refusal ({@link checkPolicy}).
+ */
 export interface HttpSigPolicy {
-    /** Components every request must cover. Default {@link HTTPSIG_REQUEST_MINIMUM}. */
+    /**
+     * Components every request must cover. Default
+     * {@link HTTPSIG_REQUEST_MINIMUM}; must include all of it.
+     */
     request?: readonly string[];
     /**
      * Require `@authority` in requests, and compare it with `authorities`.
@@ -137,26 +146,42 @@ export interface HttpSigPolicy {
      * signer's own agent should.
      */
     requireAuthority?: boolean;
-    /** The authorities this verifier serves, when `requireAuthority` is set. */
+    /**
+     * The authorities this verifier serves; required, and non-empty, when
+     * `requireAuthority` is set. Compared lowercased, with `:80` and `:443`
+     * removed.
+     */
     authorities?: readonly string[];
-    /** Seconds a signature stays fresh after `created`. Default 300. */
+    /** Seconds a signature stays fresh after `created`. Default 300; positive. */
     maxAge?: number;
-    /** Tolerated clock skew in seconds. Default 60. */
+    /** Tolerated clock skew in seconds. Default 60; positive. */
     skew?: number;
 }
 
 /** Seconds since the epoch, or a clock that returns them. */
 export type HttpSigClock = number | (() => number);
 
+/** A key lookup result: a key, or nothing when the verifier holds no KEL. */
+export type HttpSigKeyLookup =
+    | Verfer
+    | null
+    | undefined
+    | Promise<Verfer | null | undefined>;
+
 /**
- * Resolves a transferable AID to its current signing key (profile §7, R1).
- * Return `null` or `undefined` for an AID the verifier holds no KEL for. To
- * refuse a key state, throw an {@link HttpSigRefusal}, such as
- * `unsupported-signer` for more than one key.
+ * Resolves a transferable AID to its single effective signing key (profile
+ * §7, R1 and R4). Return `null` or `undefined` for an AID the verifier holds
+ * no KEL for. To refuse a key state, throw an {@link HttpSigRefusal}, such as
+ * `unsupported-signer` for a state without a single effective signer.
+ *
+ * `legacy`, when present, is the legacy-mode lookup of profile §8: the
+ * first current key of the `Signify-Resource` AID, with none of §7's rules.
+ * A resolver without it is called as is for legacy messages too.
  */
-export type HttpSigKeyResolver = (
-    keyid: string
-) => Verfer | null | undefined | Promise<Verfer | null | undefined>;
+export interface HttpSigKeyResolver {
+    (keyid: string): HttpSigKeyLookup;
+    legacy?: (aid: string) => HttpSigKeyLookup;
+}
 
 /** A request, with its content when the caller has it. */
 export interface HttpSigMessageRequest extends HttpSigRequest {
@@ -164,7 +189,12 @@ export interface HttpSigMessageRequest extends HttpSigRequest {
     body?: Uint8Array | string | null;
 }
 
-/** What a successful verification established. */
+/**
+ * What a verification established. When `bodyOwed` is true it is NOT yet a
+ * completed verification: the signature and headers passed, but the body was
+ * not supplied, and {@link checkBody} must run, and its result be used,
+ * before the message reaches application code (profile §5).
+ */
 export interface HttpSigVerified {
     mode: HttpSigMode;
     /** The signer's AID. In legacy mode, the Signify-Resource value. */
@@ -178,6 +208,11 @@ export interface HttpSigVerified {
     verfer: Verfer;
     /** The signature base that was verified. */
     base: string;
+    /**
+     * True while the body check is still owed: the body was left `undefined`
+     * and {@link checkBody} has not run. Always false in legacy mode.
+     */
+    bodyOwed: boolean;
 }
 
 /** The header fields a signer adds to a message. */
@@ -232,7 +267,8 @@ export interface HttpSigVerifyRequestArgs {
     headers: HttpSigHeaders;
     /**
      * The content. Leave `undefined` to verify the headers before reading
-     * the body, then call {@link checkBody} once it has been read.
+     * the body; the result then has `bodyOwed` set, and {@link checkBody}
+     * must run once the body has been read.
      */
     body?: Uint8Array | string | null;
     resolver?: HttpSigKeyResolver;
@@ -245,14 +281,21 @@ export interface HttpSigVerifyRequestArgs {
 export interface HttpSigVerifyResponseArgs {
     status: number;
     headers: HttpSigHeaders;
-    /** The response content; `null` or empty for none. */
-    body: Uint8Array | string | null;
+    /**
+     * The response content; `null` or empty for none. `undefined` defers
+     * the body check: the result has `bodyOwed` set, and {@link checkBody}
+     * must follow, as for {@link verifyRequest}.
+     */
+    body?: Uint8Array | string | null;
     /** The request this response answers, as the client sent it. */
     request: HttpSigMessageRequest;
     /** The AID the client expects to be talking to (profile §7, R1). */
     keyid: string;
     resolver?: HttpSigKeyResolver;
-    /** The mode the request was signed in. Default `canonical`. */
+    /**
+     * The mode the request was signed in. Default: the mode of the request's
+     * own Signature header, or `canonical` when it carries none.
+     */
     requestMode?: HttpSigMode;
     policy?: HttpSigPolicy;
     now?: HttpSigClock;
@@ -312,8 +355,10 @@ function bytesOf(body: Uint8Array | string | null | undefined): Uint8Array {
 }
 
 /**
- * Whether a message has a body for the purpose of the minimum set (profile
- * §3): Content-Length above zero, any Transfer-Encoding, or content in hand.
+ * Whether a request has a body for the purpose of the minimum set (profile
+ * §3): content in hand, any Transfer-Encoding, or a Content-Length above zero.
+ * A Content-Length that is not a plain decimal is no evidence of an empty
+ * body, so it counts as one.
  */
 function hasBody(
     headers: Headers,
@@ -322,7 +367,53 @@ function hasBody(
     if (bytesOf(body).length > 0) return true;
     if (headers.has('transfer-encoding')) return true;
     const length = headers.get('content-length');
-    return length !== null && Number(length) > 0;
+    if (length === null) return false;
+    return !/^[0-9]+$/.test(length.trim()) || Number(length) > 0;
+}
+
+/** Lowercase, with `:80` or `:443` removed whatever the scheme. */
+function normalizeAuthority(authority: string): string {
+    return authority.toLowerCase().replace(/:(80|443)$/, '');
+}
+
+/**
+ * Refuse, as a caller error, a policy below the profile's floor (profile §3,
+ * §6): a request minimum set lacking any of {@link HTTPSIG_REQUEST_MINIMUM},
+ * a `maxAge` or `skew` that is not a positive integer, or `requireAuthority`
+ * without the authorities to compare with.
+ */
+export function checkPolicy(policy: HttpSigPolicy): void {
+    if (policy.request !== undefined) {
+        const covered = identities(policy.request.map(componentIdentifier));
+        for (const component of HTTPSIG_REQUEST_MINIMUM) {
+            if (
+                !covered.has(componentIdentity(componentIdentifier(component)))
+            ) {
+                throw new Error(
+                    `Policy request set must include ${component}; a policy may not go below the profile's minimum set.`
+                );
+            }
+        }
+    }
+    for (const key of ['maxAge', 'skew'] as const) {
+        const value = policy[key];
+        if (value !== undefined && !(Number.isInteger(value) && value > 0)) {
+            throw new Error(`Policy ${key} must be a positive integer.`);
+        }
+    }
+    if (policy.authorities !== undefined) {
+        if (
+            typeof policy.authorities === 'string' ||
+            !Array.isArray(policy.authorities)
+        ) {
+            throw new Error('Policy authorities must be an array.');
+        }
+    }
+    if (policy.requireAuthority && !policy.authorities?.length) {
+        throw new Error(
+            'Policy requireAuthority needs the authorities this verifier serves.'
+        );
+    }
 }
 
 function nowSeconds(now: HttpSigClock | undefined): number {
@@ -565,13 +656,17 @@ function requestMinimum(
     return required;
 }
 
+/**
+ * A response's body is its content: its Content-Length is no evidence, since
+ * a HEAD or 304 response announces a length it does not send. A deferred
+ * body adds nothing here; {@link checkBody} catches uncovered content.
+ */
 function responseMinimum(
-    headers: Headers,
     body: Uint8Array | string | null | undefined,
     request: HttpSigMessageRequest
 ): string[] {
     const required = [...RESPONSE_MINIMUM];
-    if (hasBody(headers, body)) required.push(`"${CONTENT_DIGEST}"`);
+    if (bytesOf(body).length > 0) required.push(`"${CONTENT_DIGEST}"`);
     if (hasBody(toHeaders(request.headers), request.body)) {
         required.push('"content-digest";req');
     }
@@ -588,7 +683,7 @@ export function responseComponents(
     request: HttpSigMessageRequest,
     body?: Uint8Array | string | null
 ): string[] {
-    return responseMinimum(new Headers(), body, request);
+    return responseMinimum(body, request);
 }
 
 function checkAlgorithm(verfer: Verfer, params: Parameters): void {
@@ -661,32 +756,71 @@ export async function resolveKeyid(
 }
 
 /**
- * A resolver over KERIA-style key state records (profile §7, R1 and R4).
- * `lookup` returns the current key state for an AID, or nothing when it
- * holds none. A key state with other than exactly one key and a threshold of
- * one is refused as `unsupported-signer`.
+ * The index of a key state's single effective signer (profile §7, R4): the
+ * one current signing key that satisfies the signing threshold on its own.
+ * A plain single-key state qualifies, and so does a Signify controller after
+ * its passcode is rotated (keys `[new, prior-next]`, threshold `['1','0']`),
+ * where only the first key does. Any other state, such as a 2-of-3 group or
+ * `1` over two keys, is refused as `unsupported-signer`.
+ */
+export function effectiveKeyIndex(
+    keys: readonly string[],
+    threshold: KeyState['kt']
+): number {
+    let tholder: Tholder;
+    try {
+        tholder = new Tholder({ sith: threshold });
+    } catch (e) {
+        refuse(
+            'unsupported-signer',
+            `Signing threshold ${JSON.stringify(threshold)} is not usable: ${(e as Error).message}`
+        );
+    }
+    const alone = keys
+        .map((_, index) => index)
+        .filter((index) => tholder.satisfy([index]));
+    if (alone.length !== 1) {
+        refuse(
+            'unsupported-signer',
+            `Threshold ${JSON.stringify(threshold)} over ${keys.length} keys has ${alone.length === 0 ? 'no' : 'more than one'} key that satisfies it alone; canonical mode needs a single effective signer.`
+        );
+    }
+    return alone[0];
+}
+
+function verferOf(qb64: string): Verfer {
+    try {
+        return new Verfer({ qb64 });
+    } catch (e) {
+        refuse('unsupported-algorithm', (e as Error).message);
+    }
+}
+
+/**
+ * A resolver over KERIA-style key state records. `lookup` returns the
+ * current key state for an AID, or nothing when it holds none.
+ *
+ * Canonical mode (profile §7, R1 and R4) yields the single effective signer
+ * ({@link effectiveKeyIndex}). Its `legacy` lookup (profile §8) yields the
+ * first current key with no threshold rule, as KERIA does today.
  */
 export function keyStateResolver(
     lookup: (
         aid: string
     ) => KeyState | null | undefined | Promise<KeyState | null | undefined>
 ): HttpSigKeyResolver {
-    return async (keyid: string) => {
+    const resolver: HttpSigKeyResolver = async (keyid: string) => {
         const state = await lookup(keyid);
         if (state === null || state === undefined) return null;
         const keys = state.k ?? [];
-        if (keys.length !== 1 || Array.isArray(state.kt) || state.kt !== '1') {
-            refuse(
-                'unsupported-signer',
-                `${keyid} has ${keys.length} signing keys and threshold ${JSON.stringify(state.kt)}; only single-key signers are supported.`
-            );
-        }
-        try {
-            return new Verfer({ qb64: keys[0] });
-        } catch (e) {
-            refuse('unsupported-algorithm', (e as Error).message);
-        }
+        return verferOf(keys[effectiveKeyIndex(keys, state.kt)]);
     };
+    resolver.legacy = async (aid: string) => {
+        const state = await lookup(aid);
+        const first = state?.k?.[0];
+        return first === undefined ? null : verferOf(first);
+    };
+    return resolver;
 }
 
 function buildBase(
@@ -718,9 +852,10 @@ function buildBase(
 
 function authorityOf(url: string, headers: Headers): string | null {
     if (/^[a-z][a-z0-9+.-]*:/i.test(url)) {
-        return new URL(url).host.toLowerCase();
+        return normalizeAuthority(new URL(url).host);
     }
-    return headers.get('host')?.toLowerCase() ?? null;
+    const host = headers.get('host');
+    return host === null ? null : normalizeAuthority(host.trim());
 }
 
 function checkFreshness(
@@ -772,25 +907,30 @@ function covers(verified: HttpSigVerified, component: string): boolean {
 }
 
 /**
- * The body stage of a request verified before its body was read (profile §3
+ * The body stage of a message verified before its body was read (profile §3
  * and §5): a non-empty body without a covered `content-digest` is
  * `insufficient-coverage`, and a covered digest is recomputed over the body.
- * Does nothing for a legacy message.
+ * Checks nothing for a legacy message.
+ *
+ * Returns the verification with `bodyOwed` cleared. Use the returned value;
+ * the one passed in still says the body check is owed.
  */
 export function checkBody(
     verified: HttpSigVerified,
     headers: HttpSigHeaders,
     body: Uint8Array | string | null
-): void {
-    if (verified.mode === 'legacy') return;
-    const covered = covers(verified, `"${CONTENT_DIGEST}"`);
-    if (!covered && bytesOf(body).length > 0) {
-        refuse(
-            'insufficient-coverage',
-            'A body arrived and its content-digest is not covered.'
-        );
+): HttpSigVerified {
+    if (verified.mode === 'canonical') {
+        const covered = covers(verified, `"${CONTENT_DIGEST}"`);
+        if (!covered && bytesOf(body).length > 0) {
+            refuse(
+                'insufficient-coverage',
+                'A body arrived and its content-digest is not covered.'
+            );
+        }
+        if (covered) checkDigest(toHeaders(headers), body);
     }
-    if (covered) checkDigest(toHeaders(headers), body);
+    return { ...verified, bodyOwed: false };
 }
 
 async function verifyCanonical(
@@ -815,7 +955,7 @@ async function verifyCanonical(
     const base = buildBase(items, params, request, response);
     if (target === 'request' && policy.requireAuthority) {
         const authority = authorityOf(request.url, toHeaders(request.headers));
-        const served = (policy.authorities ?? []).map((a) => a.toLowerCase());
+        const served = (policy.authorities ?? []).map(normalizeAuthority);
         if (authority === null || !served.includes(authority)) {
             refuse(
                 'signature-mismatch',
@@ -842,6 +982,7 @@ async function verifyCanonical(
         components: items.map(serializeItem),
         verfer,
         base,
+        bodyOwed: false,
     };
 }
 
@@ -920,18 +1061,22 @@ export function verifyLegacy(args: {
         components: [...first.fields],
         verfer: args.verfer,
         base,
+        bodyOwed: false,
     };
 }
 
 /**
  * Legacy mode resolves Signify-Resource by lookup alone, as KERIA does with
- * its kevers today; the canonical derivation-code rules of §7 do not apply.
+ * its kevers today (profile §8): the resolver's `legacy` lookup when it has
+ * one, else the resolver itself. §7's derivation-code and R4 rules do not
+ * apply.
  */
 async function resolveLegacy(
     resource: string,
     resolver: HttpSigKeyResolver | undefined
 ): Promise<Verfer> {
-    const verfer = resolver === undefined ? null : await resolver(resource);
+    const lookup = resolver?.legacy ?? resolver;
+    const verfer = lookup === undefined ? null : await lookup(resource);
     if (verfer === null || verfer === undefined) {
         refuse('unknown-key', `No key state is known for ${resource}.`);
     }
@@ -948,13 +1093,18 @@ function pathOf(url: string): string {
  * Verify a signed request under the profile. Canonical requests run the
  * checks of §9 in order; legacy requests are verified as KERIA does today,
  * with the key resolved from `Signify-Resource`, unless `acceptLegacy` is
- * false. Throws {@link HttpSigRefusal}.
+ * false. Throws {@link HttpSigRefusal}, and `Error` for a policy below the
+ * profile's floor ({@link checkPolicy}).
+ *
+ * Without `body` the result has `bodyOwed` set: pass the body to
+ * {@link checkBody} once read, and use what it returns.
  */
 export async function verifyRequest(
     args: HttpSigVerifyRequestArgs
 ): Promise<HttpSigVerified> {
     const headers = toHeaders(args.headers);
     const policy = args.policy ?? {};
+    checkPolicy(policy);
     const signature = headers.get(SIGNATURE);
     if (signature === null) {
         refuse('missing-signature', 'The request is not signed.');
@@ -999,26 +1149,42 @@ export async function verifyRequest(
         policy,
         args.now
     );
-    if (args.body !== undefined) checkBody(verified, headers, args.body);
-    return verified;
+    if (args.body === undefined) return { ...verified, bodyOwed: true };
+    return checkBody(verified, headers, args.body);
+}
+
+/**
+ * The mode a client's request was sent in, from its own Signature header:
+ * `canonical` when it carries none or the header is neither form.
+ */
+function modeOfRequest(request: HttpSigMessageRequest): HttpSigMode {
+    const signature = toHeaders(request.headers).get(SIGNATURE);
+    if (signature === null) return 'canonical';
+    try {
+        return detectMode(signature);
+    } catch {
+        return 'canonical';
+    }
 }
 
 /**
  * Verify a response under the profile, as a client that sent `request`.
  *
- * After a canonical request: an unsigned 401 is refused as `unauthenticated`
- * and any other unsigned response as `missing-signature`; a legacy response
- * is `mode-mismatch`; the response must be signed by `keyid`, cover the
- * response minimum set, be fresh, and match its digest. There is no fallback
- * to legacy (profile §8). After a legacy request, the legacy response is
- * verified as {@link SignedHeaderAuthenticator} does.
+ * After a canonical request an unsigned 401 is refused as `unauthenticated`,
+ * before any other check, and any other unsigned response as
+ * `missing-signature`. A response in the other mode than the request, in
+ * either direction, is `mode-mismatch`, with no fallback (profile §8).
+ * A canonical response must be signed by `keyid`, cover the response
+ * minimum set, be fresh, and match its digest. After a legacy request, the
+ * legacy response is verified as {@link SignedHeaderAuthenticator} does.
  */
 export async function verifyResponse(
     args: HttpSigVerifyResponseArgs
 ): Promise<HttpSigVerified> {
     const headers = toHeaders(args.headers);
     const policy = args.policy ?? {};
-    const requestMode = args.requestMode ?? 'canonical';
+    checkPolicy(policy);
+    const requestMode = args.requestMode ?? modeOfRequest(args.request);
     const signature = headers.get(SIGNATURE);
     if (signature === null) {
         if (args.status === 401 && requestMode === 'canonical') {
@@ -1060,7 +1226,7 @@ export async function verifyResponse(
     const verified = await verifyCanonical(
         'response',
         parsed,
-        responseMinimum(headers, args.body, args.request),
+        responseMinimum(args.body, args.request),
         {
             method: args.request.method,
             url: args.request.url,
@@ -1072,10 +1238,8 @@ export async function verifyResponse(
         policy,
         args.now
     );
-    if (covers(verified, `"${CONTENT_DIGEST}"`)) {
-        checkDigest(headers, args.body);
-    }
-    return verified;
+    if (args.body === undefined) return { ...verified, bodyOwed: true };
+    return checkBody(verified, headers, args.body);
 }
 
 function sign(
@@ -1177,7 +1341,7 @@ export function signResponse(
 ): HttpSigSignedFields {
     const headers = new Headers(toHeaders(args.headers));
     const body = bytesOf(args.body);
-    const required = responseMinimum(new Headers(), body, args.request);
+    const required = responseMinimum(body, args.request);
     const components = args.components ?? required;
     return sign(
         'response',
