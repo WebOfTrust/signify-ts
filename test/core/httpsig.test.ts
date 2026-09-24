@@ -549,4 +549,17 @@ describe('Content-Digest (RFC 9530)', () => {
             /not a Dictionary/
         );
     });
+
+    it('parses every member before comparing any', () => {
+        // A mismatching sha-256 ahead of a malformed sha-512 is malformed,
+        // not a mismatch: the field is parsed whole first.
+        assertRefused(
+            () =>
+                verifyContentDigest(
+                    `${contentDigest('x')}, sha-512="abc"`,
+                    RFC_REQUEST_BODY
+                ),
+            /not a Byte Sequence/
+        );
+    });
 });

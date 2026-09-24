@@ -536,17 +536,14 @@ function equalBytes(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 /**
- * Check a Content-Digest field value against a body.
- *
- * Every sha-256 and sha-512 member must match; other algorithms are ignored,
- * as RFC 9530 §2 allows. Returns false on a mismatch. Throws
- * {@link HttpSigError} when the field cannot be parsed or carries no
- * algorithm this module can check, since then nothing was verified.
+ * Parse a Content-Digest field value into the digests this module can check,
+ * keyed by algorithm (RFC 9530). Members of other algorithms are ignored, as
+ * RFC 9530 §2 allows. Throws {@link HttpSigError} with code
+ * `malformed-digest` when the field cannot be parsed, when a recognized
+ * member is not a Byte Sequence, or when no member is recognized, since then
+ * nothing could be verified.
  */
-export function verifyContentDigest(
-    header: string,
-    body: Uint8Array | string
-): boolean {
+export function parseContentDigest(header: string): Map<string, Uint8Array> {
     let dict;
     try {
         dict = parseDictionary(header);
@@ -556,11 +553,9 @@ export function verifyContentDigest(
             'malformed-digest'
         );
     }
-    const bytes = bodyBytes(body);
-    let checked = 0;
+    const digests = new Map<string, Uint8Array>();
     for (const [algorithm, member] of dict) {
-        const fn = DIGESTS[algorithm];
-        if (fn === undefined) continue;
+        if (DIGESTS[algorithm] === undefined) continue;
         const value: BareItem | undefined = isInnerList(member)
             ? undefined
             : member[0];
@@ -570,17 +565,48 @@ export function verifyContentDigest(
                 'malformed-digest'
             );
         }
-        const received = decodeByteSequence(value as ByteSequence, algorithm);
-        if (!equalBytes(received, fn(bytes))) {
-            return false;
-        }
-        checked += 1;
+        digests.set(
+            algorithm,
+            decodeByteSequence(value as ByteSequence, algorithm)
+        );
     }
-    if (checked === 0) {
+    if (digests.size === 0) {
         fail(
             `Content-Digest carries no supported algorithm; supported: ${Object.keys(DIGESTS).join(', ')}.`,
             'malformed-digest'
         );
     }
+    return digests;
+}
+
+/**
+ * Compare digests from {@link parseContentDigest} with a body: true when
+ * every one matches.
+ */
+export function matchContentDigest(
+    digests: Map<string, Uint8Array>,
+    body: Uint8Array | string
+): boolean {
+    const bytes = bodyBytes(body);
+    for (const [algorithm, received] of digests) {
+        if (!equalBytes(received, DIGESTS[algorithm](bytes))) return false;
+    }
     return true;
+}
+
+/**
+ * Check a Content-Digest field value against a body.
+ *
+ * Every sha-256 and sha-512 member must match; other algorithms are ignored,
+ * as RFC 9530 §2 allows. The whole field is parsed before any member is
+ * compared, so a malformed member is reported as such even when another
+ * member mismatches. Returns false on a mismatch. Throws
+ * {@link HttpSigError} when the field cannot be parsed or carries no
+ * algorithm this module can check, since then nothing was verified.
+ */
+export function verifyContentDigest(
+    header: string,
+    body: Uint8Array | string
+): boolean {
+    return matchContentDigest(parseContentDigest(header), body);
 }
