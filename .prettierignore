@@ -4,3 +4,5 @@ package.json
 package-lock.json
 .github/
 MAINTAINERS.md
+# Shared RFC 9421 vectors are verbatim copies; never reformat them.
+test/vectors/keri-rfc9421/*.json
