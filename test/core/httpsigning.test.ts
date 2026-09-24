@@ -10,7 +10,11 @@ import { Matter, MtrDex } from '../../src/keri/core/matter.ts';
 import { Signer } from '../../src/keri/core/signer.ts';
 import { Verfer } from '../../src/keri/core/verfer.ts';
 import { KeyState } from '../../src/keri/core/keyState.ts';
+import { Siger } from '../../src/keri/core/siger.ts';
+import { IdrDex } from '../../src/keri/core/indexer.ts';
+import { SignedHeaderAuthenticator } from '../../src/keri/core/authing.ts';
 import {
+    HttpSigKeyResolver,
     HttpSigRefusal,
     checkBody,
     checkPolicy,
@@ -455,6 +459,56 @@ describe('keyid resolution (profile §7)', () => {
         );
         const none = keyStateResolver(() => undefined);
         assert.isNull(await none.legacy!(CONTROLLER));
+    });
+
+    it('refuses, never throws, a legacy signature the key cannot check', async () => {
+        const headers = new Headers({
+            'Signify-Resource': CONTROLLER,
+            'Signify-Timestamp': '2026-01-01T00:00:00.000000+00:00',
+        });
+        const prepared = await new SignedHeaderAuthenticator(
+            controller,
+            controller.verfer
+        ).prepare(new Request(URL_, { headers }), CONTROLLER, AGENT);
+        const legacy: Record<string, string> = {};
+        prepared.headers.forEach((value, name) => (legacy[name] = value));
+        const verify = (h: Record<string, string>, r: HttpSigKeyResolver) =>
+            code(
+                verifyRequest({
+                    method: 'GET',
+                    url: URL_,
+                    headers: h,
+                    resolver: r,
+                })
+            );
+        expect(await verify(legacy, resolver)).toBe('accepted');
+        // An Ed448 signature is 114 bytes, which Ed25519 verification
+        // rejects by throwing rather than by returning false.
+        const ed448 = new Siger({
+            raw: new Uint8Array(114).fill(1),
+            code: IdrDex.Ed448_Sig,
+            index: 0,
+        });
+        expect(
+            await verify(
+                {
+                    ...legacy,
+                    signature: `indexed="?1";signify="${ed448.qb64}"`,
+                },
+                resolver
+            )
+        ).toBe('signature-mismatch');
+        // A secp256k1 key never reaches verification: no Verfer holds one,
+        // and the key-state resolver refuses it.
+        const k1 = keyStateResolver(
+            () =>
+                ({
+                    i: CONTROLLER,
+                    k: [`1AAB${'A'.repeat(44)}`],
+                    kt: '1',
+                }) as unknown as KeyState
+        );
+        expect(await verify(legacy, k1)).toBe('unsupported-algorithm');
     });
 
     it('surfaces unsupported-signer through verifyRequest', async () => {

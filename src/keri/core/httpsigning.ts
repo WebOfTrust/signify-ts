@@ -1087,7 +1087,20 @@ export function verifyLegacy(args: {
         if (!cig) {
             refuse('missing-signature-label', `No ${i.name} signature.`);
         }
-        if (!args.verfer.verify(cig.raw, base)) {
+        // Verification throws, rather than returning false, for a signature
+        // the key cannot check, such as a 114-byte Ed448 signature under an
+        // Ed25519 key. Legacy carries no alg to refuse it on beforehand, so
+        // it is a signature that does not verify (§9).
+        let valid: boolean;
+        try {
+            valid = args.verfer.verify(cig.raw, base);
+        } catch (e) {
+            refuse(
+                'signature-mismatch',
+                `Signature for ${i.keyid} cannot be checked: ${(e as Error).message}`
+            );
+        }
+        if (!valid) {
             refuse('signature-mismatch', `Signature for ${i.keyid} invalid.`);
         }
     }
