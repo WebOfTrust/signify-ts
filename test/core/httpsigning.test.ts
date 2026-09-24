@@ -17,6 +17,7 @@ import {
     effectiveKeyIndex,
     keyStateResolver,
     resolveKeyid,
+    responseComponents,
     signRequest,
     signResponse,
     verifyRequest,
@@ -548,6 +549,87 @@ describe('verifyResponse (profile §8)', () => {
                 now: NOW + 10000,
             })
         ).rejects.toThrow(/check the local clock/);
+    });
+});
+
+describe('the response minimum reads the request content (profile §3, version 1)', () => {
+    // Headers that announce a body the request did not carry: the header-time
+    // request rule would count them, and the response minimum must not.
+    const announced = {
+        'transfer-encoding': 'chunked',
+        'content-length': '5',
+    };
+    const empty = () => ({
+        method: 'POST',
+        url: URL_,
+        headers: announced,
+        body: new Uint8Array(),
+    });
+    const respondTo = (
+        req: Parameters<typeof signResponse>[0]['request'],
+        components?: string[]
+    ): Record<string, string> => ({
+        ...signResponse({
+            status: 200,
+            body: '{"done": true}',
+            request: req,
+            signer: agent,
+            keyid: AGENT,
+            created: NOW,
+            components,
+        }),
+    });
+
+    it('leaves "content-digest";req out when the content was empty, whatever the headers say', async () => {
+        const req = empty();
+        const v = await verifyResponse({
+            status: 200,
+            headers: respondTo(req),
+            body: '{"done": true}',
+            request: req,
+            keyid: AGENT,
+            resolver,
+            now: NOW,
+        });
+        assert.notInclude(v.components, '"content-digest";req');
+        assert.deepEqual(responseComponents(req, '{"done": true}'), [
+            '"@status"',
+            '"@method";req',
+            '"@path";req',
+            '"@query";req',
+            '"content-digest"',
+        ]);
+    });
+
+    it('requires "content-digest";req when the content was non-empty, whatever the headers say', async () => {
+        // No Content-Length and no Transfer-Encoding: only the content.
+        const headers = signed();
+        assert.notProperty(headers, 'Content-Length');
+        const req = { method: 'POST', url: URL_, headers, body: BODY };
+        const short = [
+            '"@status"',
+            '"@method";req',
+            '"@path";req',
+            '"@query";req',
+            'content-digest',
+        ];
+        expect(await code(() => respondTo(req, short))).toBe(
+            'insufficient-coverage'
+        );
+        const unbound = respondTo({ ...req, body: '' }, short);
+        expect(
+            await code(
+                verifyResponse({
+                    status: 200,
+                    headers: unbound,
+                    body: '{"done": true}',
+                    request: req,
+                    keyid: AGENT,
+                    resolver,
+                    now: NOW,
+                })
+            )
+        ).toBe('insufficient-coverage');
     });
 });
 

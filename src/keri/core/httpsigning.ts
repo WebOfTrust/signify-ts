@@ -319,6 +319,7 @@ const CANONICAL_PARAMS = new Set([
     'tag',
 ]);
 const REQUEST_DERIVED = new Set(['@method', '@authority', '@path', '@query']);
+const REQUEST_DIGEST = '"content-digest";req';
 const RESPONSE_MINIMUM = [
     '"@status"',
     '"@method";req',
@@ -355,10 +356,12 @@ function bytesOf(body: Uint8Array | string | null | undefined): Uint8Array {
 }
 
 /**
- * Whether a request has a body for the purpose of the minimum set (profile
- * §3): content in hand, any Transfer-Encoding, or a Content-Length above zero.
- * A Content-Length that is not a plain decimal is no evidence of an empty
- * body, so it counts as one.
+ * Whether a request has a body for the purpose of the request minimum set
+ * (profile §3): content in hand, any Transfer-Encoding, or a Content-Length
+ * above zero. A Content-Length that is not a plain decimal is no evidence of
+ * an empty body, so it counts as one. The header test is for the verifier of
+ * a request only; the response minimum looks at the request's content alone
+ * ({@link responseMinimum}).
  */
 function hasBody(
     headers: Headers,
@@ -660,6 +663,10 @@ function requestMinimum(
  * A response's body is its content: its Content-Length is no evidence, since
  * a HEAD or 304 response announces a length it does not send. A deferred
  * body adds nothing here; {@link checkBody} catches uncovered content.
+ *
+ * "The request had a body" is likewise the request's content, never its
+ * headers (profile §3): both sides hold the whole request by the time a
+ * response is signed or verified.
  */
 function responseMinimum(
     body: Uint8Array | string | null | undefined,
@@ -667,17 +674,15 @@ function responseMinimum(
 ): string[] {
     const required = [...RESPONSE_MINIMUM];
     if (bytesOf(body).length > 0) required.push(`"${CONTENT_DIGEST}"`);
-    if (hasBody(toHeaders(request.headers), request.body)) {
-        required.push('"content-digest";req');
-    }
+    if (bytesOf(request.body).length > 0) required.push(REQUEST_DIGEST);
     return required;
 }
 
 /**
  * The components a response covers by default: `@status`, its own
  * `content-digest` when it has a body, and the request's `@method`, `@path`
- * and `@query` marked `req`, plus `"content-digest";req` when the request had
- * a body (profile §3).
+ * and `@query` marked `req`, plus `"content-digest";req` when the request's
+ * content was non-empty (profile §3).
  */
 export function responseComponents(
     request: HttpSigMessageRequest,
