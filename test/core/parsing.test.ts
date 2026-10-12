@@ -83,13 +83,11 @@ function intToB64(n: number, len: number): string {
 const ctr2 = (code: string, quadlets: number) =>
     code + intToB64(quadlets, code.startsWith('--') ? 5 : 2);
 /** Build a self-framed v2 JSON message with a correct base64 version-string size. */
-function mkMessageV2(fields: Record<string, unknown>): string {
-    const placeholder = JSON.stringify({ v: 'KERICAACAAJSONAAAA.', ...fields });
+function mkMessageV2(fields: Record<string, unknown>, genusMinor = 0): string {
+    const head = `KERICAAC${intToB64(genusMinor, 2)}JSON`;
+    const placeholder = JSON.stringify({ v: `${head}AAAA.`, ...fields });
     const size = new TextEncoder().encode(placeholder).length;
-    return placeholder.replace(
-        'KERICAACAAJSONAAAA.',
-        `KERICAACAAJSON${intToB64(size, 4)}.`
-    );
+    return placeholder.replace(`${head}AAAA.`, `${head}${intToB64(size, 4)}.`);
 }
 /** A real keripy 2.0.0-dev6 witness-role OOBI (CESR genus 2, PII-free synthetic):
  * one icp message whose -C AttachmentGroup wrapper (the v2 analog of v1 -V) holds
@@ -111,7 +109,7 @@ describe('parseVersion', () => {
         assert.equal(v.version, '1.0');
         assert.equal(v.kind, 'JSON');
         assert.equal(typeof v.size, 'number');
-        assert.equal(v.genus, 1);
+        assert.deepEqual(v.genus, { major: 1, minor: 0 });
     });
 
     it('returns null when there is no version string', () => {
@@ -125,7 +123,7 @@ describe('parseVersion', () => {
             version: '2.0',
             kind: 'JSON',
             size: 255,
-            genus: 2,
+            genus: { major: 2, minor: 0 },
         });
     });
 
@@ -151,7 +149,11 @@ describe('parse — CESR 2.0 framing (keripy sample)', () => {
             sn: '0',
         });
         const c = asGroup(messages[0].attachments[0]);
-        assertLike(c, { code: '-C', genus: 2, state: 'known' });
+        assertLike(c, {
+            code: '-C',
+            genus: { major: 2, minor: 0 },
+            state: 'known',
+        });
         const inner = c.items.map(asGroup);
         assert.deepEqual(
             inner.map((x) => x.code),
@@ -174,7 +176,7 @@ describe('parse — CESR 2.0 ACDC (CESR spec SAD-path example)', () => {
             version: '2.0',
             kind: 'JSON',
             size: 542,
-            genus: 2,
+            genus: { major: 2, minor: 0 },
         });
     });
 
@@ -227,6 +229,21 @@ describe('parse — CESR 2.0 synthetic structure and resilience', () => {
         const w = asGroup(messages[0].attachments[0]);
         assert.equal(w.code, '--C');
         assert.equal(asGroup(w.items[0]).code, '-K');
+    });
+
+    it('keeps the genus MINOR version, so 2.1 is not reported as 2.0', () => {
+        const k = ctr2('-K', 22) + SIG;
+        const stream = bytesOf(
+            mkMessageV2(V2ICP, 1) + ctr2('-C', k.length / 4) + k
+        );
+        const { messages, errors } = parse(stream);
+        assert.deepEqual(errors, []);
+        const twoOne = { major: 2, minor: 1 };
+        assert.deepEqual(messages[0].genus, twoOne);
+        // every group, nested ones included, carries the full genus version
+        const wrapper = asGroup(messages[0].attachments[0]);
+        assert.deepEqual(wrapper.genus, twoOne);
+        assert.deepEqual(asGroup(wrapper.items[0]).genus, twoOne);
     });
 
     it('marks an unrecognized genus-version counter unknown-but-bodyless, then resumes', () => {
