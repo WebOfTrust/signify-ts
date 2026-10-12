@@ -70,24 +70,31 @@ export interface AttachmentGroup {
 /** A node in the attachment tree. */
 export type AttachmentNode = AttachmentGroup | Primitive;
 
-/** A parsed message (KEL/TEL event or ACDC) with its attachments. */
-export interface CesrMessage {
+/** A message body (KEL/TEL event or ACDC): what its version string says, the
+ * fields every consumer reaches for, and its bytes. Everything here describes the
+ * body only; each attachment group carries its own `gvrsn`, since v2 groups may
+ * nest and interleave genera. Protocol-specific fields (a KERI sequence number,
+ * say) are read from `sad`, not lifted here. */
+export interface CesrBody {
     proto: string; // e.g. 'KERI', 'ACDC'
     /** The protocol version, e.g. 1.0 or 2.0. */
     pvrsn: Version;
-    kind: string; // serialization, e.g. 'JSON'
     /** The CESR genus version from the version string; 1.0 for every v1 stream. */
     gvrsn: Version;
-    ilk: string | null; // the `t` field, null for ACDCs
-    /** The sequence number — a hex-encoded integer — from the `s` field of a
-     * KERI event, where present. Null under any other protocol: an ACDC also
-     * carries an `s` field, but it holds the schema SAID, which is not a
-     * sequence number and must not be read as one. Take that from `sad.s`. */
-    sn: string | null;
+    kind: string; // serialization, e.g. 'JSON'
+    size: number; // the body's byte length, from the version string
+    ilk: string | null; // the `t` field, null when absent (e.g. an ACDC)
     said: string | null; // the `d` field
     /** The deserialized body, or null when framed but not decoded. */
     sad: Record<string, unknown> | null;
-    span: ByteSpan; // the message body bytes (attachments excluded)
+    /** The body's bytes: a view into the parsed stream, not a copy. */
+    raw: Uint8Array;
+    span: ByteSpan; // where `raw` sits in the stream
+}
+
+/** A parsed message: its body and the attachment groups that follow it. */
+export interface CesrMessage {
+    body: CesrBody;
     attachments: AttachmentGroup[];
 }
 
@@ -760,20 +767,18 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
             break;
         }
         messages.push({
-            proto: ver.proto,
-            pvrsn: ver.pvrsn,
-            kind: ver.kind,
-            gvrsn: ver.gvrsn,
-            ilk: sad && typeof sad.t === 'string' ? sad.t : null,
-            // `s` is the sequence number under KERI and the schema SAID under
-            // ACDC — same field name, unrelated meanings — so gate on the proto.
-            sn:
-                ver.proto === 'KERI' && sad && typeof sad.s === 'string'
-                    ? sad.s
-                    : null,
-            said: sad && typeof sad.d === 'string' ? sad.d : null,
-            sad,
-            span: { start: i, end: bodyEnd },
+            body: {
+                proto: ver.proto,
+                pvrsn: ver.pvrsn,
+                gvrsn: ver.gvrsn,
+                kind: ver.kind,
+                size: ver.size,
+                ilk: sad && typeof sad.t === 'string' ? sad.t : null,
+                said: sad && typeof sad.d === 'string' ? sad.d : null,
+                sad,
+                raw: bytes.subarray(i, bodyEnd),
+                span: { start: i, end: bodyEnd },
+            },
             attachments: seq.items,
         });
 
