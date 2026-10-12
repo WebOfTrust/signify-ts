@@ -32,6 +32,18 @@ export type NodeState =
     | 'unknown' // well-formed but code not recognized; may be framable by size
     | 'invalid'; // cannot be framed
 
+/** A CESR genus version, e.g. 2.0 or 2.1. The major selects the counter
+ * table; the minor is kept because a later minor may add codes the earlier one
+ * lacks, so a consumer cannot tell 2.0 material from 2.1 material without it. */
+export interface GenusVersion {
+    major: number;
+    minor: number;
+}
+
+/** CESR genus 1.0: the genus of every v1 stream, whose version string does not
+ * carry one. */
+const GENUS_1: GenusVersion = { major: 1, minor: 0 };
+
 /** A single CESR primitive (key, digest, signature, sequence number, …). */
 export interface Primitive {
     kind: 'primitive';
@@ -48,10 +60,11 @@ export interface AttachmentGroup {
     kind: 'group';
     code: string;
     count: number;
-    /** CESR genus major (1 or 2). The same code denotes different groups by
-     * genus (e.g. v1 -C is NonTransReceiptCouples, v2 -C is the AttachmentGroup
-     * wrapper), so a consumer must know the genus to interpret `code`. */
-    genus: number;
+    /** The CESR genus version this group was framed under. The same code
+     * denotes different groups by genus major (e.g. v1 -C is
+     * NonTransReceiptCouples, v2 -C is the AttachmentGroup wrapper), so a
+     * consumer must know the genus to interpret `code`. */
+    genus: GenusVersion;
     span: ByteSpan;
     state: NodeState;
     /** Typed children; empty for opaque quadlet frames and unknown codes. */
@@ -66,6 +79,8 @@ export interface CesrMessage {
     proto: string; // e.g. 'KERI', 'ACDC'
     version: string; // e.g. '1.0'
     kind: string; // serialization, e.g. 'JSON'
+    /** The CESR genus version from the version string; 1.0 for every v1 stream. */
+    genus: GenusVersion;
     ilk: string | null; // the `t` field, null for ACDCs
     /** The sequence number — a hex-encoded integer — from the `s` field of a
      * KERI event, where present. Null under any other protocol: an ACDC also
@@ -152,7 +167,7 @@ interface Version {
     version: string; // the PROTOCOL version, e.g. '1.0' or '2.0'
     kind: string;
     size: number;
-    genus: number; // the CESR GENUS major version (1 or 2) — selects the counter table
+    genus: GenusVersion; // the CESR GENUS version; its major selects the counter table
     /** The version-string TOKEN's own length; a message cannot be shorter. */
     length: number;
 }
@@ -170,7 +185,7 @@ export function parseVersion(bytes: Uint8Array, at: number): Version | null {
             version: `${b64ToInt(m2[2])}.${b64ToInt(m2[3])}`,
             kind: m2[6],
             size: b64ToInt(m2[7]),
-            genus: b64ToInt(m2[4]),
+            genus: { major: b64ToInt(m2[4]), minor: b64ToInt(m2[5]) },
             length: m2[0].length,
         };
     }
@@ -181,7 +196,7 @@ export function parseVersion(bytes: Uint8Array, at: number): Version | null {
         version: `${m1[2]}.${m1[3]}`,
         kind: m1[4],
         size: parseInt(m1[5], 16),
-        genus: 1,
+        genus: GENUS_1,
         length: m1[0].length,
     };
 }
@@ -341,13 +356,14 @@ function frameEnclosedV2(
     bytes: Uint8Array,
     start: number,
     limit: number,
-    sigCtx: boolean
+    sigCtx: boolean,
+    genus: GenusVersion
 ): AttachmentNode[] {
     const items: AttachmentNode[] = [];
     let p = start;
     while (p < limit) {
         if (bytes[p] === DASH) {
-            const nested = frameGroupV2(bytes, p);
+            const nested = frameGroupV2(bytes, p, genus);
             if (failed(nested) || nested.node.end > limit) break;
             items.push(nested.node.group);
             p = nested.node.end;
@@ -364,11 +380,15 @@ function frameEnclosedV2(
 /** Frame one v2 (genus 2) attachment group at `at`. Every v2 group self-frames as
  * count*4 bytes, so even an unrecognized code is UNKNOWN-BUT-FRAMED with a known
  * span; only a genus-version counter (`-_…`) is bodyless. */
-function frameGroupV2(bytes: Uint8Array, at: number): Attempt<FramedGroup> {
+function frameGroupV2(
+    bytes: Uint8Array,
+    at: number,
+    genus: GenusVersion
+): Attempt<FramedGroup> {
     const hdr = parseV2Counter(bytes, at);
     if (failed(hdr)) return hdr;
     const { code, count, headerLen } = hdr.node;
-    const base = { kind: 'group' as const, code, count, genus: 2 };
+    const base = { kind: 'group' as const, code, count, genus };
     if (code[1] === '_') {
         // A genus/version counter declares the CESR genus for the following
         // material; it has no quadlet body.
@@ -403,7 +423,8 @@ function frameGroupV2(bytes: Uint8Array, at: number): Attempt<FramedGroup> {
         bytes,
         innerStart,
         innerEnd,
-        V2_SIG_CODES.has(code)
+        V2_SIG_CODES.has(code),
+        genus
     );
     return {
         node: {
@@ -424,9 +445,9 @@ function frameGroupV2(bytes: Uint8Array, at: number): Attempt<FramedGroup> {
 function frameGroup(
     bytes: Uint8Array,
     at: number,
-    genus: number
+    genus: GenusVersion
 ): Attempt<FramedGroup> {
-    if (genus === 2) return frameGroupV2(bytes, at);
+    if (genus.major === 2) return frameGroupV2(bytes, at, genus);
     // A counter header cut off by the end of the stream is short, not
     // unparseable, so the header's own length is checked against the tables
     // before Counter is asked to parse it.
@@ -447,7 +468,7 @@ function frameGroup(
     }
     const { code, count } = counter;
     const headerLen = counter.qb64.length;
-    const base = { kind: 'group' as const, code, count, genus: 1 };
+    const base = { kind: 'group' as const, code, count, genus };
     const spec = GROUP_SPEC[code];
 
     if (!spec) {
@@ -499,7 +520,7 @@ function frameGroup(
         // inner limit stops decomposing THIS wrapper without condemning it, and
         // framing resumes at innerEnd — so decomposing a wrapper is never less
         // resilient than leaving it opaque.
-        const seq = frameGroupSequence(bytes, innerStart, innerEnd, 1);
+        const seq = frameGroupSequence(bytes, innerStart, innerEnd, genus);
         return {
             node: {
                 group: {
@@ -537,7 +558,7 @@ function frameGroup(
                 // A nested attachment group (the -A ControllerIdxSigs inside a
                 // -F/-H); frame it recursively and require it fully known, else
                 // this item — and so this group — cannot be framed.
-                const nested = frameGroup(bytes, p, 1);
+                const nested = frameGroup(bytes, p, genus);
                 if (failed(nested)) {
                     if (nested.fail === 'short') return nested;
                     return invalid(p);
@@ -577,7 +598,7 @@ function frameGroupSequence(
     bytes: Uint8Array,
     start: number,
     limit: number,
-    genus: number
+    genus: GenusVersion
 ): GroupSequence {
     const items: AttachmentGroup[] = [];
     let pos = start;
@@ -611,7 +632,7 @@ function frameGroupSequence(
         // Under genus 2 every counter self-frames (count*4), so an UNKNOWN code
         // is framed-and-continued rather than halting; under genus 1 an
         // unframable body halts, since v1 cannot size an unrecognized group.
-        if (genus !== 2 && framed.node.group.state !== 'known') {
+        if (genus.major !== 2 && framed.node.group.state !== 'known') {
             return {
                 items,
                 end: pos,
@@ -718,6 +739,7 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
             proto: ver.proto,
             version: ver.version,
             kind: ver.kind,
+            genus: ver.genus,
             ilk: sad && typeof sad.t === 'string' ? sad.t : null,
             // `s` is the sequence number under KERI and the schema SAID under
             // ACDC — same field name, unrelated meanings — so gate on the proto.
