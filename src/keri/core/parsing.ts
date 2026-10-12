@@ -173,32 +173,44 @@ interface Version {
     length: number;
 }
 
-/** Parse the version string at `at`, or null if none is present in the leading
- * window. Tries the v2 layout first (its terminator and base64 fields cannot
- * cross-match a v1 string, and vice versa), then falls back to v1. The returned
- * `genus` drives v1-vs-v2 counter framing. */
+/** Both version-string layouts in one pattern, v2 first. A single search
+ * finds the EARLIEST token in the window, so a version-like string inside a
+ * field value further on can never displace the real header (keripy's Rever). */
+const SMELL_RE = new RegExp(`${VERSION_RE_2.source}|${VERSION_RE.source}`);
+/** The furthest a version string may start from the message start: past this it
+ * is not the leading `v` field. keripy's MAXVSOFFSET. */
+const MAXVSOFFSET = 8;
+/** The longest version string (v2's 19 bytes; v1's is 17). */
+const MAXVERFULLSPAN = 19;
+/** Bytes that must be present before a missing version string is a verdict
+ * rather than a shortage. keripy's SMELLSIZE. */
+export const SMELLSIZE = MAXVSOFFSET + MAXVERFULLSPAN;
+
+/** Parse the version string at `at`, or null if none starts within
+ * MAXVSOFFSET bytes of it. The window is read one character per byte, so match
+ * offsets are byte offsets even when a CBOR or MGPK header precedes the token.
+ * The returned `genus` drives v1-vs-v2 counter framing. */
 export function parseVersion(bytes: Uint8Array, at: number): Version | null {
-    const window = td().decode(bytes.subarray(at, at + 128));
-    const m2 = window.match(VERSION_RE_2);
-    if (m2) {
+    const window = String.fromCharCode(...bytes.subarray(at, at + SMELLSIZE));
+    const m = SMELL_RE.exec(window);
+    if (!m || m.index > MAXVSOFFSET) return null;
+    if (m[1] !== undefined) {
         return {
-            proto: m2[1],
-            version: `${b64ToInt(m2[2])}.${b64ToInt(m2[3])}`,
-            kind: m2[6],
-            size: b64ToInt(m2[7]),
-            genus: { major: b64ToInt(m2[4]), minor: b64ToInt(m2[5]) },
-            length: m2[0].length,
+            proto: m[1],
+            version: `${b64ToInt(m[2])}.${b64ToInt(m[3])}`,
+            kind: m[6],
+            size: b64ToInt(m[7]),
+            genus: { major: b64ToInt(m[4]), minor: b64ToInt(m[5]) },
+            length: m[0].length,
         };
     }
-    const m1 = window.match(VERSION_RE);
-    if (!m1) return null;
     return {
-        proto: m1[1],
-        version: `${parseInt(m1[2], 16)}.${parseInt(m1[3], 16)}`,
-        kind: m1[4],
-        size: parseInt(m1[5], 16),
+        proto: m[8],
+        version: `${parseInt(m[9], 16)}.${parseInt(m[10], 16)}`,
+        kind: m[11],
+        size: parseInt(m[12], 16),
         genus: GENUS_1,
-        length: m1[0].length,
+        length: m[0].length,
     };
 }
 
@@ -669,6 +681,17 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
         // serialization), not by a leading '{' — CBOR/MGPK bodies begin with a
         // map-header byte.
         const ver = parseVersion(bytes, i);
+        if (!ver && n - i < SMELLSIZE) {
+            // Too few bytes to rule a version string out: it may be cut off
+            // mid-token (keripy's ShortageError in smell).
+            errors.push({
+                code: 'incomplete',
+                message: `The stream ends at byte ${n}, too soon to find the version string of a message at byte ${i}.`,
+                span: { start: i, end: n },
+                permanent: false,
+            });
+            break;
+        }
         if (!ver) {
             errors.push({
                 code: 'no-version-string',

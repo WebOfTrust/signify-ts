@@ -620,14 +620,42 @@ describe('parse — synthetic structure', () => {
 
 describe('parse — resilience', () => {
     it('errors and stops when the stream has no version string at its start', () => {
-        const { messages, errors, consumed } = parse(bytesOf('garbage'));
+        const { messages, errors, consumed } = parse(
+            bytesOf('garbage that is long enough to rule out a version')
+        );
         assert.deepStrictEqual(messages, []);
         assert.equal(consumed, 0);
         assertLike(errors[0], { code: 'no-version-string', permanent: true });
     });
 
     it('errors when a { has no version string', () => {
-        const { errors } = parse(bytesOf('{"x":1}'));
+        const { errors } = parse(bytesOf('{"x":"no version string in here"}'));
+        assertLike(errors[0], { code: 'no-version-string', permanent: true });
+    });
+
+    it('reports a stream too short to hold a version string as incomplete', () => {
+        // Cut inside the token: more bytes may complete it (keripy ShortageError).
+        const { errors, consumed } = parse(bytesOf('{"v":"KERI10JS'));
+        assertLike(errors[0], { code: 'incomplete', permanent: false });
+        assert.equal(consumed, 0);
+    });
+
+    it('frames by the leading version string, not a version-like field value', () => {
+        // A v2 token inside a value must not take over the v1 header's framing.
+        const stream = bytesOf(
+            '{"v":"KERI10JSON000033_","x":"KERICAACAAJSONAAD_."}'
+        );
+        const { messages, errors } = parse(stream);
+        assert.deepStrictEqual(errors, []);
+        assert.equal(messages.length, 1);
+        assertLike(messages[0], {
+            version: '1.0',
+            span: { start: 0, end: 51 },
+        });
+    });
+
+    it('rejects a version string that starts past MAXVSOFFSET', () => {
+        const { errors } = parse(bytesOf('{"xxxx":"KERI10JSON00001f_"}'));
         assertLike(errors[0], { code: 'no-version-string', permanent: true });
     });
 
