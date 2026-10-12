@@ -110,7 +110,15 @@ export interface ParseOptions {
     decoders?: Record<string, BodyDecoder>;
 }
 
-/** A stable symbolic code for a framing failure — branch on this, not the prose. */
+/** A stable symbolic code for a framing failure — branch on this, not the prose.
+ *
+ * Against keripy's extraction errors: `incomplete` is ShortageError, raised
+ * wherever the stream ends inside an element, version string included.
+ * `unparseable-counter`, together with a node in the `unknown` state, covers
+ * UnknownCodeError. `no-version-string` is a ColdStartError for the message
+ * domain only: the parser does not yet classify a stream's first byte as keripy's
+ * ColdCodex does, so a stream that opens with a counter or in binary is reported
+ * as having no version string. */
 export type ParseErrorCode =
     | 'no-version-string' // no CESR version string — not a recognizable message
     | 'invalid-version-size' // a size too small to contain the version string itself
