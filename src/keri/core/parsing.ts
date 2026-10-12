@@ -9,6 +9,7 @@
 // returning everything parsed so far, so a single bad byte never loses the
 // stream prefix that did parse.
 
+import type { Version } from './core.ts';
 import { Counter } from './counter.ts';
 import { Indexer } from './indexer.ts';
 import { Matter } from './matter.ts';
@@ -32,17 +33,12 @@ export type NodeState =
     | 'unknown' // well-formed but code not recognized; may be framable by size
     | 'invalid'; // cannot be framed
 
-/** A CESR genus version, e.g. 2.0 or 2.1. The major selects the counter
- * table; the minor is kept because a later minor may add codes the earlier one
- * lacks, so a consumer cannot tell 2.0 material from 2.1 material without it. */
-export interface GenusVersion {
-    major: number;
-    minor: number;
-}
-
 /** CESR genus 1.0: the genus of every v1 stream, whose version string does not
- * carry one. */
-const GENUS_1: GenusVersion = { major: 1, minor: 0 };
+ * carry one. Versions, protocol and genus alike, are core's `Version` (keripy's
+ * Versionage). A genus version keeps its minor because a later minor may add
+ * codes the earlier one lacks, so 2.0 material cannot be told from 2.1 without
+ * it. */
+const GENUS_1: Version = { major: 1, minor: 0 };
 
 /** A single CESR primitive (key, digest, signature, sequence number, …). */
 export interface Primitive {
@@ -64,7 +60,7 @@ export interface AttachmentGroup {
      * denotes different groups by genus major (e.g. v1 -C is
      * NonTransReceiptCouples, v2 -C is the AttachmentGroup wrapper), so a
      * consumer must know the genus to interpret `code`. */
-    genus: GenusVersion;
+    gvrsn: Version;
     span: ByteSpan;
     state: NodeState;
     /** Typed children; empty for opaque quadlet frames and unknown codes. */
@@ -77,10 +73,11 @@ export type AttachmentNode = AttachmentGroup | Primitive;
 /** A parsed message (KEL/TEL event or ACDC) with its attachments. */
 export interface CesrMessage {
     proto: string; // e.g. 'KERI', 'ACDC'
-    version: string; // e.g. '1.0'
+    /** The protocol version, e.g. 1.0 or 2.0. */
+    pvrsn: Version;
     kind: string; // serialization, e.g. 'JSON'
     /** The CESR genus version from the version string; 1.0 for every v1 stream. */
-    genus: GenusVersion;
+    gvrsn: Version;
     ilk: string | null; // the `t` field, null for ACDCs
     /** The sequence number — a hex-encoded integer — from the `s` field of a
      * KERI event, where present. Null under any other protocol: an ACDC also
@@ -163,14 +160,15 @@ function b64ToInt(s: string): number {
 /** The built-in JSON body decoder (a language builtin — no dependency). */
 const jsonDecoder: BodyDecoder = (body) => JSON.parse(td().decode(body));
 
-interface Version {
+/** What a version string says, as keripy's `Smellage`. */
+export interface Smellage {
     proto: string;
-    version: string; // the PROTOCOL version, e.g. '1.0' or '2.0'
+    /** The PROTOCOL version, e.g. 1.0 or 2.0. */
+    pvrsn: Version;
     kind: string;
     size: number;
-    genus: GenusVersion; // the CESR GENUS version; its major selects the counter table
-    /** The version-string TOKEN's own length; a message cannot be shorter. */
-    length: number;
+    /** The CESR GENUS version; its major selects the counter table. */
+    gvrsn: Version;
 }
 
 /** Both version-string layouts in one pattern, v2 first. A single search
@@ -180,37 +178,39 @@ const SMELL_RE = new RegExp(`${VERSION_RE_2.source}|${VERSION_RE.source}`);
 /** The furthest a version string may start from the message start: past this it
  * is not the leading `v` field. keripy's MAXVSOFFSET. */
 const MAXVSOFFSET = 8;
-/** The longest version string (v2's 19 bytes; v1's is 17). */
-const MAXVERFULLSPAN = 19;
+/** The v1 and v2 version strings' lengths (keripy's VER1FULLSPAN and
+ * VER2FULLSPAN). A message cannot be shorter than its own. */
+const VER1FULLSPAN = 17;
+const VER2FULLSPAN = 19;
+/** The longest version string. */
+const MAXVERFULLSPAN = VER2FULLSPAN;
 /** Bytes that must be present before a missing version string is a verdict
  * rather than a shortage. keripy's SMELLSIZE. */
 export const SMELLSIZE = MAXVSOFFSET + MAXVERFULLSPAN;
 
-/** Parse the version string at `at`, or null if none starts within
+/** Smell the version string at `at` (keripy's `smell`), or null if none starts within
  * MAXVSOFFSET bytes of it. The window is read one character per byte, so match
  * offsets are byte offsets even when a CBOR or MGPK header precedes the token.
- * The returned `genus` drives v1-vs-v2 counter framing. */
-export function parseVersion(bytes: Uint8Array, at: number): Version | null {
+ * The returned `gvrsn` drives v1-vs-v2 counter framing. */
+export function smell(bytes: Uint8Array, at: number): Smellage | null {
     const window = String.fromCharCode(...bytes.subarray(at, at + SMELLSIZE));
     const m = SMELL_RE.exec(window);
     if (!m || m.index > MAXVSOFFSET) return null;
     if (m[1] !== undefined) {
         return {
             proto: m[1],
-            version: `${b64ToInt(m[2])}.${b64ToInt(m[3])}`,
+            pvrsn: { major: b64ToInt(m[2]), minor: b64ToInt(m[3]) },
             kind: m[6],
             size: b64ToInt(m[7]),
-            genus: { major: b64ToInt(m[4]), minor: b64ToInt(m[5]) },
-            length: m[0].length,
+            gvrsn: { major: b64ToInt(m[4]), minor: b64ToInt(m[5]) },
         };
     }
     return {
         proto: m[8],
-        version: `${parseInt(m[9], 16)}.${parseInt(m[10], 16)}`,
+        pvrsn: { major: parseInt(m[9], 16), minor: parseInt(m[10], 16) },
         kind: m[11],
         size: parseInt(m[12], 16),
-        genus: GENUS_1,
-        length: m[0].length,
+        gvrsn: GENUS_1,
     };
 }
 
@@ -370,13 +370,13 @@ function frameEnclosedV2(
     start: number,
     limit: number,
     sigCtx: boolean,
-    genus: GenusVersion
+    gvrsn: Version
 ): AttachmentNode[] {
     const items: AttachmentNode[] = [];
     let p = start;
     while (p < limit) {
         if (bytes[p] === DASH) {
-            const nested = frameGroupV2(bytes, p, genus);
+            const nested = frameGroupV2(bytes, p, gvrsn);
             if (failed(nested) || nested.node.end > limit) break;
             items.push(nested.node.group);
             p = nested.node.end;
@@ -396,12 +396,12 @@ function frameEnclosedV2(
 function frameGroupV2(
     bytes: Uint8Array,
     at: number,
-    genus: GenusVersion
+    gvrsn: Version
 ): Attempt<FramedGroup> {
     const hdr = parseV2Counter(bytes, at);
     if (failed(hdr)) return hdr;
     const { code, count, headerLen } = hdr.node;
-    const base = { kind: 'group' as const, code, count, genus };
+    const base = { kind: 'group' as const, code, count, gvrsn };
     if (code[1] === '_') {
         // A genus/version counter declares the CESR genus for the following
         // material; it has no quadlet body.
@@ -437,7 +437,7 @@ function frameGroupV2(
         innerStart,
         innerEnd,
         V2_SIG_CODES.has(code),
-        genus
+        gvrsn
     );
     return {
         node: {
@@ -458,9 +458,9 @@ function frameGroupV2(
 function frameGroup(
     bytes: Uint8Array,
     at: number,
-    genus: GenusVersion
+    gvrsn: Version
 ): Attempt<FramedGroup> {
-    if (genus.major === 2) return frameGroupV2(bytes, at, genus);
+    if (gvrsn.major === 2) return frameGroupV2(bytes, at, gvrsn);
     // A counter header cut off by the end of the stream is short, not
     // unparseable, so the header's own length is checked against the tables
     // before Counter is asked to parse it.
@@ -481,7 +481,7 @@ function frameGroup(
     }
     const { code, count } = counter;
     const headerLen = counter.qb64.length;
-    const base = { kind: 'group' as const, code, count, genus };
+    const base = { kind: 'group' as const, code, count, gvrsn };
     const spec = GROUP_SPEC[code];
 
     if (!spec) {
@@ -533,7 +533,7 @@ function frameGroup(
         // inner limit stops decomposing THIS wrapper without condemning it, and
         // framing resumes at innerEnd — so decomposing a wrapper is never less
         // resilient than leaving it opaque.
-        const seq = frameGroupSequence(bytes, innerStart, innerEnd, genus);
+        const seq = frameGroupSequence(bytes, innerStart, innerEnd, gvrsn);
         return {
             node: {
                 group: {
@@ -571,7 +571,7 @@ function frameGroup(
                 // A nested attachment group (the -A ControllerIdxSigs inside a
                 // -F/-H); frame it recursively and require it fully known, else
                 // this item — and so this group — cannot be framed.
-                const nested = frameGroup(bytes, p, genus);
+                const nested = frameGroup(bytes, p, gvrsn);
                 if (failed(nested)) {
                     if (nested.fail === 'short') return nested;
                     return invalid(p);
@@ -611,12 +611,12 @@ function frameGroupSequence(
     bytes: Uint8Array,
     start: number,
     limit: number,
-    genus: GenusVersion
+    gvrsn: Version
 ): GroupSequence {
     const items: AttachmentGroup[] = [];
     let pos = start;
     while (pos < limit && bytes[pos] === DASH) {
-        const framed = frameGroup(bytes, pos, genus);
+        const framed = frameGroup(bytes, pos, gvrsn);
         if (failed(framed)) {
             // A group the stream ends inside is reported as a shortfall, not an
             // error: only the caller knows whether this window is the live end
@@ -645,7 +645,7 @@ function frameGroupSequence(
         // Under genus 2 every counter self-frames (count*4), so an UNKNOWN code
         // is framed-and-continued rather than halting; under genus 1 an
         // unframable body halts, since v1 cannot size an unrecognized group.
-        if (genus.major !== 2 && framed.node.group.state !== 'known') {
+        if (gvrsn.major !== 2 && framed.node.group.state !== 'known') {
             return {
                 items,
                 end: pos,
@@ -680,7 +680,7 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
         // A message is marked by its version string (near the start in every
         // serialization), not by a leading '{' — CBOR/MGPK bodies begin with a
         // map-header byte.
-        const ver = parseVersion(bytes, i);
+        const ver = smell(bytes, i);
         if (!ver && n - i < SMELLSIZE) {
             // Too few bytes to rule a version string out: it may be cut off
             // mid-token (keripy's ShortageError in smell).
@@ -701,7 +701,7 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
             });
             break;
         }
-        if (ver.size < ver.length) {
+        if (ver.size < (ver.gvrsn.major === 1 ? VER1FULLSPAN : VER2FULLSPAN)) {
             // A message cannot be shorter than the version string inside it.
             // Rejecting this is also what guarantees the loop ADVANCES:
             // bodyEnd > i on every iteration, so a size of 0 can no longer spin
@@ -745,7 +745,7 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
         // When no decoder handles this serialization, the body is framed but
         // left undecoded (sad = null).
 
-        const seq = frameGroupSequence(bytes, bodyEnd, n, ver.genus);
+        const seq = frameGroupSequence(bytes, bodyEnd, n, ver.gvrsn);
         if (seq.short) {
             // The stream ends inside this message's attachments. The message
             // body is whole, but emitting it would double-emit when the caller
@@ -761,9 +761,9 @@ export function parse(bytes: Uint8Array, opts: ParseOptions = {}): ParseResult {
         }
         messages.push({
             proto: ver.proto,
-            version: ver.version,
+            pvrsn: ver.pvrsn,
             kind: ver.kind,
-            genus: ver.genus,
+            gvrsn: ver.gvrsn,
             ilk: sad && typeof sad.t === 'string' ? sad.t : null,
             // `s` is the sequence number under KERI and the schema SAID under
             // ACDC — same field name, unrelated meanings — so gate on the proto.

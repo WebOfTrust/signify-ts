@@ -1,7 +1,7 @@
 import { assert, describe, it } from 'vitest';
 import {
     parse,
-    parseVersion,
+    smell,
     type AttachmentGroup,
     type AttachmentNode,
     type Primitive,
@@ -101,42 +101,42 @@ const V2_OOBI =
 const V2_ACDC_SAD =
     '{"v":"ACDCCAACAAJSONAAIe.","t":"acm","d":"EO3117lnAbjDt66qe2PtgHooXKAYQT_C6SIbESMcJ5lN","i":"EEDGM_DvZ9qFEAPf_FX08J3HX49ycrVvYVXe9isaP5SW","s":"EGU_SHY-8ywNBJOqPKHr4sXV9tOtOwpYzYOM63_zUCDW","a":{"d":"ED1wMKzV72L7YI1yJ3NXlClPUgvEerw4jRocOYxaZGtH","i":"ECsGDKWAYtHBCkiDrzajkxs3Iw2g-dls3bLUsRP4yVdT","dt":"2025-06-09T17:35:54.169967+00:00","personal":{"name":"John Doe","home":"Atlanta"},"p":[{"ref0":{"name":"Amy","i":"ECmiMVHTfZIjhA_rovnfx73T3G_FJzIQtzDn1meBVLAz"}},{"ref1":{"name":"Bob","i":"ECWJZFBtllh99fESUOrBvT3EtBujWtDKCmyzDAXWhYmf"}}]}}';
 
-describe('parseVersion', () => {
+describe('smell', () => {
     it('reads proto, version, kind, size and CESR genus 1 from a v1 version string', () => {
-        const v = parseVersion(bytesOf(mkMessage({ t: 'ixn' })), 0);
+        const v = smell(bytesOf(mkMessage({ t: 'ixn' })), 0);
         assert.ok(v);
         assert.equal(v.proto, 'KERI');
-        assert.equal(v.version, '1.0');
+        assert.deepEqual(v.pvrsn, { major: 1, minor: 0 });
         assert.equal(v.kind, 'JSON');
         assert.equal(typeof v.size, 'number');
-        assert.deepEqual(v.genus, { major: 1, minor: 0 });
+        assert.deepEqual(v.gvrsn, { major: 1, minor: 0 });
     });
 
     it('returns null when there is no version string', () => {
-        assert.equal(parseVersion(bytesOf('{"x":1}'), 0), null);
+        assert.equal(smell(bytesOf('{"x":1}'), 0), null);
     });
 
     it('reads v1 version digits as hex, like the size', () => {
-        const v = parseVersion(bytesOf('{"v":"KERI1aJSON00012b_"}'), 0);
+        const v = smell(bytesOf('{"v":"KERI1aJSON00012b_"}'), 0);
         assert.ok(v);
-        assert.equal(v.version, '1.10');
+        assert.deepEqual(v.pvrsn, { major: 1, minor: 10 });
         assert.equal(v.size, 0x12b);
     });
 
     it('reads proto, protocol version, CESR genus and a base64 size from a v2 string', () => {
         // AAD_ base64 = 255 = the exact JSON body length of the v2 OOBI sample.
-        assertLike(parseVersion(bytesOf(V2_OOBI), 0), {
+        assertLike(smell(bytesOf(V2_OOBI), 0), {
             proto: 'KERI',
-            version: '2.0',
+            pvrsn: { major: 2, minor: 0 },
             kind: 'JSON',
             size: 255,
-            genus: { major: 2, minor: 0 },
+            gvrsn: { major: 2, minor: 0 },
         });
     });
 
     it('decodes the v2 size field as base64, not hex', () => {
         // AAEv base64 = 4*64 + 47 = 303.
-        const v = parseVersion(bytesOf('{"v":"KERICAACAAJSONAAEv."}'), 0);
+        const v = smell(bytesOf('{"v":"KERICAACAAJSONAAEv."}'), 0);
         assert.equal(v?.size, 303);
     });
 });
@@ -150,7 +150,7 @@ describe('parse — CESR 2.0 framing (keripy sample)', () => {
         assert.equal(messages.length, 1);
         assertLike(messages[0], {
             proto: 'KERI',
-            version: '2.0',
+            pvrsn: { major: 2, minor: 0 },
             kind: 'JSON',
             ilk: 'icp',
             sn: '0',
@@ -158,7 +158,7 @@ describe('parse — CESR 2.0 framing (keripy sample)', () => {
         const c = asGroup(messages[0].attachments[0]);
         assertLike(c, {
             code: '-C',
-            genus: { major: 2, minor: 0 },
+            gvrsn: { major: 2, minor: 0 },
             state: 'known',
         });
         const inner = c.items.map(asGroup);
@@ -178,12 +178,12 @@ describe('parse — CESR 2.0 framing (keripy sample)', () => {
 describe('parse — CESR 2.0 ACDC (CESR spec SAD-path example)', () => {
     it('reads the v2 ACDC version string, including the base64 size', () => {
         // AAIe base64 = 2*4096 + 8*64 + 30 = 542, the byte length of the SAD.
-        assertLike(parseVersion(bytesOf(V2_ACDC_SAD), 0), {
+        assertLike(smell(bytesOf(V2_ACDC_SAD), 0), {
             proto: 'ACDC',
-            version: '2.0',
+            pvrsn: { major: 2, minor: 0 },
             kind: 'JSON',
             size: 542,
-            genus: { major: 2, minor: 0 },
+            gvrsn: { major: 2, minor: 0 },
         });
     });
 
@@ -195,7 +195,7 @@ describe('parse — CESR 2.0 ACDC (CESR spec SAD-path example)', () => {
         assert.equal(messages.length, 1);
         assertLike(messages[0], {
             proto: 'ACDC',
-            version: '2.0',
+            pvrsn: { major: 2, minor: 0 },
             kind: 'JSON',
             ilk: 'acm',
             said: 'EO3117lnAbjDt66qe2PtgHooXKAYQT_C6SIbESMcJ5lN',
@@ -246,11 +246,11 @@ describe('parse — CESR 2.0 synthetic structure and resilience', () => {
         const { messages, errors } = parse(stream);
         assert.deepEqual(errors, []);
         const twoOne = { major: 2, minor: 1 };
-        assert.deepEqual(messages[0].genus, twoOne);
+        assert.deepEqual(messages[0].gvrsn, twoOne);
         // every group, nested ones included, carries the full genus version
         const wrapper = asGroup(messages[0].attachments[0]);
-        assert.deepEqual(wrapper.genus, twoOne);
-        assert.deepEqual(asGroup(wrapper.items[0]).genus, twoOne);
+        assert.deepEqual(wrapper.gvrsn, twoOne);
+        assert.deepEqual(asGroup(wrapper.items[0]).gvrsn, twoOne);
     });
 
     it('marks an unrecognized genus-version counter unknown-but-bodyless, then resumes', () => {
@@ -649,7 +649,7 @@ describe('parse — resilience', () => {
         assert.deepStrictEqual(errors, []);
         assert.equal(messages.length, 1);
         assertLike(messages[0], {
-            version: '1.0',
+            pvrsn: { major: 1, minor: 0 },
             span: { start: 0, end: 51 },
         });
     });
