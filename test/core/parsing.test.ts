@@ -116,6 +116,13 @@ describe('parseVersion', () => {
         assert.equal(parseVersion(bytesOf('{"x":1}'), 0), null);
     });
 
+    it('reads v1 version digits as hex, like the size', () => {
+        const v = parseVersion(bytesOf('{"v":"KERI1aJSON00012b_"}'), 0);
+        assert.ok(v);
+        assert.equal(v.version, '1.10');
+        assert.equal(v.size, 0x12b);
+    });
+
     it('reads proto, protocol version, CESR genus and a base64 size from a v2 string', () => {
         // AAD_ base64 = 255 = the exact JSON body length of the v2 OOBI sample.
         assertLike(parseVersion(bytesOf(V2_OOBI), 0), {
