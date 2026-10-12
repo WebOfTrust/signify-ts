@@ -159,7 +159,7 @@ describe('post-quantum codes — parsing a real Falcon stream', () => {
         assert.deepStrictEqual(errors, []);
         assert.equal(consumed, bytes.length); // delta 0
         assert.deepStrictEqual(
-            messages.map((m) => m.ilk),
+            messages.map((m) => m.body.ilk),
             ['icp', 'rct']
         );
     });
