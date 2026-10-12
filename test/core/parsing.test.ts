@@ -148,12 +148,11 @@ describe('parse — CESR 2.0 framing (keripy sample)', () => {
         assert.deepEqual(errors, []);
         assert.equal(consumed, bytes.length); // delta 0
         assert.equal(messages.length, 1);
-        assertLike(messages[0], {
+        assertLike(messages[0].body, {
             proto: 'KERI',
             pvrsn: { major: 2, minor: 0 },
             kind: 'JSON',
             ilk: 'icp',
-            sn: '0',
         });
         const c = asGroup(messages[0].attachments[0]);
         assertLike(c, {
@@ -193,18 +192,19 @@ describe('parse — CESR 2.0 ACDC (CESR spec SAD-path example)', () => {
         assert.deepEqual(errors, []);
         assert.equal(consumed, bytes.length); // delta 0
         assert.equal(messages.length, 1);
-        assertLike(messages[0], {
+        assertLike(messages[0].body, {
             proto: 'ACDC',
             pvrsn: { major: 2, minor: 0 },
             kind: 'JSON',
+            size: bytes.length,
             ilk: 'acm',
             said: 'EO3117lnAbjDt66qe2PtgHooXKAYQT_C6SIbESMcJ5lN',
-            sn: null, // `s` here is the schema SAID, not a sequence number
             span: { start: 0, end: bytes.length },
         });
+        assert.deepStrictEqual(messages[0].body.raw, bytes);
         assert.deepEqual(messages[0].attachments, []);
         // the nested attribute block survives the round trip intact
-        const a = messages[0].sad?.a as Record<string, unknown>;
+        const a = messages[0].body.sad?.a as Record<string, unknown>;
         assert.equal(a.i, 'ECsGDKWAYtHBCkiDrzajkxs3Iw2g-dls3bLUsRP4yVdT');
         assert.equal((a.p as unknown[]).length, 2);
     });
@@ -246,7 +246,7 @@ describe('parse — CESR 2.0 synthetic structure and resilience', () => {
         const { messages, errors } = parse(stream);
         assert.deepEqual(errors, []);
         const twoOne = { major: 2, minor: 1 };
-        assert.deepEqual(messages[0].gvrsn, twoOne);
+        assert.deepEqual(messages[0].body.gvrsn, twoOne);
         // every group, nested ones included, carries the full genus version
         const wrapper = asGroup(messages[0].attachments[0]);
         assert.deepEqual(wrapper.gvrsn, twoOne);
@@ -332,7 +332,7 @@ describe('parse — -V/-0V inner decomposition', () => {
             code: '-V',
             count: 18,
             state: 'known',
-            span: { start: messages[0].span.end, end: stream.length },
+            span: { start: messages[0].body.span.end, end: stream.length },
             items: [
                 {
                     kind: 'group',
@@ -345,7 +345,7 @@ describe('parse — -V/-0V inner decomposition', () => {
         });
         // the inner group is byte-exact: it begins right after the 4-byte -V header
         assert.deepStrictEqual(asGroup(v.items[0]).span, {
-            start: messages[0].span.end + 4,
+            start: messages[0].body.span.end + 4,
             end: stream.length,
         });
     });
@@ -554,7 +554,7 @@ describe('parse — synthetic structure', () => {
         assert.deepStrictEqual(errors, []);
         assert.equal(messages.length, 1);
         assert.deepStrictEqual(messages[0].attachments, []);
-        assert.equal(consumed, messages[0].span.end);
+        assert.equal(consumed, messages[0].body.span.end);
     });
 
     it('frames an -I seal-source-triple group into typed (i, s, d) primitives', () => {
@@ -597,24 +597,23 @@ describe('parse — synthetic structure', () => {
         assert.equal(messages[0].attachments[0].items.length, 2);
     });
 
-    it('nulls ilk, sn and said when the fields are absent (e.g. an ACDC)', () => {
+    it('nulls ilk and said when the fields are absent (e.g. an ACDC)', () => {
         const { messages } = parse(
             bytesOf(mkMessage({ i: 'E_holder' }, 'ACDC'))
         );
-        assertLike(messages[0], {
+        assertLike(messages[0].body, {
             ilk: null,
-            sn: null,
             said: null,
             proto: 'ACDC',
         });
     });
 
-    it("does not read an ACDC's `s` (the schema SAID) as a sequence number", () => {
+    it('leaves protocol-specific fields such as `s` in the field map', () => {
         const { messages } = parse(
             bytesOf(mkMessage({ i: SAID, s: SAID }, 'ACDC'))
         );
-        assert.equal(messages[0].sn, null);
-        assert.equal(messages[0].sad?.s, SAID); // still available on the body
+        assert.ok(!('sn' in messages[0].body));
+        assert.equal(messages[0].body.sad?.s, SAID);
     });
 });
 
@@ -648,7 +647,7 @@ describe('parse — resilience', () => {
         const { messages, errors } = parse(stream);
         assert.deepStrictEqual(errors, []);
         assert.equal(messages.length, 1);
-        assertLike(messages[0], {
+        assertLike(messages[0].body, {
             pvrsn: { major: 1, minor: 0 },
             span: { start: 0, end: 51 },
         });
@@ -906,7 +905,10 @@ describe('parse — truncation sweep: every vector cut at every byte', () => {
                 const { messages, errors, consumed } = parse(prefix);
                 assert.ok(consumed <= cut, `consumed ${consumed} > ${cut}`);
                 for (const m of messages) {
-                    assert.ok(m.span.end <= cut, `message span past ${cut}`);
+                    assert.ok(
+                        m.body.span.end <= cut,
+                        `message span past ${cut}`
+                    );
                     for (const node of m.attachments.flatMap(nodesOf)) {
                         assert.ok(
                             node.span.end <= cut,
