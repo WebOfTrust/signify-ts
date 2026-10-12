@@ -135,10 +135,11 @@ export interface ParseResult {
 }
 
 /** A CESR version string as a BARE token, e.g. `KERI10JSON00012b_` -> proto
- * KERI, ver 1.0, kind JSON, size 0x12b. Matched WITHOUT the JSON `"v":"..."`
+ * KERI, ver 1.0, kind JSON, size 0x12b. The version digits are hex, like the
+ * size (`KERI1aJSON…` is version 1.10), per keripy's VEREX1. Matched WITHOUT the JSON `"v":"..."`
  * framing so it is found inside binary CBOR/MGPK bodies too, where it still
  * appears as ASCII. */
-const VERSION_RE = /([A-Z]{4})(\d)(\d)([A-Z]{4})([0-9a-f]{6})_/;
+const VERSION_RE = /([A-Z]{4})([0-9a-f])([0-9a-f])([A-Z]{4})([0-9a-f]{6})_/;
 
 /** A CESR v2 (CESR 2.0) version string as a BARE token, e.g. `KERICAACAAJSONAAD_.`
  * -> proto KERI, protocol version 2.0, CESR genus version 2.0, kind JSON, size
@@ -193,7 +194,7 @@ export function parseVersion(bytes: Uint8Array, at: number): Version | null {
     if (!m1) return null;
     return {
         proto: m1[1],
-        version: `${m1[2]}.${m1[3]}`,
+        version: `${parseInt(m1[2], 16)}.${parseInt(m1[3], 16)}`,
         kind: m1[4],
         size: parseInt(m1[5], 16),
         genus: GENUS_1,
