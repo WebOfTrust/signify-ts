@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.1] - 2026-08-26
+## [0.4.1] - 2026-10-11
 
 ### Release highlights
 
@@ -9,10 +9,11 @@
 - Made `boot`, `state`, and `connect` cancellable with `AbortSignal`; restored connections from KERIA's authoritative controller sequence; avoided duplicate delegation approval; and now fail clearly on malformed state or rejected approval ([#405](https://github.com/WebOfTrust/signify-ts/pull/405)).
 - **Identifier state API change:** Regenerated the KERIA API models and made pending multisig inception explicit with `PendingHabState`, `isAccepted`, and `requireKeyState`; `identifiers().get` and `.update` now require accepted key state by default, so callers that need pending state must pass `false` and handle `PendingHabState` ([#407](https://github.com/WebOfTrust/signify-ts/pull/407)).
 - Exported generated KERIA OpenAPI types and enums through the `KeriaApi` namespace, addressing [#384](https://github.com/WebOfTrust/signify-ts/issues/384) ([#385](https://github.com/WebOfTrust/signify-ts/pull/385)), and tightened salty signer index and `ondex` typing and validation ([#382](https://github.com/WebOfTrust/signify-ts/pull/382)).
+- Corrected hexadecimal seal sequence-number encoding in `messagize`, preventing incorrect attachments for sequence numbers above 9 ([#417](https://github.com/WebOfTrust/signify-ts/pull/417)).
 - Updated Docker and CI integration coverage for KERIA 0.4.0 and the 0.4.1 development image, aligned multisig notification expectations, and exercised both signed-header and ESSR modes, resolving [#392](https://github.com/WebOfTrust/signify-ts/issues/392) ([#391](https://github.com/WebOfTrust/signify-ts/pull/391), [#397](https://github.com/WebOfTrust/signify-ts/pull/397), [#405](https://github.com/WebOfTrust/signify-ts/pull/405)).
 - Added OIDC-based npm Trusted Publishing through GitHub Actions and documented the release flow ([#383](https://github.com/WebOfTrust/signify-ts/pull/383)).
 - Established the versioned changelog requested in [#387](https://github.com/WebOfTrust/signify-ts/issues/387) and backfilled earlier releases ([#389](https://github.com/WebOfTrust/signify-ts/pull/389)).
-- Refreshed Vitest, Vite/esbuild, markdown-it, js-yaml, linkify-it, and postcss dependencies, including parser and CSS security updates ([#386](https://github.com/WebOfTrust/signify-ts/pull/386), [#394](https://github.com/WebOfTrust/signify-ts/pull/394), [#395](https://github.com/WebOfTrust/signify-ts/pull/395), [#396](https://github.com/WebOfTrust/signify-ts/pull/396), [#404](https://github.com/WebOfTrust/signify-ts/pull/404), [#406](https://github.com/WebOfTrust/signify-ts/pull/406), [#409](https://github.com/WebOfTrust/signify-ts/pull/409)).
+- Refreshed Vitest, Vite/esbuild, markdown-it, js-yaml, linkify-it, postcss, brace-expansion, and @humanfs/node dependencies, including parser and CSS security updates ([#386](https://github.com/WebOfTrust/signify-ts/pull/386), [#394](https://github.com/WebOfTrust/signify-ts/pull/394), [#395](https://github.com/WebOfTrust/signify-ts/pull/395), [#396](https://github.com/WebOfTrust/signify-ts/pull/396), [#404](https://github.com/WebOfTrust/signify-ts/pull/404), [#406](https://github.com/WebOfTrust/signify-ts/pull/406), [#409](https://github.com/WebOfTrust/signify-ts/pull/409), [#410](https://github.com/WebOfTrust/signify-ts/pull/410), [#412](https://github.com/WebOfTrust/signify-ts/pull/412), [#414](https://github.com/WebOfTrust/signify-ts/pull/414), [#415](https://github.com/WebOfTrust/signify-ts/pull/415)).
 
 Version 0.4.1 centers on the new ESSR transport boundary: SignifyTS can now seal and sign complete KERIA API requests, then authenticate, decrypt, and reconstruct the responses, without changing the default signed-header path. The surrounding work makes connection and delegation failures explicit, represents pending multisig identifiers honestly in the type system, exposes KERIA's generated API surface, and strengthens release and compatibility testing.
 
@@ -77,7 +78,8 @@ Version 0.4.1 centers on the new ESSR transport boundary: SignifyTS can now seal
 - `contacts.list` uses `filter_field` / `filter_value` params correctly
 - `serializeACDCAttachment` works with correct anchor per type ([#156](https://github.com/WebOfTrust/signify-ts/pull/156))
 
-[Unreleased]: https://github.com/WebOfTrust/signify-ts/compare/v0.4.0...HEAD
-[0.4.0]: https://github.com/WebOfTrust/signify-ts/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/WebOfTrust/signify-ts/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/WebOfTrust/signify-ts/releases/tag/v0.2.0
+[Unreleased]: https://github.com/WebOfTrust/signify-ts/compare/0.4.1...HEAD
+[0.4.1]: https://github.com/WebOfTrust/signify-ts/compare/0.4.0...0.4.1
+[0.4.0]: https://github.com/WebOfTrust/signify-ts/compare/0.3.0...0.4.0
+[0.3.0]: https://github.com/WebOfTrust/signify-ts/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/WebOfTrust/signify-ts/releases/tag/0.2.0
