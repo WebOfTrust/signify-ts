@@ -33,6 +33,13 @@ describe('deversify', () => {
         assert.deepStrictEqual(Vrsn_1_0, new Version(1, 0));
     });
 
+    it('should reject a major version above 1, as keripy does', async () => {
+        assert.throws(
+            () => deversify('KERI20JSON00011c_'),
+            'Incompatible version 2.0'
+        );
+    });
+
     it('should keep Vrsn_1_0 frozen', async () => {
         assert.isFrozen(Vrsn_1_0);
     });
@@ -43,10 +50,6 @@ describe('sizeify', () => {
         assert.throws(
             () => sizeify({ v: 'KERI11JSON000000_', t: Ilks.icp }),
             'unsupported version 1.1'
-        );
-        assert.throws(
-            () => sizeify({ v: 'KERI20JSON000000_', t: Ilks.icp }),
-            'unsupported version 2.0'
         );
     });
 });

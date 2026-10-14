@@ -213,6 +213,11 @@ export function deversify(
             match[4],
             match[5],
         ];
+        if (version.major > 1) {
+            throw new Error(
+                `Incompatible version ${version.major}.${version.minor} with version string = ${versionString}`
+            );
+        }
         if (!Object.values(Serials).includes(kind as Serials)) {
             throw new Error(`Invalid serialization kind = ${kind}`);
         }
