@@ -1,9 +1,15 @@
-import { deversify, Ilks, Serials, Version } from '../../src/keri/core/core.ts';
+import {
+    deversify,
+    Ilks,
+    Serials,
+    Version,
+    Vrsn_1_0,
+} from '../../src/keri/core/core.ts';
 import { assert, describe, it } from 'vitest';
 import { Salter, Tier } from '../../src/keri/core/salter.ts';
 import { MtrDex } from '../../src/keri/core/matter.ts';
 import { Diger } from '../../src/keri/core/diger.ts';
-import { Serder } from '../../src/keri/core/serder.ts';
+import { Serder, sizeify } from '../../src/keri/core/serder.ts';
 import libsodium from 'libsodium-wrappers-sumo';
 import { Prefixer } from '../../src/keri/core/prefixer.ts';
 
@@ -13,6 +19,38 @@ describe('deversify', () => {
         assert.equal(kind, Serials.JSON);
         assert.deepStrictEqual(version, new Version(1, 0));
         assert.equal(size, '00011c');
+    });
+
+    it('should read version digits as hex', async () => {
+        const [, , version] = deversify('KERI1aJSON00011c_');
+        assert.deepStrictEqual(version, new Version(1, 10));
+    });
+
+    it('should not alter Vrsn_1_0', async () => {
+        const [, , version] = deversify('KERI11JSON00011c_');
+        assert.deepStrictEqual(version, new Version(1, 1));
+        assert.notStrictEqual(version, Vrsn_1_0);
+        assert.deepStrictEqual(Vrsn_1_0, new Version(1, 0));
+    });
+
+    it('should reject a major version above 1, as keripy does', async () => {
+        assert.throws(
+            () => deversify('KERI20JSON00011c_'),
+            'Incompatible version 2.0'
+        );
+    });
+
+    it('should keep Vrsn_1_0 frozen', async () => {
+        assert.isFrozen(Vrsn_1_0);
+    });
+});
+
+describe('sizeify', () => {
+    it('should reject a version other than 1.0', async () => {
+        assert.throws(
+            () => sizeify({ v: 'KERI11JSON000000_', t: Ilks.icp }),
+            'unsupported version 1.1'
+        );
     });
 });
 

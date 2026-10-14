@@ -29,7 +29,7 @@ export class Version {
 /**
  * Denotes version 1.0 of a protocol.
  */
-export const Vrsn_1_0 = new Version();
+export const Vrsn_1_0 = Object.freeze(new Version());
 
 /**
  * Types of KERI and ACDC events.
@@ -197,7 +197,7 @@ export function deversify(
     let kind;
     let size;
     let proto;
-    const version = Vrsn_1_0;
+    let version;
 
     // we need to identify how to match the buffers pattern ,like we do regex matching for strings
     const re = new RegExp(VEREX);
@@ -206,13 +206,18 @@ export function deversify(
     const match = re.exec(versionString);
 
     if (match) {
-        [proto, version.major, version.minor, kind, size] = [
+        // version digits are hex, as versify writes them
+        [proto, version, kind, size] = [
             match[1],
-            +match[2],
-            +match[3],
+            new Version(parseInt(match[2], 16), parseInt(match[3], 16)),
             match[4],
             match[5],
         ];
+        if (version.major > 1) {
+            throw new Error(
+                `Incompatible version ${version.major}.${version.minor} with version string = ${versionString}`
+            );
+        }
         if (!Object.values(Serials).includes(kind as Serials)) {
             throw new Error(`Invalid serialization kind = ${kind}`);
         }
