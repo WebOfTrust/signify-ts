@@ -206,9 +206,10 @@ export function deversify(
     const match = re.exec(versionString);
 
     if (match) {
+        // version digits are hex, as versify writes them
         [proto, version, kind, size] = [
             match[1],
-            new Version(+match[2], +match[3]),
+            new Version(parseInt(match[2], 16), parseInt(match[3], 16)),
             match[4],
             match[5],
         ];

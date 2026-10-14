@@ -21,6 +21,11 @@ describe('deversify', () => {
         assert.equal(size, '00011c');
     });
 
+    it('should read version digits as hex', async () => {
+        const [, , version] = deversify('KERI1aJSON00011c_');
+        assert.deepStrictEqual(version, new Version(1, 10));
+    });
+
     it('should not alter Vrsn_1_0', async () => {
         const [, , version] = deversify('KERI11JSON00011c_');
         assert.deepStrictEqual(version, new Version(1, 1));
