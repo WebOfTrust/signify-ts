@@ -197,7 +197,7 @@ export function deversify(
     let kind;
     let size;
     let proto;
-    const version = Vrsn_1_0;
+    let version;
 
     // we need to identify how to match the buffers pattern ,like we do regex matching for strings
     const re = new RegExp(VEREX);
@@ -206,10 +206,9 @@ export function deversify(
     const match = re.exec(versionString);
 
     if (match) {
-        [proto, version.major, version.minor, kind, size] = [
+        [proto, version, kind, size] = [
             match[1],
-            +match[2],
-            +match[3],
+            new Version(+match[2], +match[3]),
             match[4],
             match[5],
         ];
