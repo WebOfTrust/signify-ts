@@ -29,7 +29,7 @@ export class Version {
 /**
  * Denotes version 1.0 of a protocol.
  */
-export const Vrsn_1_0 = new Version();
+export const Vrsn_1_0 = Object.freeze(new Version());
 
 /**
  * Types of KERI and ACDC events.

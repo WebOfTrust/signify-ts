@@ -32,6 +32,10 @@ describe('deversify', () => {
         assert.notStrictEqual(version, Vrsn_1_0);
         assert.deepStrictEqual(Vrsn_1_0, new Version(1, 0));
     });
+
+    it('should keep Vrsn_1_0 frozen', async () => {
+        assert.isFrozen(Vrsn_1_0);
+    });
 });
 
 describe('sizeify', () => {
