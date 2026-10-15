@@ -360,7 +360,7 @@ test('multisig', async function run() {
 
     // Holder resolve multisig OOBI
     const oobisRes = await client1.oobis().get('holder', 'agent');
-    const oobiMultisig = oobisRes.oobis[0].split('/agent/')[0];
+    const oobiMultisig = oobisRes.oobis[0];
 
     op3 = await client3.oobis().resolve(oobiMultisig, 'holder');
     await waitOperation(client3, op3);

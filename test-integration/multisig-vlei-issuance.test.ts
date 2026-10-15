@@ -287,7 +287,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(oobiGEDAbyGAR1.oobis[0], oobiGEDAbyGAR2.oobis[0]);
 
     // QARs, LARs, ECR resolve GEDA's OOBI
-    const oobiGEDA = oobiGEDAbyGAR1.oobis[0].split('/agent/')[0];
+    const oobiGEDA = oobiGEDAbyGAR1.oobis[0];
     await Promise.all([
         getOrCreateContact(clientQAR1, aidGEDA.name, oobiGEDA),
         getOrCreateContact(clientQAR2, aidGEDA.name, oobiGEDA),
@@ -466,7 +466,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(oobiQVIbyQAR1.oobis[0], oobiQVIbyQAR3.oobis[0]);
 
     // GARs, LARs, ECR resolve QVI AID's OOBI
-    const oobiQVI = oobiQVIbyQAR1.oobis[0].split('/agent/')[0];
+    const oobiQVI = oobiQVIbyQAR1.oobis[0];
     await Promise.all([
         getOrCreateContact(clientGAR1, aidQVI.name, oobiQVI),
         getOrCreateContact(clientGAR2, aidQVI.name, oobiQVI),
@@ -808,7 +808,7 @@ test('multisig-vlei-issuance', async function run() {
     assert.equal(oobiLEbyLAR1.oobis[0], oobiLEbyLAR3.oobis[0]);
 
     // QARs, ECR resolve LE AID's OOBI
-    const oobiLE = oobiLEbyLAR1.oobis[0].split('/agent/')[0];
+    const oobiLE = oobiLEbyLAR1.oobis[0];
     await Promise.all([
         getOrCreateContact(clientQAR1, aidLE.name, oobiLE),
         getOrCreateContact(clientQAR2, aidLE.name, oobiLE),

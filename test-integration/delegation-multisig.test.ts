@@ -227,7 +227,7 @@ test('delegation-multisig', async () => {
         }
     );
 
-    const oobiGtor = delegatorGroupNameOobi.split('/agent/')[0];
+    const oobiGtor = delegatorGroupNameOobi;
     await Promise.all([
         getOrCreateContact(
             delegatee1Client,
