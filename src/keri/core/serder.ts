@@ -155,8 +155,10 @@ export function sizeify(
     }
 
     const [proto, knd, version] = deversify(ked['v'] as string);
-    if (version != Vrsn_1_0) {
-        throw new Error(`unsupported version ${version.toString()}`);
+    if (version.major !== Vrsn_1_0.major || version.minor !== Vrsn_1_0.minor) {
+        throw new Error(
+            `unsupported version ${version.major}.${version.minor}`
+        );
     }
 
     if (kind == undefined) {
