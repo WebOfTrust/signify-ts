@@ -1246,10 +1246,13 @@ export async function verifyRequest(
         refuse('missing-signature-input', 'Signature-Input is absent.');
     }
     if (detectMode(signature) === 'legacy') {
-        // TODO(profile ruling pending: legacy vs requireAuthority): a legacy
-        // request returns below before any policy runs, so requireAuthority
-        // and authorities do not stop it. Legacy covers no authority at all;
-        // whether such a verifier must refuse legacy is for the profile.
+        // A legacy request is verified without the canonical policy, so
+        // requireAuthority does not refuse it although legacy covers no
+        // authority. Profile 1.1 §8 makes accept_legacy (acceptLegacy here)
+        // the switch that turns legacy off, and keripy's verifyRequest
+        // likewise returns a legacy request before its policy runs. A
+        // verifier that must have @authority compared sets acceptLegacy to
+        // false as well.
         if (args.acceptLegacy === false) {
             refuse(
                 'malformed-signature',

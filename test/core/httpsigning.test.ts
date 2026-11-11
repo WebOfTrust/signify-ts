@@ -515,6 +515,38 @@ describe('keyid resolution (profile §7)', () => {
         assert.isNull(await none.legacy!(CONTROLLER));
     });
 
+    it('leaves a legacy request to acceptLegacy, not requireAuthority (profile §8)', async () => {
+        const prepared = await new SignedHeaderAuthenticator(
+            controller,
+            controller.verfer
+        ).prepare(
+            new Request(URL_, {
+                headers: new Headers({
+                    'Signify-Resource': CONTROLLER,
+                    'Signify-Timestamp': '2026-01-01T00:00:00.000000+00:00',
+                }),
+            }),
+            CONTROLLER,
+            AGENT
+        );
+        const headers: Record<string, string> = {};
+        prepared.headers.forEach((value, name) => (headers[name] = value));
+        const args = {
+            method: 'GET',
+            url: URL_,
+            headers,
+            resolver,
+            policy: {
+                requireAuthority: true,
+                authorities: ['other.example.com'],
+            },
+        };
+        expect(await code(verifyRequest(args))).toBe('accepted');
+        expect(
+            await code(verifyRequest({ ...args, acceptLegacy: false }))
+        ).toBe('malformed-signature');
+    });
+
     it('verifies a legacy request under the effective signer only', async () => {
         const prepare = async (signer: Signer) => {
             const prepared = await new SignedHeaderAuthenticator(
