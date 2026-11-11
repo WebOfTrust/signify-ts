@@ -181,8 +181,10 @@ export type HttpSigKeyLookup =
  * `unsupported-signer` for a state without a single effective signer.
  *
  * `legacy`, when present, is the legacy-mode lookup of profile §8: the
- * first current key of the `Signify-Resource` AID, with none of §7's rules.
- * A resolver without it is called as is for legacy messages too.
+ * single effective signer (R4) of the `Signify-Resource` AID's key state,
+ * without §7 R1's derivation-code rules, refusing `unsupported-signer` for a
+ * state without one. A resolver without it is called as is for legacy
+ * messages too, and is not refused for lacking it (§8).
  */
 export interface HttpSigKeyResolver {
     (keyid: string): HttpSigKeyLookup;
@@ -855,7 +857,7 @@ export function effectiveKeyIndex(
     if (alone.length !== 1) {
         refuse(
             'unsupported-signer',
-            `Threshold ${JSON.stringify(threshold)} over ${keys.length} keys has ${alone.length === 0 ? 'no' : 'more than one'} key that satisfies it alone; canonical mode needs a single effective signer.`
+            `Threshold ${JSON.stringify(threshold)} over ${keys.length} keys has ${alone.length === 0 ? 'no' : 'more than one'} key that satisfies it alone; the profile needs a single effective signer.`
         );
     }
     return alone[0];
@@ -874,8 +876,12 @@ function verferOf(qb64: string): Verfer {
  * current key state for an AID, or nothing when it holds none.
  *
  * Canonical mode (profile §7, R1 and R4) yields the single effective signer
- * ({@link effectiveKeyIndex}). Its `legacy` lookup (profile §8) yields the
- * first current key with no threshold rule, as KERIA does today.
+ * ({@link effectiveKeyIndex}). So does its `legacy` lookup (profile 1.1 §8),
+ * for the `Signify-Resource` AID: for every Signify controller that is its
+ * first current key, including after a passcode rotation, and a state with
+ * no single effective signer, such as a 2-of-3 group, is refused as
+ * `unsupported-signer`. Version 1 took the first key whatever the threshold
+ * said, which let one member of a group act as the group.
  */
 export function keyStateResolver(
     lookup: (
@@ -890,8 +896,9 @@ export function keyStateResolver(
     };
     resolver.legacy = async (aid: string) => {
         const state = await lookup(aid);
-        const first = state?.k?.[0];
-        return first === undefined ? null : verferOf(first);
+        if (state === null || state === undefined) return null;
+        const keys = state.k ?? [];
+        return verferOf(keys[effectiveKeyIndex(keys, state.kt)]);
     };
     return resolver;
 }
@@ -1172,10 +1179,11 @@ export function verifyLegacy(args: {
 }
 
 /**
- * Legacy mode resolves Signify-Resource by lookup alone, as KERIA does with
- * its kevers today (profile §8): the resolver's `legacy` lookup when it has
- * one, else the resolver itself. §7's derivation-code and R4 rules do not
- * apply.
+ * Legacy mode resolves Signify-Resource by lookup (profile 1.1 §8): the
+ * resolver's `legacy` lookup when it has one, which yields the controller's
+ * single effective signer under R4, else the resolver itself as given. §7
+ * R1's derivation-code rules do not apply: the AID is looked up, never
+ * decoded as a key.
  */
 async function resolveLegacy(
     resource: string,

@@ -476,21 +476,75 @@ describe('keyid resolution (profile §7)', () => {
         );
     });
 
-    it('looks legacy Signify-Resource up by its first key, without R4', async () => {
-        const multi = keyStateResolver(
-            () =>
-                ({
-                    i: CONTROLLER,
-                    k: [controller.verfer.qb64, agent.verfer.qb64],
-                    kt: '1',
-                }) as unknown as KeyState
-        );
+    it('looks legacy Signify-Resource up by its single effective signer (profile 1.1 §8)', async () => {
+        const as = (k: string[], kt: string | string[]) =>
+            keyStateResolver(
+                () => ({ i: CONTROLLER, k, kt }) as unknown as KeyState
+            );
+        const pair = [controller.verfer.qb64, agent.verfer.qb64];
+        // A passcode-rotated Signify controller: its first key.
         assert.equal(
-            (await multi.legacy!(CONTROLLER))!.qb64,
+            (await as(pair, ['1', '0']).legacy!(CONTROLLER))!.qb64,
             controller.verfer.qb64
+        );
+        // Weight 0 on the first key: the second is the one used.
+        assert.equal(
+            (await as(pair, ['0', '1']).legacy!(CONTROLLER))!.qb64,
+            agent.verfer.qb64
+        );
+        // Either key alone, or neither: no single effective signer.
+        expect(await code(() => as(pair, '1').legacy!(CONTROLLER))).toBe(
+            'unsupported-signer'
+        );
+        expect(await code(() => as(pair, '2').legacy!(CONTROLLER))).toBe(
+            'unsupported-signer'
         );
         const none = keyStateResolver(() => undefined);
         assert.isNull(await none.legacy!(CONTROLLER));
+    });
+
+    it('verifies a legacy request under the effective signer only', async () => {
+        const prepare = async (signer: Signer) => {
+            const prepared = await new SignedHeaderAuthenticator(
+                signer,
+                signer.verfer
+            ).prepare(
+                new Request(URL_, {
+                    headers: new Headers({
+                        'Signify-Resource': CONTROLLER,
+                        'Signify-Timestamp': '2026-01-01T00:00:00.000000+00:00',
+                    }),
+                }),
+                CONTROLLER,
+                AGENT
+            );
+            const headers: Record<string, string> = {};
+            prepared.headers.forEach((value, name) => (headers[name] = value));
+            return headers;
+        };
+        const verify = async (
+            signer: Signer,
+            kt: string | string[]
+        ): Promise<string> =>
+            code(
+                verifyRequest({
+                    method: 'GET',
+                    url: URL_,
+                    headers: await prepare(signer),
+                    resolver: keyStateResolver(
+                        () =>
+                            ({
+                                i: CONTROLLER,
+                                k: [controller.verfer.qb64, agent.verfer.qb64],
+                                kt,
+                            }) as unknown as KeyState
+                    ),
+                })
+            );
+        expect(await verify(controller, ['1', '0'])).toBe('accepted');
+        expect(await verify(agent, ['0', '1'])).toBe('accepted');
+        expect(await verify(controller, ['0', '1'])).toBe('signature-mismatch');
+        expect(await verify(controller, '2')).toBe('unsupported-signer');
     });
 
     it('refuses, never throws, a legacy signature the key cannot check', async () => {
