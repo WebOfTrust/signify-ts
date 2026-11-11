@@ -636,6 +636,18 @@ describe('verifyResponse (profile §8)', () => {
         ).toBe('missing-signature');
     });
 
+    it('treats an empty Signature header as unsigned (profile 1.1 §8)', async () => {
+        const req = request();
+        const base = { body: 'nope', request: req, keyid: AGENT, resolver };
+        const headers = { Signature: '' };
+        expect(
+            await code(verifyResponse({ ...base, status: 401, headers }))
+        ).toBe('unauthenticated');
+        expect(
+            await code(verifyResponse({ ...base, status: 500, headers }))
+        ).toBe('missing-signature');
+    });
+
     it('defers a response body check visibly', async () => {
         const req = request();
         const headers = respond(req);

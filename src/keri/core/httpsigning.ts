@@ -1284,7 +1284,8 @@ function modeOfRequest(request: HttpSigMessageRequest): HttpSigMode {
  *
  * After a canonical request an unsigned 401 is refused as `unauthenticated`,
  * before any other check, and any other unsigned response as
- * `missing-signature`. A response in the other mode than the request, in
+ * `missing-signature`. A `Signature` header that is present but empty is
+ * unsigned (profile 1.1, §8 and §9). A response in the other mode than the request, in
  * either direction, is `mode-mismatch`, with no fallback (profile §8).
  * A canonical response must be signed by `keyid`, cover the response
  * minimum set, be fresh, and match its digest. When it covers
@@ -1302,7 +1303,9 @@ export async function verifyResponse(
     checkPolicy(policy);
     const requestMode = args.requestMode ?? modeOfRequest(args.request);
     const signature = headers.get(SIGNATURE);
-    if (signature === null) {
+    // An empty Signature is no signature (profile §8), so a 401 carrying
+    // one is the same unsigned 401.
+    if (signature === null || signature === '') {
         if (args.status === 401 && requestMode === 'canonical') {
             refuse(
                 'unauthenticated',
