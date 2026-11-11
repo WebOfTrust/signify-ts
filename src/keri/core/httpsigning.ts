@@ -408,10 +408,10 @@ function bytesOf(body: Uint8Array | string | null | undefined): Uint8Array {
 /**
  * Whether a request has a body for the purpose of the request minimum set
  * (profile §3): content in hand, any Transfer-Encoding, or a Content-Length
- * above zero. A Content-Length that is not a plain decimal is no evidence of
- * an empty body, so it counts as one. The header test is for the verifier of
- * a request only; the response minimum looks at the request's content alone
- * ({@link responseMinimum}).
+ * above zero. A Content-Length that is not a plain decimal once SP and HTAB
+ * are trimmed is no evidence of an empty body, so it counts as one. The
+ * header test is for the verifier of a request only; the response minimum
+ * looks at the request's content alone ({@link responseMinimum}).
  */
 function hasBody(
     headers: Headers,
@@ -421,7 +421,10 @@ function hasBody(
     if (headers.has('transfer-encoding')) return true;
     const length = headers.get('content-length');
     if (length === null) return false;
-    return !/^[0-9]+$/.test(length.trim()) || Number(length) > 0;
+    // RFC 9421 §2.1 strips SP and HTAB only. String.prototype.trim would
+    // also strip a no-break space and read "0\u00a0" as no body.
+    const value = length.replace(/^[ \t]+|[ \t]+$/g, '');
+    return !/^[0-9]+$/.test(value) || Number(value) > 0;
 }
 
 /**

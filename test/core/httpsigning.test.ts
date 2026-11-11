@@ -241,6 +241,24 @@ describe('verifyRequest', () => {
         );
     });
 
+    it('trims only SP and HTAB from a Content-Length (profile §3)', async () => {
+        const bare = signed({ method: 'POST', body: null });
+        const verify = (length: string) =>
+            code(
+                verifyRequest({
+                    method: 'POST',
+                    url: URL_,
+                    headers: { ...bare, 'Content-Length': length },
+                    resolver,
+                    now: NOW,
+                })
+            );
+        expect(await verify('0')).toBe('accepted');
+        expect(await verify('0\t')).toBe('accepted');
+        // A no-break space leaves something other than a plain decimal.
+        expect(await verify('0\u00a0')).toBe('insufficient-coverage');
+    });
+
     it('verifies the path and query as received, not normalized (profile §2)', async () => {
         const over = (url: string) =>
             signed({ method: 'GET', body: null, url });
