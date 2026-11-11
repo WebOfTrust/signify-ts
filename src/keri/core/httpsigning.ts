@@ -143,7 +143,10 @@ export const HTTPSIG_REQUEST_DEFAULT: readonly string[] = [
 export interface HttpSigPolicy {
     /**
      * Components every request must cover. Default
-     * {@link HTTPSIG_REQUEST_MINIMUM}; must include all of it.
+     * {@link HTTPSIG_REQUEST_MINIMUM}; must include all of it. `@authority`
+     * does not belong here: `requireAuthority` adds it together with the
+     * comparison against `authorities`, and a request set that lists it
+     * without `requireAuthority` is refused ({@link checkPolicy}).
      */
     request?: readonly string[];
     /**
@@ -432,8 +435,9 @@ function hasBody(
 /**
  * Refuse, as a caller error, a policy below the profile's floor (profile §3,
  * §6): a request minimum set lacking any of {@link HTTPSIG_REQUEST_MINIMUM},
- * a `maxAge` or `skew` that is not a positive integer, or `requireAuthority`
- * without the authorities to compare with.
+ * one that lists `@authority` without `requireAuthority`, a `maxAge` or
+ * `skew` that is not a positive integer, or `requireAuthority` without the
+ * authorities to compare with.
  */
 export function checkPolicy(policy: HttpSigPolicy): void {
     if (policy.request !== undefined) {
@@ -446,6 +450,17 @@ export function checkPolicy(policy: HttpSigPolicy): void {
                     `Policy request set must include ${component}; a policy may not go below the profile's minimum set.`
                 );
             }
+        }
+        // A verifier that requires @authority must compare it with the
+        // authorities it serves (profile §3), or a request signed for one
+        // service replays to another. Covering it alone compares nothing.
+        if (
+            covered.has(componentIdentity(componentIdentifier('@authority'))) &&
+            !policy.requireAuthority
+        ) {
+            throw new Error(
+                'Require @authority with requireAuthority and authorities, not in the policy request set.'
+            );
         }
     }
     for (const key of ['maxAge', 'skew'] as const) {
@@ -1049,10 +1064,8 @@ async function verifyCanonical(
     checkAlgorithm(verfer, params);
 
     const base = buildBase(items, params, request, response);
-    // TODO(profile ruling pending: @authority in the minimum set without
-    // requireAuthority): the covered @authority is compared with the
-    // served authorities only under requireAuthority, not when a policy
-    // puts @authority in its request set; the profile is to say which.
+    // checkPolicy refuses @authority in the request set without
+    // requireAuthority, so a required @authority is always compared.
     if (target === 'request' && policy.requireAuthority) {
         const authority = authorityOf(request.url, toHeaders(request.headers));
         const served = (policy.authorities ?? []).map(normalizeAuthority);

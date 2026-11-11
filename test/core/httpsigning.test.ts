@@ -344,7 +344,19 @@ describe('verifyRequest', () => {
 describe('checkPolicy (profile §3, §6)', () => {
     it('refuses a policy below the minimum set or with a non-positive window', () => {
         checkPolicy({});
-        checkPolicy({ request: ['@method', '@path', '@query', '@authority'] });
+        // @authority must be compared, not merely covered (profile §3).
+        assert.throws(
+            () =>
+                checkPolicy({
+                    request: ['@method', '@path', '@query', '@authority'],
+                }),
+            /requireAuthority/
+        );
+        checkPolicy({
+            request: ['@method', '@path', '@query', '@authority'],
+            requireAuthority: true,
+            authorities: ['keria.example.com'],
+        });
         assert.throws(() => checkPolicy({ request: ['@method', '@path'] }));
         assert.throws(() => checkPolicy({ maxAge: 0 }));
         assert.throws(() => checkPolicy({ skew: -1 }));
