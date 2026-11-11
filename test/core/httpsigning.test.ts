@@ -373,6 +373,20 @@ describe('keyid resolution (profile §7)', () => {
         assert.equal(v.qb64, nt.verfer.qb64);
     });
 
+    it('refuses a non-transferable keyid whose key has small order (§9)', async () => {
+        // The identity point: a signature verifies under it over any message.
+        const identity = new Uint8Array(32);
+        identity[0] = 1;
+        const keyid = new Matter({ raw: identity, code: MtrDex.Ed25519N }).qb64;
+        assert.equal(keyid, 'BAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        expect(await code(resolveKeyid(keyid))).toBe('malformed-key');
+        // The same point with the sign bit set is the same small-order key.
+        identity[31] = 0x80;
+        const signed = new Matter({ raw: identity, code: MtrDex.Ed25519N })
+            .qb64;
+        expect(await code(resolveKeyid(signed))).toBe('malformed-key');
+    });
+
     it('never decodes a transferable D keyid as a key', async () => {
         expect(await code(resolveKeyid(controller.verfer.qb64))).toBe(
             'unknown-key'

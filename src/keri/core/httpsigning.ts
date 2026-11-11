@@ -359,6 +359,34 @@ const PREFIX_CODES = new Set<string>([
 ]);
 const ED25519_KEYS = new Set<string>([MtrDex.Ed25519, MtrDex.Ed25519N]);
 
+/**
+ * The encodings of the Ed25519 points of small order (order dividing 8), and
+ * the non-canonical y = p and y = p + 1, as in libsodium's `has_small_order`
+ * and fiki's blocklist. Compared with the sign bit of the last byte masked.
+ * Under such a key a fixed signature verifies over any message, so a
+ * non-transferable keyid holding one authenticates no one (profile §9).
+ */
+const SMALL_ORDER: readonly Uint8Array[] = [
+    '00'.repeat(32),
+    '01' + '00'.repeat(31),
+    '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05',
+    'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a',
+    'ec' + 'ff'.repeat(30) + '7f',
+    'ed' + 'ff'.repeat(30) + '7f',
+    'ee' + 'ff'.repeat(30) + '7f',
+].map((hex) => Uint8Array.from(hex.match(/../g)!, (h) => parseInt(h, 16)));
+
+function smallOrder(raw: Uint8Array): boolean {
+    return SMALL_ORDER.some(
+        (point) =>
+            raw.length === point.length &&
+            point.every(
+                (byte, i) =>
+                    (i === point.length - 1 ? raw[i] & 0x7f : raw[i]) === byte
+            )
+    );
+}
+
 type Target = 'request' | 'response';
 
 function toHeaders(headers: HttpSigHeaders | undefined): Headers {
@@ -743,7 +771,8 @@ function checkAlgorithm(verfer: Verfer, params: Parameters): void {
  * transferable code, including a basic `D` prefix, goes through `resolver`
  * to the current key state, and is never decoded as a key.
  *
- * Refuses `malformed-key` for anything that is not a well-formed AID,
+ * Refuses `malformed-key` for anything that is not a well-formed AID, or a
+ * non-transferable Ed25519 prefix whose key is a small-order point (§9),
  * `unknown-key` for a transferable AID the resolver does not know (or when
  * `expected` is given and differs), and `unsupported-algorithm` for a
  * non-transferable prefix of another key type.
@@ -776,6 +805,12 @@ export async function resolveKeyid(
             refuse(
                 'unsupported-algorithm',
                 `Non-transferable prefix code ${matter.code} is not Ed25519.`
+            );
+        }
+        if (smallOrder(matter.raw)) {
+            refuse(
+                'malformed-key',
+                `keyid "${keyid}" is a small-order Ed25519 point, under which a signature verifies over any message.`
             );
         }
         return new Verfer({ qb64: keyid });
