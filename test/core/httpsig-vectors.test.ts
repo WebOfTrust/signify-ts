@@ -1,8 +1,8 @@
 /**
  * Runs every case of the shared KERI-profile RFC 9421 vectors in
- * test/vectors/keri-rfc9421/ (bakobo/fiki c6ec3b5, keri_vectors_format 2,
- * profile version 1). The vectors are verbatim copies; see the README beside
- * them.
+ * test/vectors/keri-rfc9421/ (bakobo/fiki e8e553f, tag keri-profile-v1.1,
+ * keri_vectors_format 7, profile version 1.1). The vectors are verbatim
+ * copies; see the README beside them.
  */
 import { readFileSync } from 'node:fs';
 import { assert, beforeAll, describe, expect, it } from 'vitest';
@@ -157,10 +157,14 @@ beforeAll(async () => {
 });
 
 describe('vector files', () => {
-    it('are the frozen format 2 set, for profile version 1', () => {
+    it('are the frozen format 7 set, for profile version 1.1', () => {
         for (const file of [rfc9421, requests, responses, refusals, legacy]) {
-            assert.equal(file.keri_vectors_format, 2);
-            assert.equal(file.profile.version, 1);
+            assert.equal(file.keri_vectors_format, 7);
+            assert.equal(file.profile.version, '1.1');
+            assert.equal(
+                file.profile.where,
+                'https://github.com/bakobo/fiki/blob/keri-profile-v1.1/docs/keri-profile.md'
+            );
         }
     });
 
@@ -404,6 +408,8 @@ describe('legacy.json', () => {
             c.base
         );
 
+        // Transcription check: the key that made the signature verifies it
+        // over the stated base.
         const verfer = new Verfer({ qb64: c.key });
         const v = verifyLegacy({
             method: c.method,
@@ -415,11 +421,47 @@ describe('legacy.json', () => {
         assert.equal(v.base, c.base);
 
         // Legacy verification resolves Signify-Resource (the case's own
-        // keyid may be the signer's verfer rather than an AID).
+        // keyid may be the signer's verfer rather than an AID). A pinned
+        // case is accepted under its key. A generated case (format 7)
+        // carries the key state held for Signify-Resource, which the
+        // legacy lookup reduces to its single effective signer (profile 1.1
+        // §8, R4), and is refused with its error, if it has one.
         const resource = headers.get('Signify-Resource');
-        const resolver = (k: string) => (k === resource ? verfer : null);
+        const resolver: HttpSigKeyResolver =
+            c.key_state === undefined
+                ? (k: string) => (k === resource ? verfer : null)
+                : keyStateResolver((aid) =>
+                      aid === resource
+                          ? ({
+                                i: aid,
+                                k: c.key_state.keys,
+                                kt: c.key_state.threshold,
+                            } as unknown as KeyState)
+                          : null
+                  );
+        if (c.key_state !== undefined) {
+            if (c.effective_key === null) {
+                expect(
+                    await refusalOf(
+                        Promise.resolve(resolver.legacy!(resource!))
+                    )
+                ).toBe('unsupported-signer');
+            } else {
+                const found = (await resolver.legacy!(resource!)) as Verfer;
+                assert.equal(
+                    Buffer.from(found.raw).toString('base64url'),
+                    c.effective_key
+                );
+            }
+        }
         const url = c.url ?? `http://127.0.0.1${c.path}`;
-        if (c.kind === 'request') {
+        if (c.kind === 'request' && c.error !== undefined) {
+            expect(
+                await refusalOf(
+                    verifyRequest({ method: c.method, url, headers, resolver })
+                )
+            ).toBe(c.error);
+        } else if (c.kind === 'request') {
             const r = await verifyRequest({
                 method: c.method,
                 url,
@@ -439,6 +481,9 @@ describe('legacy.json', () => {
                 )
             ).toBe('malformed-signature');
         } else {
+            // Every generated case is a request; a refused response would
+            // need its own branch.
+            assert.isUndefined(c.error);
             // The vector does not record the request's content. Legacy mode
             // never uses it, but verifyResponse requires the content sent, so
             // the record says empty.
