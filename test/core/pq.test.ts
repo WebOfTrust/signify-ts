@@ -190,10 +190,11 @@ describe('post-quantum codes — parsing a real ML-DSA stream', () => {
         assert.equal(items[1].span.end, group.span.end);
     });
 
-    it('never frames a post-quantum signature as an INDEXED signature', () => {
-        // signify-ts does not yet carry the indexed post-quantum codes that
-        // kswg-cesr-specification #186 proposes, so a post-quantum signature
-        // in this stream must frame as Matter, never as Indexer.
+    it('frames the post-quantum signature in a receipt couple signature as Matter, not Indexer', () => {
+        // A -C couple carries an unindexed signature, so the ML-DSA-44
+        // signature in this stream must frame through the Matter table even
+        // though the indexed codes from kswg-cesr-specification #186 exist
+        // (see pq-indexed.test.ts).
         const all = parse(bytesOf(MLDSA_RECEIPT)).messages.flatMap((m) =>
             m.attachments.flatMap(nodes)
         );
@@ -203,9 +204,8 @@ describe('post-quantum codes — parsing a real ML-DSA stream', () => {
         );
         // A -A group's members are Indexer primitives, so a post-quantum Matter
         // code placed there must not resolve, however well it would resolve as
-        // Matter. This checks that the two tables stay separate; it says
-        // nothing about #186's own codes, which would use the 3, 8 and 9
-        // selectors.
+        // Matter. This checks that the two tables stay separate; #186's own
+        // indexed codes use the 3, 8 and 9 selectors instead.
         const icp = MLDSA_RECEIPT.slice(0, 253);
         const { errors } = parse(
             bytesOf(icp + '-AAB' + '1AAQ' + 'A'.repeat(4412))

@@ -19,6 +19,24 @@ export class IndexerCodex {
     ECDSA_256r1_Big_Crt_Sig: string = '2F'; // ECDSA secp256r1 sig appears in current list only.
     Ed448_Big_Sig: string = '3A'; // Ed448 signature appears in both lists.
     Ed448_Big_Crt_Sig: string = '3B'; // Ed448 signature appears in current list only.
+    ML_DSA_65_Big_Sig: string = '3C'; // ML-DSA-65 sig appears in both lists.
+    ML_DSA_65_Big_Crt_Sig: string = '3D'; // ML-DSA-65 sig appears in current list only.
+    SLH_DSA_SHA2_192s_Big_Sig: string = '3E'; // SLH-DSA-SHA2-192s sig appears in both lists.
+    SLH_DSA_SHA2_192s_Big_Crt_Sig: string = '3F'; // SLH-DSA-SHA2-192s sig appears in current list only.
+    SLH_DSA_SHAKE_192s_Big_Sig: string = '3G'; // SLH-DSA-SHAKE-192s sig appears in both lists.
+    SLH_DSA_SHAKE_192s_Big_Crt_Sig: string = '3H'; // SLH-DSA-SHAKE-192s sig appears in current list only.
+    ML_DSA_44_Big_Sig: string = '8A'; // ML-DSA-44 sig appears in both lists, lead size 1.
+    ML_DSA_44_Big_Crt_Sig: string = '8B'; // ML-DSA-44 sig appears in current list only, lead size 1.
+    SLH_DSA_SHA2_128s_Big_Sig: string = '8C'; // SLH-DSA-SHA2-128s sig appears in both lists, lead size 1.
+    SLH_DSA_SHA2_128s_Big_Crt_Sig: string = '8D'; // SLH-DSA-SHA2-128s sig appears in current list only, lead size 1.
+    SLH_DSA_SHAKE_128s_Big_Sig: string = '8E'; // SLH-DSA-SHAKE-128s sig appears in both lists, lead size 1.
+    SLH_DSA_SHAKE_128s_Big_Crt_Sig: string = '8F'; // SLH-DSA-SHAKE-128s sig appears in current list only, lead size 1.
+    SLH_DSA_SHA2_256s_Big_Sig: string = '8G'; // SLH-DSA-SHA2-256s sig appears in both lists, lead size 1.
+    SLH_DSA_SHA2_256s_Big_Crt_Sig: string = '8H'; // SLH-DSA-SHA2-256s sig appears in current list only, lead size 1.
+    SLH_DSA_SHAKE_256s_Big_Sig: string = '8I'; // SLH-DSA-SHAKE-256s sig appears in both lists, lead size 1.
+    SLH_DSA_SHAKE_256s_Big_Crt_Sig: string = '8J'; // SLH-DSA-SHAKE-256s sig appears in current list only, lead size 1.
+    ML_DSA_87_Big_Sig: string = '9A'; // ML-DSA-87 sig appears in both lists, lead size 2.
+    ML_DSA_87_Big_Crt_Sig: string = '9B'; // ML-DSA-87 sig appears in current list only, lead size 2.
 }
 
 export const IdrDex = new IndexerCodex();
@@ -40,6 +58,24 @@ export class IndexedSigCodex {
     ECDSA_256r1_Big_Crt_Sig: string = '2F'; // ECDSA secp256r1 sig appears in current list only.
     Ed448_Big_Sig: string = '3A'; // Ed448 signature appears in both lists.
     Ed448_Big_Crt_Sig: string = '3B'; // Ed448 signature appears in current list only.
+    ML_DSA_65_Big_Sig: string = '3C'; // ML-DSA-65 sig appears in both lists.
+    ML_DSA_65_Big_Crt_Sig: string = '3D'; // ML-DSA-65 sig appears in current list only.
+    SLH_DSA_SHA2_192s_Big_Sig: string = '3E'; // SLH-DSA-SHA2-192s sig appears in both lists.
+    SLH_DSA_SHA2_192s_Big_Crt_Sig: string = '3F'; // SLH-DSA-SHA2-192s sig appears in current list only.
+    SLH_DSA_SHAKE_192s_Big_Sig: string = '3G'; // SLH-DSA-SHAKE-192s sig appears in both lists.
+    SLH_DSA_SHAKE_192s_Big_Crt_Sig: string = '3H'; // SLH-DSA-SHAKE-192s sig appears in current list only.
+    ML_DSA_44_Big_Sig: string = '8A'; // ML-DSA-44 sig appears in both lists, lead size 1.
+    ML_DSA_44_Big_Crt_Sig: string = '8B'; // ML-DSA-44 sig appears in current list only, lead size 1.
+    SLH_DSA_SHA2_128s_Big_Sig: string = '8C'; // SLH-DSA-SHA2-128s sig appears in both lists, lead size 1.
+    SLH_DSA_SHA2_128s_Big_Crt_Sig: string = '8D'; // SLH-DSA-SHA2-128s sig appears in current list only, lead size 1.
+    SLH_DSA_SHAKE_128s_Big_Sig: string = '8E'; // SLH-DSA-SHAKE-128s sig appears in both lists, lead size 1.
+    SLH_DSA_SHAKE_128s_Big_Crt_Sig: string = '8F'; // SLH-DSA-SHAKE-128s sig appears in current list only, lead size 1.
+    SLH_DSA_SHA2_256s_Big_Sig: string = '8G'; // SLH-DSA-SHA2-256s sig appears in both lists, lead size 1.
+    SLH_DSA_SHA2_256s_Big_Crt_Sig: string = '8H'; // SLH-DSA-SHA2-256s sig appears in current list only, lead size 1.
+    SLH_DSA_SHAKE_256s_Big_Sig: string = '8I'; // SLH-DSA-SHAKE-256s sig appears in both lists, lead size 1.
+    SLH_DSA_SHAKE_256s_Big_Crt_Sig: string = '8J'; // SLH-DSA-SHAKE-256s sig appears in current list only, lead size 1.
+    ML_DSA_87_Big_Sig: string = '9A'; // ML-DSA-87 sig appears in both lists, lead size 2.
+    ML_DSA_87_Big_Crt_Sig: string = '9B'; // ML-DSA-87 sig appears in current list only, lead size 2.
 
     has(prop: string): boolean {
         const m = new Map(
@@ -60,6 +96,15 @@ export class IndexedCurrentSigCodex {
     ECDSA_256k1_Big_Crt_Sig: string = '2D'; // ECDSA secp256k1 sig appears in current list only.
     ECDSA_256r1_Big_Crt_Sig: string = '2F'; // ECDSA secp256r1 sig appears in current list only.
     Ed448_Big_Crt_Sig: string = '3B'; // Ed448 signature appears in current list only.
+    ML_DSA_65_Big_Crt_Sig: string = '3D'; // ML-DSA-65 sig appears in current list only.
+    SLH_DSA_SHA2_192s_Big_Crt_Sig: string = '3F'; // SLH-DSA-SHA2-192s sig appears in current list only.
+    SLH_DSA_SHAKE_192s_Big_Crt_Sig: string = '3H'; // SLH-DSA-SHAKE-192s sig appears in current list only.
+    ML_DSA_44_Big_Crt_Sig: string = '8B'; // ML-DSA-44 sig appears in current list only, lead size 1.
+    SLH_DSA_SHA2_128s_Big_Crt_Sig: string = '8D'; // SLH-DSA-SHA2-128s sig appears in current list only, lead size 1.
+    SLH_DSA_SHAKE_128s_Big_Crt_Sig: string = '8F'; // SLH-DSA-SHAKE-128s sig appears in current list only, lead size 1.
+    SLH_DSA_SHA2_256s_Big_Crt_Sig: string = '8H'; // SLH-DSA-SHA2-256s sig appears in current list only, lead size 1.
+    SLH_DSA_SHAKE_256s_Big_Crt_Sig: string = '8J'; // SLH-DSA-SHAKE-256s sig appears in current list only, lead size 1.
+    ML_DSA_87_Big_Crt_Sig: string = '9B'; // ML-DSA-87 sig appears in current list only, lead size 2.
 
     has(prop: string): boolean {
         const m = new Map(
@@ -78,6 +123,15 @@ export class IndexedBothSigCodex {
     Ed25519_Big_Sig: string = '2A'; // Ed25519 sig appears in both listsy.
     ECDSA_256k1_Big_Sig: string = '2C'; // ECDSA secp256k1 sig appears in both lists.
     Ed448_Big_Sig: string = '3A'; // Ed448 signature appears in both lists.
+    ML_DSA_65_Big_Sig: string = '3C'; // ML-DSA-65 sig appears in both lists.
+    SLH_DSA_SHA2_192s_Big_Sig: string = '3E'; // SLH-DSA-SHA2-192s sig appears in both lists.
+    SLH_DSA_SHAKE_192s_Big_Sig: string = '3G'; // SLH-DSA-SHAKE-192s sig appears in both lists.
+    ML_DSA_44_Big_Sig: string = '8A'; // ML-DSA-44 sig appears in both lists, lead size 1.
+    SLH_DSA_SHA2_128s_Big_Sig: string = '8C'; // SLH-DSA-SHA2-128s sig appears in both lists, lead size 1.
+    SLH_DSA_SHAKE_128s_Big_Sig: string = '8E'; // SLH-DSA-SHAKE-128s sig appears in both lists, lead size 1.
+    SLH_DSA_SHA2_256s_Big_Sig: string = '8G'; // SLH-DSA-SHA2-256s sig appears in both lists, lead size 1.
+    SLH_DSA_SHAKE_256s_Big_Sig: string = '8I'; // SLH-DSA-SHAKE-256s sig appears in both lists, lead size 1.
+    ML_DSA_87_Big_Sig: string = '9A'; // ML-DSA-87 sig appears in both lists, lead size 2.
 
     has(prop: string): boolean {
         const m = new Map(
@@ -176,6 +230,8 @@ export class Indexer {
         ['2', 2],
         ['3', 2],
         ['4', 2],
+        ['8', 2],
+        ['9', 2],
     ]);
 
     static Sizes = new Map(
@@ -198,6 +254,24 @@ export class Indexer {
 
             '3A': new Xizage(2, 6, 3, 160, 0),
             '3B': new Xizage(2, 6, 3, 160, 0),
+            '3C': new Xizage(2, 6, 3, 4420, 0),
+            '3D': new Xizage(2, 6, 3, 4420, 0),
+            '3E': new Xizage(2, 6, 3, 21640, 0),
+            '3F': new Xizage(2, 6, 3, 21640, 0),
+            '3G': new Xizage(2, 6, 3, 21640, 0),
+            '3H': new Xizage(2, 6, 3, 21640, 0),
+            '8A': new Xizage(2, 6, 3, 3236, 1),
+            '8B': new Xizage(2, 6, 3, 3236, 1),
+            '8C': new Xizage(2, 6, 3, 10484, 1),
+            '8D': new Xizage(2, 6, 3, 10484, 1),
+            '8E': new Xizage(2, 6, 3, 10484, 1),
+            '8F': new Xizage(2, 6, 3, 10484, 1),
+            '8G': new Xizage(2, 6, 3, 39732, 1),
+            '8H': new Xizage(2, 6, 3, 39732, 1),
+            '8I': new Xizage(2, 6, 3, 39732, 1),
+            '8J': new Xizage(2, 6, 3, 39732, 1),
+            '9A': new Xizage(2, 6, 3, 6180, 2),
+            '9B': new Xizage(2, 6, 3, 6180, 2),
 
             '0z': new Xizage(2, 2, 0, undefined, 0),
             '1z': new Xizage(2, 2, 1, 76, 1),
