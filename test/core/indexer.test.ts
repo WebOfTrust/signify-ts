@@ -381,3 +381,47 @@ describe('Indexer', () => {
         });
     });
 });
+
+describe('Indexer lead bytes and pad bits', () => {
+    /** The raw size a code implies: every character after the hard and soft
+     * code carries 6 bits, less any pad bits, and lead bytes are not raw. */
+    const rawSizeOf = (code: string) => {
+        const x = Indexer.Sizes.get(code)!;
+        return Math.floor(((x.fs! - x.hs - x.ss) * 3) / 4) - x.ls;
+    };
+
+    it('computes _rawSize from the full size, the code size and the lead size', () => {
+        for (const [code, x] of Indexer.Sizes) {
+            if (x.fs == undefined) continue;
+            assert.equal(Indexer._rawSize(code), rawSizeOf(code), code);
+        }
+        assert.equal(Indexer._rawSize(IdrDex.Ed25519_Sig), 64);
+        assert.equal(Indexer._rawSize(IdrDex.Ed448_Big_Sig), 114);
+    });
+
+    it('round-trips a code that carries a lead byte', () => {
+        // 1z and 4z are keripy's test codes for indexed material with one
+        // lead byte. Before the lead size was subtracted from the expected raw
+        // size, neither could be built from raw or read back from qb64.
+        for (const code of ['1z', '4z']) {
+            const raw = new Uint8Array(rawSizeOf(code)).map((_, i) => i + 1);
+            const fs = Indexer.Sizes.get(code)!.fs!;
+            const indexer = new Indexer({ raw, code, index: 5, ondex: 5 });
+            assert.equal(indexer.qb64.length, fs, code);
+            const back = new Indexer({ qb64: indexer.qb64 });
+            assert.equal(back.code, code);
+            assert.equal(back.index, 5);
+            assert.deepStrictEqual(back.raw, raw);
+            assert.equal(back.qb64, indexer.qb64);
+        }
+    });
+
+    it('rejects a lead byte that is not zero', () => {
+        const raw = new Uint8Array(rawSizeOf('1z')).fill(7);
+        const qb64 = new Indexer({ raw, code: '1z', index: 1, ondex: 1 }).qb64;
+        // The two characters after the 4-character code hold the lead byte
+        // and the first 4 bits of raw; 'B' sets a bit inside the lead byte.
+        const bad = qb64.slice(0, 4) + 'B' + qb64.slice(5);
+        assert.throws(() => new Indexer({ qb64: bad }), /lead byte/);
+    });
+});

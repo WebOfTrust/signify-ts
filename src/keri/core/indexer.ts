@@ -276,7 +276,7 @@ export class Indexer {
             //           raise InvalidCodeSizeError(f"Non-zero other index size for "
             //                                      f"variable length material. os={os}.")
             //       fs = (index * 4) + cs
-            const rawsize = Math.floor(((fs - cs) * 3) / 4);
+            const rawsize = Math.floor(((fs - cs) * 3) / 4) - xizage.ls; // lead bytes are not raw
             raw = raw.slice(0, rawsize);
 
             if (raw.length != rawsize) {
@@ -309,7 +309,8 @@ export class Indexer {
 
     public static _rawSize(code: string) {
         const xizage = Indexer.Sizes.get(code)!;
-        return Math.floor(xizage.fs! - ((xizage.hs + xizage.ss) * 3) / 4);
+        const cs = xizage.hs + xizage.ss;
+        return Math.floor(((xizage.fs! - cs) * 3) / 4) - xizage.ls;
     }
 
     get code(): string {
@@ -495,7 +496,10 @@ export class Indexer {
             raw = paw.slice(xizage!.ls);
         }
 
-        if (raw.length != Math.floor(((qb64.length - cs) * 3) / 4)) {
+        if (
+            raw.length !=
+            Math.floor(((qb64.length - cs) * 3) / 4) - xizage.ls
+        ) {
             throw new Error(`Improperly qualified material = ${qb64}`);
         }
 
