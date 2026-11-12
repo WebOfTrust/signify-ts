@@ -319,7 +319,11 @@ export class Indexer {
             if (
                 ondex != undefined &&
                 xizage.os != 0 &&
-                !(ondex >= 0 && ondex <= 64 ** os - 1)
+                !(
+                    Number.isInteger(ondex) &&
+                    ondex >= 0 &&
+                    ondex <= 64 ** os - 1
+                )
             ) {
                 throw new Error(`Invalid ondex=${ondex} for code=${code}.`);
             }
@@ -441,7 +445,11 @@ export class Indexer {
         if (
             ondex != undefined &&
             xizage.os != 0 &&
-            !(ondex >= 0 && ondex <= 64 ** xizage.os - 1)
+            !(
+                Number.isInteger(ondex) &&
+                ondex >= 0 &&
+                ondex <= 64 ** xizage.os - 1
+            )
         ) {
             throw new Error(
                 `Invalid ondex=${ondex} for os=${xizage.os} and code=${code}.`

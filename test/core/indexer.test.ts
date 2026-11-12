@@ -458,3 +458,21 @@ describe('Indexer dual-indexed ECDSA secp256r1 codes', () => {
         }
     });
 });
+
+describe('Indexer ondex validation', () => {
+    it('rejects an ondex that is not an integer', () => {
+        // The index was already required to be an integer; the ondex was only
+        // range-checked, so 1.5 was stored and then encoded.
+        const sig = new Uint8Array(114);
+        assert.throws(
+            () =>
+                new Indexer({
+                    raw: sig,
+                    code: IdrDex.Ed448_Big_Sig,
+                    index: 1,
+                    ondex: 1.5,
+                }),
+            /ondex/
+        );
+    });
+});
