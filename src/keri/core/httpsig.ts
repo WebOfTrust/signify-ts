@@ -305,9 +305,15 @@ export function isHeadersLike(headers: unknown): headers is Headers {
     );
 }
 
+/** An RFC 9110 §5.6.2 token, which every field name is (§5.1). */
+const FIELD_NAME = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
 /** Field lines of one name, in message order, each trimmed (RFC 9421 §2.1). */
 function fieldValues(headers: HttpSigHeaders, name: string): string[] | null {
     if (isHeadersLike(headers)) {
+        // A name that is not a token names no field a Headers can hold, and
+        // Headers.get throws a TypeError for one; such a field is absent.
+        if (!FIELD_NAME.test(name)) return null;
         // Headers already combines repeated fields with ", " and strips
         // leading and trailing whitespace from each value.
         const value = headers.get(name);

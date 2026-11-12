@@ -5,7 +5,12 @@ import {
     Item,
     Parameters as SfParameters,
 } from 'structured-headers';
+import { fromByteArray } from 'base64-js';
 import { decodeBase64Url } from '../../src/keri/core/base64.ts';
+import {
+    signatureBase,
+    signatureParamsValue,
+} from '../../src/keri/core/httpsig.ts';
 import { Matter, MtrDex } from '../../src/keri/core/matter.ts';
 import { Signer } from '../../src/keri/core/signer.ts';
 import { Verfer } from '../../src/keri/core/verfer.ts';
@@ -1254,5 +1259,50 @@ describe('profile 1.2', () => {
         expect(await code(resolveKeyid('1AAF' + 'A'.repeat(4)))).toBe(
             'malformed-key'
         );
+    });
+});
+
+describe('peer input stays inside the refusal codes (profile §9)', () => {
+    // A canonical request signed over exactly the components and fields
+    // given, as a peer could send it.
+    function handSigned(
+        components: string[],
+        fields: Record<string, string>,
+        url = 'https://keria.example.com/x'
+    ): Record<string, string> {
+        const params = { created: NOW, keyid: CONTROLLER };
+        const base = signatureBase({
+            components,
+            params,
+            request: { method: 'POST', url, headers: fields },
+        });
+        const raw = controller.sign(new TextEncoder().encode(base)).raw;
+        return {
+            ...fields,
+            'Signature-Input': `signify=${signatureParamsValue(components, params)}`,
+            Signature: `signify=:${fromByteArray(raw)}:`,
+        };
+    }
+
+    it('refuses a covered name that is not a field name as missing-component', async () => {
+        const headers = handSigned(['@method', '@path', '@query'], {});
+        headers['Signature-Input'] = headers['Signature-Input'].replace(
+            '"@query")',
+            '"@query" "bad name")'
+        );
+        for (const h of [headers, new Headers(headers)]) {
+            expect(
+                await code(
+                    verifyRequest({
+                        method: 'POST',
+                        url: 'https://keria.example.com/x',
+                        headers: h,
+                        body: '',
+                        resolver,
+                        now: NOW,
+                    })
+                )
+            ).toBe('missing-component');
+        }
     });
 });
