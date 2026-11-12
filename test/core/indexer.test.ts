@@ -424,4 +424,20 @@ describe('Indexer lead bytes and pad bits', () => {
         const bad = qb64.slice(0, 4) + 'B' + qb64.slice(5);
         assert.throws(() => new Indexer({ qb64: bad }), /lead byte/);
     });
+
+    it('checks every pad bit, not half of them', () => {
+        // A one-character code pads its 64-byte Ed25519 signature with two
+        // bytes, so the first character of material carries 4 pad bits on top.
+        // 'Q' is 0b010000: its top 4 bits, all pad, read 0b0100. A mask of
+        // ps = 2 bits instead of 2 * ps = 4 bits missed that set bit.
+        const sig = new Uint8Array(64).fill(1);
+        const qb64 = new Indexer({
+            raw: sig,
+            code: IdrDex.Ed25519_Sig,
+            index: 0,
+        }).qb64;
+        assert.ok('ABCD'.includes(qb64[2])); // a valid encoding has zero pad bits
+        const bad = qb64.slice(0, 2) + 'Q' + qb64.slice(3);
+        assert.throws(() => new Indexer({ qb64: bad }), /prepad bits/);
+    });
 });

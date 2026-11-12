@@ -469,7 +469,7 @@ export class Indexer {
 
         qb64 = qb64.slice(0, xizage.fs);
         const ps = cs % 4;
-        const pbs = 2 * ps != 0 ? ps : xizage.ls;
+        const pbs = 2 * (ps != 0 ? ps : xizage.ls); // pad bit size, as in Matter
         let raw;
         if (ps != 0) {
             const base = new Array(ps + 1).join('A') + qb64.slice(cs);
