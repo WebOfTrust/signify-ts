@@ -48,8 +48,9 @@ const isCurrentOnly = (name: string) => name.includes('_Crt_');
  * key (3AAA), followed by a -A controller signature group holding that key's
  * 8A indexed signature at index 0. The keypair is real and the signature is
  * over the event's exact bytes, generated with @noble/post-quantum 0.7.1's
- * ml_dsa44, so it verifies; signify-ts ships no ML-DSA implementation and
- * cannot check that here, but it can frame it. The prefix is a digest of the
+ * ml_dsa44, and it verified against the key when generated. signify-ts ships
+ * no ML-DSA implementation, so these tests check framing and sizes only. The
+ * prefix is a digest of the
  * event rather than of the key, since no post-quantum key code may be a basic
  * prefix. */
 const MLDSA_ICP =
