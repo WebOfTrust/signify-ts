@@ -1305,4 +1305,34 @@ describe('peer input stays inside the refusal codes (profile §9)', () => {
             ).toBe('missing-component');
         }
     });
+
+    it('recognizes only its own digest algorithms, never a prototype property', async () => {
+        for (const algorithm of [
+            'constructor',
+            '__proto__',
+            'tostring',
+            'hasownproperty',
+        ]) {
+            const headers = handSigned(
+                ['@method', '@path', '@query', 'content-digest'],
+                {
+                    'Content-Digest': `${algorithm}=:YQ==:`,
+                    'Content-Length': '1',
+                }
+            );
+            expect(
+                await code(
+                    verifyRequest({
+                        method: 'POST',
+                        url: 'https://keria.example.com/x',
+                        headers,
+                        body: 'a',
+                        resolver,
+                        now: NOW,
+                    })
+                ),
+                algorithm
+            ).toBe('malformed-digest');
+        }
+    });
 });

@@ -597,11 +597,14 @@ export function signatureBase(args: SignatureBaseArgs): string {
 
 type DigestFn = (data: Uint8Array) => Uint8Array;
 
-/** Digest algorithms accepted by {@link verifyContentDigest}. */
-const DIGESTS: Record<string, DigestFn> = {
-    'sha-256': sha256,
-    'sha-512': sha512,
-};
+/**
+ * Digest algorithms accepted by {@link verifyContentDigest}. A Map, since the
+ * algorithm is peer input and a plain object would recognize "constructor".
+ */
+const DIGESTS: ReadonlyMap<string, DigestFn> = new Map([
+    ['sha-256', sha256],
+    ['sha-512', sha512],
+]);
 
 function bodyBytes(body: Uint8Array | string): Uint8Array {
     return typeof body === 'string' ? new TextEncoder().encode(body) : body;
@@ -615,7 +618,7 @@ export function contentDigest(
     body: Uint8Array | string,
     algorithm: 'sha-256' | 'sha-512' = 'sha-256'
 ): string {
-    const fn = DIGESTS[algorithm];
+    const fn = DIGESTS.get(algorithm);
     if (fn === undefined) {
         fail(`Unsupported Content-Digest algorithm "${algorithm}".`);
     }
@@ -662,7 +665,7 @@ export function parseContentDigest(header: string): Map<string, Uint8Array> {
     }
     const digests = new Map<string, Uint8Array>();
     for (const [algorithm, member] of dict) {
-        if (DIGESTS[algorithm] === undefined) continue;
+        if (!DIGESTS.has(algorithm)) continue;
         const value: BareItem | undefined = isInnerList(member)
             ? undefined
             : member[0];
@@ -683,7 +686,7 @@ export function parseContentDigest(header: string): Map<string, Uint8Array> {
     }
     if (digests.size === 0) {
         fail(
-            `Content-Digest carries no supported algorithm; supported: ${Object.keys(DIGESTS).join(', ')}.`,
+            `Content-Digest carries no supported algorithm; supported: ${Array.from(DIGESTS.keys()).join(', ')}.`,
             'malformed-digest'
         );
     }
@@ -700,7 +703,7 @@ export function matchContentDigest(
 ): boolean {
     const bytes = bodyBytes(body);
     for (const [algorithm, received] of digests) {
-        if (!equalBytes(received, DIGESTS[algorithm](bytes))) return false;
+        if (!equalBytes(received, DIGESTS.get(algorithm)!(bytes))) return false;
     }
     return true;
 }
