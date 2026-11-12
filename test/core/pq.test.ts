@@ -9,11 +9,13 @@ import {
 /* Post-quantum codes, following trustoverip/kswg-cesr-specification #185.
  *
  * #185 places all 27 ML-DSA and SLH-DSA primitives in the four-character fixed
- * tables, because they are large: the smallest public key in them is 1,312 B
- * and the largest signature 29,792 B, so a four-character code costs under a
- * quarter of a percent of the encoding. These tests check the table against
- * arithmetic the spec makes checkable, against the FIPS 204 and 205 parameter
- * sets, and then against real cryptography. */
+ * tables. Its signatures and lattice-based public keys are large, from 1,312 B
+ * to 29,792 B, so a four-character code costs them under a quarter of a percent
+ * of the encoding; the small seeds and SLH-DSA keys go in the same tables so
+ * that each family is dispatched through one place. These tests check the
+ * table against arithmetic the spec makes checkable and against the FIPS 204
+ * and 205 parameter sets, and then frame a stream carrying a real ML-DSA-44
+ * key and signature. */
 
 const bytesOf = (s: string) => new TextEncoder().encode(s);
 
@@ -190,9 +192,8 @@ describe('post-quantum codes — parsing a real ML-DSA stream', () => {
 
     it('never frames a post-quantum signature as an INDEXED signature', () => {
         // signify-ts does not yet carry the indexed post-quantum codes that
-        // kswg-cesr-specification #186 proposes, so no post-quantum primitive
-        // may resolve through the Indexer table. A comment would not fail if
-        // someone later added one without the Indexer support it needs.
+        // kswg-cesr-specification #186 proposes, so a post-quantum signature
+        // in this stream must frame as Matter, never as Indexer.
         const all = parse(bytesOf(MLDSA_RECEIPT)).messages.flatMap((m) =>
             m.attachments.flatMap(nodes)
         );
@@ -200,9 +201,11 @@ describe('post-quantum codes — parsing a real ML-DSA stream', () => {
             all.filter((n) => n.kind === 'primitive' && n.class === 'indexer'),
             []
         );
-        // The same rule at the framing layer: a -A group's members are Indexer
-        // primitives, so a post-quantum code there must not resolve, however
-        // well it would resolve as Matter.
+        // A -A group's members are Indexer primitives, so a post-quantum Matter
+        // code placed there must not resolve, however well it would resolve as
+        // Matter. This checks that the two tables stay separate; it says
+        // nothing about #186's own codes, which would use the 3, 8 and 9
+        // selectors.
         const icp = MLDSA_RECEIPT.slice(0, 253);
         const { errors } = parse(
             bytesOf(icp + '-AAB' + '1AAQ' + 'A'.repeat(4412))
