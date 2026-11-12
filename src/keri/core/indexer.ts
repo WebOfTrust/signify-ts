@@ -119,9 +119,11 @@ export const IdxCrtSigDex = new IndexedCurrentSigCodex();
 export class IndexedBothSigCodex {
     Ed25519_Sig: string = 'A'; // Ed25519 sig appears same in both lists if any.
     ECDSA_256k1_Sig: string = 'C'; // ECDSA secp256k1 sig appears same in both lists if any.
+    ECDSA_256r1_Sig: string = 'E'; // ECDSA secp256r1 sig appears same in both lists if any.
     Ed448_Sig: string = '0A'; // Ed448 signature appears in both lists.
     Ed25519_Big_Sig: string = '2A'; // Ed25519 sig appears in both listsy.
     ECDSA_256k1_Big_Sig: string = '2C'; // ECDSA secp256k1 sig appears in both lists.
+    ECDSA_256r1_Big_Sig: string = '2E'; // ECDSA secp256r1 sig appears in both lists.
     Ed448_Big_Sig: string = '3A'; // Ed448 signature appears in both lists.
     ML_DSA_65_Big_Sig: string = '3C'; // ML-DSA-65 sig appears in both lists.
     SLH_DSA_SHA2_192s_Big_Sig: string = '3E'; // SLH-DSA-SHA2-192s sig appears in both lists.

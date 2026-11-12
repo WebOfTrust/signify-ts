@@ -441,3 +441,20 @@ describe('Indexer lead bytes and pad bits', () => {
         assert.throws(() => new Indexer({ qb64: bad }), /prepad bits/);
     });
 });
+
+describe('Indexer dual-indexed ECDSA secp256r1 codes', () => {
+    it('defaults the ondex of E and 2E to the index, as for the other dual-indexed codes', () => {
+        // keripy lists E and 2E among the codes whose signature appears in
+        // both the current and prior next lists. Without them, a 2E signature
+        // at index 5 built with no ondex encoded ondex 0.
+        const sig = new Uint8Array(64).fill(1);
+        for (const code of [
+            IdrDex.ECDSA_256r1_Sig,
+            IdrDex.ECDSA_256r1_Big_Sig,
+        ]) {
+            const indexer = new Indexer({ raw: sig, code, index: 5 });
+            assert.equal(indexer.ondex, 5, code);
+            assert.equal(new Indexer({ qb64: indexer.qb64 }).ondex, 5, code);
+        }
+    });
+});
