@@ -1,7 +1,9 @@
 /**
- * The KERI profile of RFC 9421 HTTP Message Signatures: signing and verifying
- * requests and responses between Signify and KERIA, and between a Signify AID
- * and any third party.
+ * The KERI profile of RFC 9421 HTTP Message Signatures, version 1.2
+ * (https://github.com/bakobo/fiki/blob/keri-profile-v1.2/docs/keri-profile.md):
+ * signing and verifying requests and responses between Signify and KERIA, and
+ * between a Signify AID and any third party. "Profile §N" below cites a
+ * section of that version.
  *
  * {@link ./httpsig.ts} builds the RFC 9421 signature base; this module adds
  * what the profile decides on top of it: the covered components a signature
@@ -14,6 +16,7 @@
  * messages are verified exactly as {@link SignedHeaderAuthenticator} does.
  */
 import libsodium from 'libsodium-wrappers-sumo';
+import { ed25519 } from '@noble/curves/ed25519';
 import {
     ByteSequence,
     Dictionary,
@@ -28,9 +31,9 @@ import {
 import { fromByteArray } from 'base64-js';
 import { Signer } from './signer.ts';
 import { Verfer } from './verfer.ts';
-import { DigiDex, Matter, MtrDex, NonTransDex } from './matter.ts';
+import { MtrDex } from './matter.ts';
 import { b } from './core.ts';
-import { encodeBase64Url } from './base64.ts';
+import { decodeBase64Url, encodeBase64Url } from './base64.ts';
 import { desiginput, Inputage, legacySignatureBase } from './httping.ts';
 import { designature } from '../end/ending.ts';
 import { Cigar } from './cigar.ts';
@@ -48,9 +51,10 @@ import {
     componentIdentifier,
     componentIdentity,
     contentDigest,
+    hostAuthority,
     isAbsoluteUrl,
+    isHeadersLike,
     matchContentDigest,
-    normalizeAuthority,
     parseContentDigest,
     requestAuthority,
     signatureBase,
@@ -58,21 +62,21 @@ import {
 } from './httpsig.ts';
 
 /**
- * The refusal codes of profile §9, in the order §9 lists them. A message with
- * several defects is refused with the first code that applies, except that
- * `unauthenticated` (an unsigned 401 answering a canonical request) is
- * response-only and checked before anything else. `uncovered-body` is the
- * one signer-side code.
+ * The refusal codes of profile §9, in the order §9 first lists them. A
+ * canonical message with several defects is refused with the first check of
+ * §9 that fails; `malformed-key` and `insufficient-coverage` each have a
+ * second place in that order. `uncovered-body` is the one signer-side code.
  */
 export const HTTPSIG_REFUSAL_CODES = [
+    'unauthenticated',
     'missing-signature',
     'missing-signature-input',
     'malformed-signature',
+    'mode-mismatch',
     'malformed-signature-input',
     'malformed-signature-label',
     'missing-signature-label',
     'malformed-signature-value',
-    'mode-mismatch',
     'duplicate-component',
     'unsupported-component',
     'insufficient-coverage',
@@ -84,7 +88,6 @@ export const HTTPSIG_REFUSAL_CODES = [
     'signature-mismatch',
     'signature-stale',
     'signature-expired',
-    'unauthenticated',
     'malformed-digest',
     'digest-mismatch',
     'uncovered-body',
@@ -126,7 +129,7 @@ export const HTTPSIG_REQUEST_MINIMUM: readonly string[] = [
 
 /**
  * What a signer covers by default: the minimum set plus `@authority`
- * (profile §3, D3), and `content-digest` when there is a body.
+ * (profile §3), and `content-digest` when there is a body.
  */
 export const HTTPSIG_REQUEST_DEFAULT: readonly string[] = [
     '@method',
@@ -157,8 +160,11 @@ export interface HttpSigPolicy {
     requireAuthority?: boolean;
     /**
      * The authorities this verifier serves; required, and non-empty, when
-     * `requireAuthority` is set. Compared lowercased, with `:80` and `:443`
-     * removed.
+     * `requireAuthority` is set. Each is `host` or `host:port`, compared
+     * lowercased with the covered `@authority`, which drops only the default
+     * port of the scheme the request was sent with (profile §2). A verifier
+     * that sees only `Host` keeps whatever port it carries, so list
+     * `host:443` as well if clients may send it.
      */
     authorities?: readonly string[];
     /** Seconds a signature stays fresh after `created`. Default 300; positive. */
@@ -167,7 +173,10 @@ export interface HttpSigPolicy {
     skew?: number;
 }
 
-/** Seconds since the epoch, or a clock that returns them. */
+/**
+ * Seconds since the epoch, or a clock that returns them. It must be a finite
+ * number; a fractional part is rounded down (profile §6).
+ */
 export type HttpSigClock = number | (() => number);
 
 /** A key lookup result: a key, or nothing when the verifier holds no KEL. */
@@ -178,20 +187,34 @@ export type HttpSigKeyLookup =
     | Promise<Verfer | null | undefined>;
 
 /**
+ * A legacy-mode lookup result: every current key that alone satisfies the
+ * signing threshold, a single key, or nothing when the verifier holds no
+ * key state. An empty list is a key state with no such key.
+ */
+export type HttpSigLegacyLookup =
+    | Verfer
+    | readonly Verfer[]
+    | null
+    | undefined
+    | Promise<Verfer | readonly Verfer[] | null | undefined>;
+
+/**
  * Resolves a transferable AID to its single effective signing key (profile
  * §7, R1 and R4). Return `null` or `undefined` for an AID the verifier holds
  * no KEL for. To refuse a key state, throw an {@link HttpSigRefusal}, such as
- * `unsupported-signer` for a state without a single effective signer.
+ * `unsupported-signer` for a state without a single effective signer. A
+ * non-transferable `B` keyid is never passed to it: its key is the prefix.
  *
- * `legacy`, when present, is the legacy-mode lookup of profile §8: the
- * single effective signer (R4) of the `Signify-Resource` AID's key state,
- * without §7 R1's derivation-code rules, refusing `unsupported-signer` for a
- * state without one. A resolver without it is called as is for legacy
+ * `legacy`, when present, is the legacy-mode lookup of profile §8: every
+ * current key of the `Signify-Resource` AID's key state that alone satisfies
+ * its signing threshold, without §7 R1's derivation-code rules. The
+ * signature is accepted under any of them, and an empty list is refused as
+ * `unsupported-signer`. A resolver without it is called as is for legacy
  * messages too, and is not refused for lacking it (§8).
  */
 export interface HttpSigKeyResolver {
     (keyid: string): HttpSigKeyLookup;
-    legacy?: (aid: string) => HttpSigKeyLookup;
+    legacy?: (aid: string) => HttpSigLegacyLookup;
 }
 
 /**
@@ -298,7 +321,7 @@ export interface HttpSigVerifyRequestArgs {
     resolver?: HttpSigKeyResolver;
     policy?: HttpSigPolicy;
     now?: HttpSigClock;
-    /** Accept legacy-mode requests (profile §8, §11 Q1). Default true. */
+    /** Accept legacy-mode requests (profile §8). Default true. */
     acceptLegacy?: boolean;
 }
 
@@ -354,49 +377,87 @@ const RESPONSE_MINIMUM = [
     '"@query";req',
 ];
 
-const NON_TRANSFERABLE = new Set<string>(Object.values(NonTransDex));
-const PREFIX_CODES = new Set<string>([
-    ...NON_TRANSFERABLE,
-    MtrDex.Ed25519,
-    MtrDex.ECDSA_256k1,
-    MtrDex.ECDSA_256r1,
-    ...Object.values(DigiDex),
+/**
+ * keripy's `PreDex`, the prefix derivation codes an AID may carry, with the
+ * size of the raw value each encodes (profile §7, R1).
+ */
+const PREFIX_CODES: ReadonlyMap<string, number> = new Map([
+    ['B', 32],
+    ['D', 32],
+    ['E', 32],
+    ['F', 32],
+    ['G', 32],
+    ['H', 32],
+    ['I', 32],
+    ['0D', 64],
+    ['0E', 64],
+    ['0F', 64],
+    ['0G', 64],
+    ['1AAA', 33],
+    ['1AAB', 33],
+    ['1AAI', 33],
+    ['1AAJ', 33],
+    ['1AAC', 57],
+    ['1AAD', 57],
+    ['1AAE', 114],
 ]);
+
+/** Non-transferable prefix codes: Ed25519, secp256k1, Ed448, secp256r1. */
+const NON_TRANSFERABLE = new Set<string>(['B', '1AAA', '1AAC', '1AAI']);
 const ED25519_KEYS = new Set<string>([MtrDex.Ed25519, MtrDex.Ed25519N]);
 
 /**
- * The encodings of the Ed25519 points of small order (order dividing 8), and
- * the non-canonical y = p and y = p + 1, as in libsodium's `has_small_order`
- * and fiki's blocklist. Compared with the sign bit of the last byte masked.
- * Under such a key a fixed signature verifies over any message, so a
- * non-transferable keyid holding one authenticates no one (profile §9).
+ * The prefix code and raw value of a well-formed AID, or null (profile §7,
+ * R1): the canonical qb64 spelling of one of {@link PREFIX_CODES}. The raw
+ * value is padded in front with zero bytes to a multiple of three,
+ * base64url-encoded, and the code written over the characters the padding
+ * became, so re-encoding gives back the keyid exactly.
  */
-const SMALL_ORDER: readonly Uint8Array[] = [
-    '00'.repeat(32),
-    '01' + '00'.repeat(31),
-    '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05',
-    'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a',
-    'ec' + 'ff'.repeat(30) + '7f',
-    'ed' + 'ff'.repeat(30) + '7f',
-    'ee' + 'ff'.repeat(30) + '7f',
-].map((hex) => Uint8Array.from(hex.match(/../g)!, (h) => parseInt(h, 16)));
+function parsePrefix(keyid: string): { code: string; raw: Uint8Array } | null {
+    const size = /^[A-Za-z]/.test(keyid) ? 1 : keyid[0] === '0' ? 2 : 4;
+    const code = keyid.slice(0, size);
+    const length = PREFIX_CODES.get(code);
+    if (length === undefined) return null;
+    const pad = (3 - (length % 3)) % 3;
+    if (keyid.length !== ((pad + length) * 4) / 3 + size - pad) return null;
+    const body = keyid.slice(size);
+    if (!/^[A-Za-z0-9_-]*$/.test(body)) return null;
+    const decoded = decodeBase64Url('A'.repeat(pad) + body);
+    const raw = decoded.slice(pad);
+    const spelled = encodeBase64Url(
+        Uint8Array.from([...new Uint8Array(pad), ...raw])
+    ).slice(pad);
+    return code + spelled === keyid ? { code, raw } : null;
+}
 
-function smallOrder(raw: Uint8Array): boolean {
-    return SMALL_ORDER.some(
-        (point) =>
-            raw.length === point.length &&
-            point.every(
-                (byte, i) =>
-                    (i === point.length - 1 ? raw[i] & 0x7f : raw[i]) === byte
-            )
-    );
+/**
+ * Whether 32 bytes are the canonical encoding of a point of Ed25519's
+ * prime-order subgroup other than the identity (profile §7, R1): what
+ * libsodium's `crypto_core_ed25519_is_valid_point` accepts. A point of small
+ * order, or of mixed order (a subgroup point plus a torsion component), is
+ * not, and no seed yields one.
+ */
+function primeOrderKey(raw: Uint8Array): boolean {
+    try {
+        const point = ed25519.ExtendedPoint.fromHex(raw);
+        return !point.isSmallOrder() && point.isTorsionFree();
+    } catch {
+        return false;
+    }
 }
 
 type Target = 'request' | 'response';
 
 function toHeaders(headers: HttpSigHeaders | undefined): Headers {
-    if (headers instanceof Headers) return headers;
+    if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+        return headers;
+    }
     const out = new Headers();
+    if (isHeadersLike(headers)) {
+        // A Headers from another realm or a polyfill.
+        headers.forEach((value, name) => out.append(name, value));
+        return out;
+    }
     for (const [name, value] of Object.entries(headers ?? {})) {
         for (const v of Array.isArray(value) ? value : [value]) {
             out.append(name, v);
@@ -411,18 +472,16 @@ function bytesOf(body: Uint8Array | string | null | undefined): Uint8Array {
 }
 
 /**
- * Whether a request has a body for the purpose of the request minimum set
- * (profile §3): content in hand, any Transfer-Encoding, or a Content-Length
- * above zero. A Content-Length that is not a plain decimal once SP and HTAB
- * are trimmed is no evidence of an empty body, so it counts as one. The
- * header test is for the verifier of a request only; the response minimum
- * looks at the request's content alone ({@link responseMinimum}).
+ * Whether a request's headers announce a body, for the covered-list check of
+ * the request minimum set (profile §3, §9 step 12): any Transfer-Encoding,
+ * or a Content-Length other than a plain zero. A Content-Length that is not
+ * a plain decimal once SP and HTAB are trimmed is no evidence of an empty
+ * body, so it counts as one. Content no header announced is refused at the
+ * body stage instead ({@link bodyStage}), after the signature and freshness
+ * checks, whether or not the verifier already holds it. The response minimum
+ * looks at content alone ({@link responseMinimum}).
  */
-function hasBody(
-    headers: Headers,
-    body: Uint8Array | string | null | undefined
-): boolean {
-    if (bytesOf(body).length > 0) return true;
+function announcesBody(headers: Headers): boolean {
     if (headers.has('transfer-encoding')) return true;
     const length = headers.get('content-length');
     if (length === null) return false;
@@ -476,6 +535,9 @@ export function checkPolicy(policy: HttpSigPolicy): void {
         ) {
             throw new Error('Policy authorities must be an array.');
         }
+        if (policy.authorities.some((a) => typeof a !== 'string')) {
+            throw new Error('Policy authorities must be strings.');
+        }
     }
     if (policy.requireAuthority && !policy.authorities?.length) {
         throw new Error(
@@ -484,10 +546,29 @@ export function checkPolicy(policy: HttpSigPolicy): void {
     }
 }
 
+/**
+ * Refuse, as a caller error, a clock that is neither a number nor a function,
+ * or a number that is not finite. A NaN or infinite `now` would make every
+ * freshness comparison false and so pass every message.
+ */
+function checkClock(now: unknown): void {
+    if (now === undefined || typeof now === 'function') return;
+    if (typeof now !== 'number' || !Number.isFinite(now)) {
+        throw new Error(
+            `now must be a finite number of seconds since the epoch, or a function returning one; got ${String(now)}.`
+        );
+    }
+}
+
+/** The verifier's clock in whole seconds, rounded down (profile §6). */
 function nowSeconds(now: HttpSigClock | undefined): number {
-    if (typeof now === 'number') return now;
-    if (typeof now === 'function') return now();
-    return Math.floor(Date.now() / 1000);
+    const t = typeof now === 'function' ? now() : (now ?? Date.now() / 1000);
+    if (typeof t !== 'number' || !Number.isFinite(t)) {
+        throw new Error(
+            `The clock must return a finite number of seconds since the epoch; it returned ${String(t)}.`
+        );
+    }
+    return Math.floor(t);
 }
 
 function identities(items: Item[]): Set<string> {
@@ -543,8 +624,33 @@ interface Parsed {
     signature: Uint8Array;
 }
 
-/** The header checks of §9, in order, for a canonical message. */
+/**
+ * The name of a `created` or `expires` signature parameter written as an RFC
+ * 8941 Decimal, or null. The parser reads `1700000000.0` as the number it
+ * equals, so the raw text is the only place the difference shows; a Decimal
+ * is not an Integer (profile §4). Strings are blanked first, so that a
+ * parameter spelled inside one is not read, and only the parameters after an
+ * Inner List's closing parenthesis are signature parameters.
+ */
+function decimalParameter(input: string): string | null {
+    const text = input.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+    for (const [, params] of text.matchAll(
+        /\)((?:;[ ]*[a-z*][a-z0-9_.*-]*(?:=[^;,]*)?)*)/g
+    )) {
+        const decimal = /;[ ]*(created|expires)=[ ]*-?[0-9]+\./.exec(params);
+        if (decimal !== null) return decimal[1];
+    }
+    return null;
+}
+
+/** The header checks of §9, steps 6 to 9, for a canonical message. */
 function parseCanonical(signature: string, input: string): Parsed {
+    if (input.replace(/^[ \t]+|[ \t]+$/g, '') === '') {
+        refuse(
+            'malformed-signature-input',
+            'Signature-Input is empty, which is malformed rather than absent.'
+        );
+    }
     let inputs: Dictionary;
     try {
         inputs = parseDictionary(input);
@@ -603,6 +709,13 @@ function parseCanonical(signature: string, input: string): Parsed {
                 );
             }
         }
+    }
+    const decimal = decimalParameter(input);
+    if (decimal !== null) {
+        refuse(
+            'malformed-signature-input',
+            `Signature parameter "${decimal}" is a Decimal; it must be an Integer.`
+        );
     }
     const signatures = parseDictionary(signature);
     if (inputs.size !== 1 || signatures.size !== 1) {
@@ -710,14 +823,10 @@ function checkCoverage(
     }
 }
 
-function requestMinimum(
-    policy: HttpSigPolicy,
-    headers: Headers,
-    body: Uint8Array | string | null | undefined
-): string[] {
+function requestMinimum(policy: HttpSigPolicy, headers: Headers): string[] {
     const required = [...(policy.request ?? HTTPSIG_REQUEST_MINIMUM)];
     if (policy.requireAuthority) required.push('@authority');
-    if (hasBody(headers, body)) required.push(CONTENT_DIGEST);
+    if (announcesBody(headers)) required.push(CONTENT_DIGEST);
     return required;
 }
 
@@ -786,33 +895,37 @@ function checkAlgorithm(verfer: Verfer, params: Parameters): void {
 }
 
 /**
- * Resolve a `keyid` to a key under profile §7, R1. The derivation code
- * decides: a non-transferable Ed25519 prefix is the key itself; every
+ * Resolve a `keyid` to a key under profile §7, R1, running §9's steps 13 to
+ * 17 in order. The derivation code decides: a non-transferable Ed25519
+ * prefix (`B`) is the key itself, and no resolver is asked about it; every
  * transferable code, including a basic `D` prefix, goes through `resolver`
  * to the current key state, and is never decoded as a key.
  *
- * Refuses `malformed-key` for anything that is not a well-formed AID, or a
- * non-transferable Ed25519 prefix whose key is a small-order point (§9),
- * `unknown-key` for a transferable AID the resolver does not know (or when
- * `expected` is given and differs), and `unsupported-algorithm` for a
- * non-transferable prefix of another key type.
+ * Refuses `malformed-key` for anything that is not a well-formed AID under
+ * keripy's `PreDex` codes, or a `B` keyid whose key is not a point of the
+ * prime-order subgroup; then `unknown-key` when `expected` is given and
+ * differs, or for a transferable AID the resolver does not know; the
+ * resolver's own refusal, such as `unsupported-signer`; `malformed-key` for
+ * a resolved Ed25519 key outside the prime-order subgroup; and
+ * `unsupported-algorithm` for a non-transferable prefix other than `B`.
  */
 export async function resolveKeyid(
     keyid: string,
     resolver?: HttpSigKeyResolver,
     expected?: string
 ): Promise<Verfer> {
-    let matter: Matter;
-    try {
-        matter = new Matter({ qb64: keyid });
-    } catch (e) {
+    const prefix = parsePrefix(keyid);
+    if (prefix === null) {
         refuse(
             'malformed-key',
-            `keyid "${keyid}" is not a qb64 AID: ${(e as Error).message}`
+            `keyid "${keyid}" is not a well-formed AID under keripy's PreDex codes.`
         );
     }
-    if (matter.qb64 !== keyid || !PREFIX_CODES.has(matter.code)) {
-        refuse('malformed-key', `keyid "${keyid}" is not a well-formed AID.`);
+    if (prefix.code === MtrDex.Ed25519N && !primeOrderKey(prefix.raw)) {
+        refuse(
+            'malformed-key',
+            `keyid "${keyid}" carries a key outside Ed25519's prime-order subgroup, which no seed yields.`
+        );
     }
     if (expected !== undefined && keyid !== expected) {
         refuse(
@@ -820,17 +933,11 @@ export async function resolveKeyid(
             `Signed by ${keyid}, not by the expected ${expected}.`
         );
     }
-    if (NON_TRANSFERABLE.has(matter.code)) {
-        if (matter.code !== MtrDex.Ed25519N) {
+    if (NON_TRANSFERABLE.has(prefix.code)) {
+        if (prefix.code !== MtrDex.Ed25519N) {
             refuse(
                 'unsupported-algorithm',
-                `Non-transferable prefix code ${matter.code} is not Ed25519.`
-            );
-        }
-        if (smallOrder(matter.raw)) {
-            refuse(
-                'malformed-key',
-                `keyid "${keyid}" is a small-order Ed25519 point, under which a signature verifies over any message.`
+                `Non-transferable prefix code ${prefix.code} is not Ed25519.`
             );
         }
         return new Verfer({ qb64: keyid });
@@ -842,21 +949,24 @@ export async function resolveKeyid(
             `No key state is known for the transferable AID ${keyid}.`
         );
     }
+    if (ED25519_KEYS.has(verfer.code) && !primeOrderKey(verfer.raw)) {
+        refuse(
+            'malformed-key',
+            `The key resolved for ${keyid} is outside Ed25519's prime-order subgroup, which no seed yields.`
+        );
+    }
     return verfer;
 }
 
 /**
- * The index of a key state's single effective signer (profile §7, R4): the
- * one current signing key that satisfies the signing threshold on its own.
- * A plain single-key state qualifies, and so does a Signify controller after
- * its passcode is rotated (keys `[new, prior-next]`, threshold `['1','0']`),
- * where only the first key does. Any other state, such as a 2-of-3 group or
- * `1` over two keys, is refused as `unsupported-signer`.
+ * The indices of the current signing keys that each satisfy the signing
+ * threshold on their own, in key-state order. A threshold that cannot be read
+ * is refused as `unsupported-signer`.
  */
-export function effectiveKeyIndex(
+export function sufficientKeyIndices(
     keys: readonly string[],
     threshold: KeyState['kt']
-): number {
+): number[] {
     let tholder: Tholder;
     try {
         tholder = new Tholder({ sith: threshold });
@@ -866,13 +976,29 @@ export function effectiveKeyIndex(
             `Signing threshold ${JSON.stringify(threshold)} is not usable: ${(e as Error).message}`
         );
     }
-    const alone = keys
+    return keys
         .map((_, index) => index)
         .filter((index) => tholder.satisfy([index]));
+}
+
+/**
+ * The index of a key state's single effective signer (profile §7, R4), which
+ * canonical mode requires: the one current signing key that satisfies the
+ * signing threshold on its own. A plain single-key state qualifies, and so
+ * does a Signify controller after its passcode is rotated (keys
+ * `[new, prior-next]`, threshold `['1','0']`), where only the first key does.
+ * Any other state, such as a 2-of-3 group or `1` over two keys, is refused as
+ * `unsupported-signer`.
+ */
+export function effectiveKeyIndex(
+    keys: readonly string[],
+    threshold: KeyState['kt']
+): number {
+    const alone = sufficientKeyIndices(keys, threshold);
     if (alone.length !== 1) {
         refuse(
             'unsupported-signer',
-            `Threshold ${JSON.stringify(threshold)} over ${keys.length} keys has ${alone.length === 0 ? 'no' : 'more than one'} key that satisfies it alone; the profile needs a single effective signer.`
+            `Threshold ${JSON.stringify(threshold)} over ${keys.length} keys has ${alone.length === 0 ? 'no' : 'more than one'} key that satisfies it alone; canonical mode needs a single effective signer.`
         );
     }
     return alone[0];
@@ -891,12 +1017,14 @@ function verferOf(qb64: string): Verfer {
  * current key state for an AID, or nothing when it holds none.
  *
  * Canonical mode (profile §7, R1 and R4) yields the single effective signer
- * ({@link effectiveKeyIndex}). So does its `legacy` lookup (profile 1.1 §8),
- * for the `Signify-Resource` AID: for every Signify controller that is its
- * first current key, including after a passcode rotation, and a state with
- * no single effective signer, such as a 2-of-3 group, is refused as
- * `unsupported-signer`. Version 1 took the first key whatever the threshold
- * said, which let one member of a group act as the group.
+ * ({@link effectiveKeyIndex}). The `legacy` lookup (profile §8) yields, for
+ * the `Signify-Resource` AID, every current key that alone satisfies the
+ * signing threshold ({@link sufficientKeyIndices}), and the legacy verifier
+ * accepts a signature under any of them. For a Signify controller, including
+ * after a passcode rotation, that is its first key; for an AID made with two
+ * keys under threshold `1`, which `createSignedRequest` signs with its first
+ * key, it is both. A state with no such key, such as a 2-of-3 group, is
+ * refused as `unsupported-signer`, and a key with no weight is never tried.
  */
 export function keyStateResolver(
     lookup: (
@@ -913,7 +1041,9 @@ export function keyStateResolver(
         const state = await lookup(aid);
         if (state === null || state === undefined) return null;
         const keys = state.k ?? [];
-        return verferOf(keys[effectiveKeyIndex(keys, state.kt)]);
+        return sufficientKeyIndices(keys, state.kt).map((index) =>
+            verferOf(keys[index])
+        );
     };
     return resolver;
 }
@@ -945,9 +1075,11 @@ function buildBase(
     }
 }
 
-function authorityOf(url: string, headers: Headers): string | null {
-    const authority = requestAuthority(url, headers);
-    return authority === null ? null : normalizeAuthority(authority);
+/** The served authorities as compared: lowercased, SP and HTAB trimmed. */
+function servedAuthorities(policy: HttpSigPolicy): string[] {
+    return (policy.authorities ?? []).map((a) =>
+        a.replace(/^[ \t]+|[ \t]+$/g, '').toLowerCase()
+    );
 }
 
 function checkFreshness(
@@ -1005,10 +1137,12 @@ function covers(verified: HttpSigVerified, component: string): boolean {
 }
 
 /**
- * The body stage of a message verified before its body was read (profile §3
- * and §5): a non-empty body without a covered `content-digest` is
- * `insufficient-coverage`, and a covered digest is recomputed over the body.
- * Checks nothing for a legacy message.
+ * The body stage of profile §9, steps 22 to 24, for a message verified
+ * before its body was read (profile §3 and §5): a non-empty body without a
+ * covered `content-digest` is `insufficient-coverage`, and a covered digest
+ * is recomputed over the body. A verifier that already holds a request body
+ * runs the same stage after the freshness checks, so both report the same
+ * code. Checks nothing for a legacy message.
  *
  * Returns the verification with `bodyOwed` cleared. Use the returned value;
  * the one passed in still says the body check is owed.
@@ -1067,9 +1201,12 @@ async function verifyCanonical(
     // checkPolicy refuses @authority in the request set without
     // requireAuthority, so a required @authority is always compared.
     if (target === 'request' && policy.requireAuthority) {
-        const authority = authorityOf(request.url, toHeaders(request.headers));
-        const served = (policy.authorities ?? []).map(normalizeAuthority);
-        if (authority === null || !served.includes(authority)) {
+        // The base was built above, so the authority is readable.
+        const authority = requestAuthority(request.url, request.headers);
+        if (
+            authority === null ||
+            !servedAuthorities(policy).includes(authority)
+        ) {
             refuse(
                 'signature-mismatch',
                 `@authority ${authority} is not an authority this verifier serves.`
@@ -1100,19 +1237,34 @@ async function verifyCanonical(
 }
 
 /**
- * Verify a legacy-mode message exactly as {@link SignedHeaderAuthenticator}
- * does: the legacy base over `method`, `path` and the covered headers, and
- * the CESR signature under `label`. No freshness and no body coverage.
+ * Verify a legacy-mode message as {@link SignedHeaderAuthenticator} does: the
+ * legacy base over `method`, `path` and the covered headers, and the CESR
+ * signature under `label`. No freshness and no body coverage.
+ *
+ * `verfers` are the keys the signature may verify under, which for a key
+ * state are every current key that alone satisfies its signing threshold
+ * (profile §8); `verfer` is shorthand for one. The signature is accepted
+ * under the first that verifies it, which the result names. Refusals follow
+ * profile §9's legacy order from `malformed-signature-input` on.
  */
 export function verifyLegacy(args: {
     method: string;
     path: string;
     headers: HttpSigHeaders;
-    verfer: Verfer;
+    verfer?: Verfer;
+    verfers?: readonly Verfer[];
     label?: string;
 }): HttpSigVerified {
     const headers = toHeaders(args.headers);
     const label = args.label ?? DEFAULT_LABEL;
+    const verfers =
+        args.verfers ?? (args.verfer === undefined ? [] : [args.verfer]);
+    if (verfers.length === 0) {
+        refuse(
+            'unsupported-signer',
+            'No current key alone satisfies the signing threshold.'
+        );
+    }
     const input = headers.get(SIGNATURE_INPUT);
     if (input === null) {
         refuse('missing-signature-input', 'Signature-Input is absent.');
@@ -1126,6 +1278,14 @@ export function verifyLegacy(args: {
         inputs = desiginput(input);
     } catch (e) {
         refuse('malformed-signature-input', (e as Error).message);
+    }
+    for (const i of inputs) {
+        if (i.fields.some((field: unknown) => typeof field !== 'string')) {
+            refuse(
+                'malformed-signature-input',
+                `A covered item of "${i.name}" is not a String.`
+            );
+        }
     }
     inputs = inputs.filter((i) => i.name === label);
     if (inputs.length === 0) {
@@ -1143,29 +1303,34 @@ export function verifyLegacy(args: {
     } catch (e) {
         refuse('malformed-signature', (e as Error).message);
     }
-    let base = '';
+    const bases: string[] = [];
+    const sigs: (Siger | Cigar)[] = [];
     for (const i of inputs) {
-        base = legacySignatureBase(i, headers, args.method, args.path);
+        bases.push(legacySignatureBase(i, headers, args.method, args.path));
         const cig = markers.get(i.name);
         if (!cig) {
             refuse('missing-signature-label', `No ${i.name} signature.`);
         }
-        // Verification throws, rather than returning false, for a signature
-        // the key cannot check, such as a 114-byte Ed448 signature under an
-        // Ed25519 key. Legacy carries no alg to refuse it on beforehand, so
-        // it is a signature that does not verify (§9).
-        let valid: boolean;
-        try {
-            valid = args.verfer.verify(cig.raw, base);
-        } catch (e) {
-            refuse(
-                'signature-mismatch',
-                `Signature for ${i.keyid} cannot be checked: ${(e as Error).message}`
-            );
-        }
-        if (!valid) {
-            refuse('signature-mismatch', `Signature for ${i.keyid} invalid.`);
-        }
+        sigs.push(cig);
+    }
+    // Verification throws, rather than returning false, for a signature the
+    // key cannot check, such as a 114-byte Ed448 signature under an Ed25519
+    // key. Legacy carries no alg to refuse it on beforehand, so it is a
+    // signature that does not verify under that key (§9).
+    const verifies = (verfer: Verfer) =>
+        sigs.every((cig, n) => {
+            try {
+                return verfer.verify(cig.raw, bases[n]);
+            } catch {
+                return false;
+            }
+        });
+    const verfer = verfers.find(verifies);
+    if (verfer === undefined) {
+        refuse(
+            'signature-mismatch',
+            `Signature for ${inputs[0].keyid} verifies under none of the ${verfers.length} key(s) that alone satisfy the threshold.`
+        );
     }
     const [first] = inputs;
     const params: Parameters = new Map();
@@ -1185,29 +1350,37 @@ export function verifyLegacy(args: {
         label,
         params,
         components: [...first.fields],
-        verfer: args.verfer,
-        base,
+        verfer,
+        base: bases[bases.length - 1],
         bodyOwed: false,
     };
 }
 
 /**
- * Legacy mode resolves Signify-Resource by lookup (profile 1.1 §8): the
- * resolver's `legacy` lookup when it has one, which yields the controller's
- * single effective signer under R4, else the resolver itself as given. §7
- * R1's derivation-code rules do not apply: the AID is looked up, never
- * decoded as a key.
+ * Legacy mode resolves Signify-Resource by lookup (profile §8): the
+ * resolver's `legacy` lookup when it has one, which yields every current key
+ * that alone satisfies the controller's signing threshold, else the resolver
+ * itself as given. §7 R1's derivation-code rules do not apply: the AID is
+ * looked up, never decoded as a key, so a `B` prefix with no key state is
+ * `unknown-key` too. An empty list is `unsupported-signer`.
  */
 async function resolveLegacy(
     resource: string,
     resolver: HttpSigKeyResolver | undefined
-): Promise<Verfer> {
+): Promise<readonly Verfer[]> {
     const lookup = resolver?.legacy ?? resolver;
-    const verfer = lookup === undefined ? null : await lookup(resource);
-    if (verfer === null || verfer === undefined) {
+    const found = lookup === undefined ? null : await lookup(resource);
+    if (found === null || found === undefined) {
         refuse('unknown-key', `No key state is known for ${resource}.`);
     }
-    return verfer;
+    const verfers = found instanceof Verfer ? [found] : found;
+    if (verfers.length === 0) {
+        refuse(
+            'unsupported-signer',
+            `No current key of ${resource} alone satisfies its signing threshold.`
+        );
+    }
+    return verfers;
 }
 
 /**
@@ -1237,6 +1410,7 @@ export async function verifyRequest(
     const headers = toHeaders(args.headers);
     const policy = args.policy ?? {};
     checkPolicy(policy);
+    checkClock(args.now);
     const signature = headers.get(SIGNATURE);
     if (signature === null) {
         refuse('missing-signature', 'The request is not signed.');
@@ -1248,11 +1422,9 @@ export async function verifyRequest(
     if (detectMode(signature) === 'legacy') {
         // A legacy request is verified without the canonical policy, so
         // requireAuthority does not refuse it although legacy covers no
-        // authority. Profile 1.1 §8 makes accept_legacy (acceptLegacy here)
-        // the switch that turns legacy off, and keripy's verifyRequest
-        // likewise returns a legacy request before its policy runs. A
-        // verifier that must have @authority compared sets acceptLegacy to
-        // false as well.
+        // authority (profile §3, §8): acceptLegacy is the only switch that
+        // refuses a request for being legacy. A verifier that must have
+        // @authority compared for every request sets it to false as well.
         if (args.acceptLegacy === false) {
             refuse(
                 'malformed-signature',
@@ -1263,12 +1435,12 @@ export async function verifyRequest(
         if (resource === null) {
             refuse('missing-component', 'Signify-Resource is absent.');
         }
-        const verfer = await resolveLegacy(resource, args.resolver);
+        const verfers = await resolveLegacy(resource, args.resolver);
         return verifyLegacy({
             method: args.method,
             path: pathOf(args.url),
             headers,
-            verfer,
+            verfers,
         });
     }
     const parsed = parseCanonical(signature, input);
@@ -1280,7 +1452,7 @@ export async function verifyRequest(
     const verified = await verifyCanonical(
         'request',
         parsed,
-        requestMinimum(policy, headers, args.body),
+        requestMinimum(policy, headers),
         request,
         undefined,
         args.resolver,
@@ -1312,8 +1484,8 @@ function modeOfRequest(request: HttpSigMessageRequest): HttpSigMode {
  * After a canonical request an unsigned 401 is refused as `unauthenticated`,
  * before any other check, and any other unsigned response as
  * `missing-signature`. A `Signature` header that is present but empty is
- * unsigned (profile 1.1, §8 and §9). A response in the other mode than the request, in
- * either direction, is `mode-mismatch`, with no fallback (profile §8).
+ * unsigned (profile §8, §9). A response in the other mode than the request,
+ * in either direction, is `mode-mismatch`, with no fallback (profile §8).
  * A canonical response must be signed by `keyid`, cover the response
  * minimum set, be fresh, and match its digest. When it covers
  * `"content-digest";req`, the request's `Content-Digest` is recomputed over
@@ -1328,10 +1500,11 @@ export async function verifyResponse(
     const headers = toHeaders(args.headers);
     const policy = args.policy ?? {};
     checkPolicy(policy);
+    checkClock(args.now);
     const requestMode = args.requestMode ?? modeOfRequest(args.request);
     const signature = headers.get(SIGNATURE);
-    // An empty Signature is no signature (profile §8), so a 401 carrying
-    // one is the same unsigned 401.
+    // An empty Signature is no signature on a response (profile §8), so a
+    // 401 carrying one is the same unsigned 401.
     if (signature === null || signature === '') {
         if (args.status === 401 && requestMode === 'canonical') {
             refuse(
@@ -1360,12 +1533,12 @@ export async function verifyResponse(
                 `Signed for ${resource}, not by the expected ${args.keyid}.`
             );
         }
-        const verfer = await resolveLegacy(resource, args.resolver);
+        const verfers = await resolveLegacy(resource, args.resolver);
         return verifyLegacy({
             method: args.request.method,
             path: pathOf(args.request.url),
             headers,
-            verfer,
+            verfers,
         });
     }
     const parsed = parseCanonical(signature, input);
@@ -1384,7 +1557,8 @@ export async function verifyResponse(
         policy,
         args.now
     );
-    // Body: parse every covered digest before comparing any. The request's
+    // Body stage (§9 steps 22 to 24): parse every covered digest before
+    // comparing any. The request's
     // is recomputed over the content the client sent, now, even when the
     // response body is deferred; the response's own is compared by checkBody.
     const digests = covers(verified, `"${CONTENT_DIGEST}"`)

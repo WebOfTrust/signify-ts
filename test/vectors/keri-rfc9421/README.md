@@ -5,19 +5,19 @@ These five JSON files are verbatim copies of the KERI-profile vector set generat
 | Field        | Value                                                                                                                       |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | Repository   | `bakobo/fiki`                                                                                                               |
-| Tag          | `keri-profile-v1.1`                                                                                                         |
-| Commit       | `e8e553f4e1780c5fa015c187ad5fe1f206e97e6f`, the merge of bakobo/fiki PR #30                                                 |
-| Profile      | version 1.1                                                                                                                 |
+| Tag          | `keri-profile-v1.2`                                                                                                         |
+| Commit       | `63821f7ac4fd6e4062b3932e77e325a7227b4f6d`, the merge of bakobo/fiki PR #32                                                 |
+| Profile      | version 1.2                                                                                                                 |
 | Path         | `vectors/keri/`                                                                                                             |
-| Profile text | [`docs/keri-profile.md` at `keri-profile-v1.1`](https://github.com/bakobo/fiki/blob/keri-profile-v1.1/docs/keri-profile.md) |
-| Format       | `keri_vectors_format` 7                                                                                                     |
+| Profile text | [`docs/keri-profile.md` at `keri-profile-v1.2`](https://github.com/bakobo/fiki/blob/keri-profile-v1.2/docs/keri-profile.md) |
+| Format       | `keri_vectors_format` 8                                                                                                     |
 
-Each file states its own encoding, policy and keys in its header. A key's `key_state` is reduced to its single effective signer (profile R4) by `keyStateResolver`, and checked against the table's `effective_key`. `test/core/httpsig-vectors.test.ts` runs every case in all five:
+Each file states its own encoding, policy and keys in its header. In the canonical files, a key's `key_state` is reduced to its single effective signer (profile R4) by `keyStateResolver`, and checked against the table's `effective_key`; an entry marked `weak_key` holds a key outside Ed25519's prime-order subgroup, refused as `malformed-key` as it is resolved. `test/core/httpsig-vectors.test.ts` runs every case in all five:
 
 - `rfc9421.json`: RFC 9421 Appendix B.2.6 reproduced byte for byte.
-- `requests.json`: signed requests a canonical verifier must accept. The cases its header lists as `verify_only` carry a digest a sha-256-only signer does not emit, so the signer does not reproduce them.
+- `requests.json`: signed requests a canonical verifier must accept. The cases its header lists as `verify_only` carry a digest a sha-256-only signer does not emit, or a byte sequence without the `=` padding a signer emits, so the signer does not reproduce them; nor does it reproduce the `B` keyid the keys table does not list, which has no seed. The two unpadded cases are marked `verified_by_fiki: false`, since fiki's own vectors refuse missing padding; signify-ts verifies them.
 - `responses.json`: signed responses a canonical client must accept, each with its request.
-- `refusals.json`: messages a canonical verifier must refuse, with the neutral refusal code. The two `mode-mismatch` cases are marked `verified_by_fiki: false`, since fiki has no legacy mode; signify-ts verifies them.
-- `legacy.json`: legacy-mode messages pinned in KERIA's and signify-ts's tests, which must still verify, and, from format 7, legacy messages fiki generated from controllers with more than one current key. Each generated case carries the `key_state` held for its `Signify-Resource`, its `effective_key` (null when there is none), its `seed_hex`, and an `error` when it is refused. The harness hands the key state to `keyStateResolver`, whose legacy lookup takes the single effective signer (profile 1.1 §8), and checks that the case is accepted or refused with its code.
+- `refusals.json`: messages a canonical verifier must refuse, with the neutral refusal code. Two cases carry two defects each and pin which one profile §9's order reports. The two `mode-mismatch` cases are marked `verified_by_fiki: false`, since fiki has no legacy mode; signify-ts verifies them.
+- `legacy.json`: legacy-mode messages pinned in KERIA's and signify-ts's tests, which must still verify, and legacy messages fiki generated from controllers with more than one current key. Each generated case carries the `key_state` held for its `Signify-Resource` (null when the verifier holds none), its `sufficient_keys` (every current key that alone satisfies the threshold, profile §8), its `seed_hex`, and an `error` when it is refused. The harness hands the key state to `keyStateResolver`, checks that its legacy lookup yields exactly `sufficient_keys`, and checks that the case is accepted or refused with its code.
 
 The JSON files are listed in `.prettierignore` so that formatting never rewrites them.

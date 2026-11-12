@@ -286,23 +286,26 @@ describe('verifyRequest', () => {
         );
     });
 
-    it('verifies a relative URL whose Host carries the default port', async () => {
+    it('keeps the port of a Host that carries one, default or not (profile §2)', async () => {
         const headers = signed({
             method: 'GET',
             body: null,
             url: 'https://api.example/p',
         });
-        expect(
-            await code(
+        const verify = (host: string) =>
+            code(
                 verifyRequest({
                     method: 'GET',
                     url: '/p',
-                    headers: { ...headers, Host: 'api.example:443' },
+                    headers: { ...headers, Host: host },
                     resolver,
                     now: NOW,
                 })
-            )
-        ).toBe('accepted');
+            );
+        expect(await verify('api.example')).toBe('accepted');
+        // The signer's @authority dropped https's :443; a verifier that has
+        // only Host does not know the scheme and removes no port.
+        expect(await verify('api.example:443')).toBe('signature-mismatch');
     });
 
     it('enforces @authority against the authorities served', async () => {
@@ -488,29 +491,26 @@ describe('keyid resolution (profile §7)', () => {
         );
     });
 
-    it('looks legacy Signify-Resource up by its single effective signer (profile 1.1 §8)', async () => {
+    it('looks legacy Signify-Resource up as every key that alone satisfies the threshold (profile §8)', async () => {
         const as = (k: string[], kt: string | string[]) =>
             keyStateResolver(
                 () => ({ i: CONTROLLER, k, kt }) as unknown as KeyState
             );
+        const qb64s = async (r: ReturnType<typeof as>) =>
+            ((await r.legacy!(CONTROLLER)) as Verfer[]).map((v) => v.qb64);
         const pair = [controller.verfer.qb64, agent.verfer.qb64];
         // A passcode-rotated Signify controller: its first key.
-        assert.equal(
-            (await as(pair, ['1', '0']).legacy!(CONTROLLER))!.qb64,
-            controller.verfer.qb64
-        );
-        // Weight 0 on the first key: the second is the one used.
-        assert.equal(
-            (await as(pair, ['0', '1']).legacy!(CONTROLLER))!.qb64,
-            agent.verfer.qb64
-        );
-        // Either key alone, or neither: no single effective signer.
-        expect(await code(() => as(pair, '1').legacy!(CONTROLLER))).toBe(
-            'unsupported-signer'
-        );
-        expect(await code(() => as(pair, '2').legacy!(CONTROLLER))).toBe(
-            'unsupported-signer'
-        );
+        assert.deepEqual(await qb64s(as(pair, ['1', '0'])), [
+            controller.verfer.qb64,
+        ]);
+        // Weight 0 on the first key: only the second is tried.
+        assert.deepEqual(await qb64s(as(pair, ['0', '1'])), [
+            agent.verfer.qb64,
+        ]);
+        // Threshold 1 over two keys: either key alone.
+        assert.deepEqual(await qb64s(as(pair, '1')), pair);
+        // 2-of-2: no key alone, so nothing to try.
+        assert.deepEqual(await qb64s(as(pair, '2')), []);
         const none = keyStateResolver(() => undefined);
         assert.isNull(await none.legacy!(CONTROLLER));
     });
@@ -752,7 +752,7 @@ describe('verifyResponse (profile §8)', () => {
         ).toBe('missing-signature');
     });
 
-    it('treats an empty Signature header as unsigned (profile 1.1 §8)', async () => {
+    it('treats an empty Signature header on a response as unsigned (profile §8)', async () => {
         const req = request();
         const base = { body: 'nope', request: req, keyid: AGENT, resolver };
         const headers = { Signature: '' };
@@ -1098,5 +1098,161 @@ describe('HttpSigRefusal', () => {
             code: MtrDex.Ed25519,
         });
         assert.equal(v.qb64, controller.verfer.qb64);
+    });
+});
+
+describe('profile 1.2', () => {
+    // A key outside the prime-order subgroup: the controller's key plus a
+    // point of order 8, from the shared vectors' weak_key entry.
+    const MIXED = 'DE_UoJ5rOdBFciLjTX96aNC50vLaB83stZdYselOv9HD';
+    const SMALL_B = 'BAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+    it('refuses a clock that is not a finite number before reading anything', async () => {
+        for (const now of [NaN, Infinity, -Infinity, '1700000030']) {
+            await expect(
+                verifyRequest({
+                    method: 'POST',
+                    url: URL_,
+                    headers: signed(),
+                    body: BODY,
+                    resolver,
+                    now: now as number,
+                })
+            ).rejects.toThrowError(/finite number/);
+        }
+        await expect(
+            verifyRequest({
+                method: 'POST',
+                url: URL_,
+                headers: signed(),
+                body: BODY,
+                resolver,
+                now: () => NaN,
+            })
+        ).rejects.toThrowError(/finite number/);
+    });
+
+    it('rounds a fractional clock down to whole seconds (§6)', async () => {
+        const verify = (now: number) =>
+            code(
+                verifyRequest({
+                    method: 'POST',
+                    url: URL_,
+                    headers: signed({ created: NOW }),
+                    body: BODY,
+                    resolver,
+                    now,
+                })
+            );
+        expect(await verify(NOW + 360.9)).toBe('accepted');
+        expect(await verify(NOW + 361)).toBe('signature-stale');
+    });
+
+    it('reads a Headers from a polyfill or another realm (not instanceof Headers)', async () => {
+        const fields = signed();
+        const map = new Map(
+            Object.entries(fields).map(([k, v]) => [k.toLowerCase(), v])
+        );
+        const foreign = {
+            get: (name: string) => map.get(name.toLowerCase()) ?? null,
+            has: (name: string) => map.has(name.toLowerCase()),
+            forEach: (fn: (value: string, name: string) => void) =>
+                map.forEach((v, k) => fn(v, k)),
+        };
+        assert.isFalse((foreign as unknown) instanceof Headers);
+        const v = await verifyRequest({
+            method: 'POST',
+            url: URL_,
+            headers: foreign as unknown as Headers,
+            body: BODY,
+            resolver,
+            now: NOW,
+        });
+        assert.equal(v.keyid, CONTROLLER);
+    });
+
+    it('reads a Decimal only where it is a signature parameter (§4)', async () => {
+        // "created=1.0" inside the nonce String is not a parameter.
+        const headers = signed({ nonce: 'x;created=1.0' });
+        expect(
+            await code(
+                verifyRequest({
+                    method: 'POST',
+                    url: URL_,
+                    headers,
+                    body: BODY,
+                    resolver,
+                    now: NOW,
+                })
+            )
+        ).toBe('accepted');
+        const decimal = {
+            ...headers,
+            'Signature-Input': headers['Signature-Input'].replace(
+                `created=${NOW}`,
+                `created=${NOW}.0`
+            ),
+        };
+        expect(
+            await code(
+                verifyRequest({
+                    method: 'POST',
+                    url: URL_,
+                    headers: decimal,
+                    body: BODY,
+                    resolver,
+                    now: NOW,
+                })
+            )
+        ).toBe('malformed-signature-input');
+    });
+
+    it('refuses a resolved key outside the prime-order subgroup as malformed-key', async () => {
+        const weak = () => new Verfer({ qb64: MIXED });
+        expect(await code(resolveKeyid(CONTROLLER, weak))).toBe(
+            'malformed-key'
+        );
+    });
+
+    it('refuses a small-order B keyid before comparing the expected keyid', async () => {
+        expect(await code(resolveKeyid(SMALL_B, resolver, AGENT))).toBe(
+            'malformed-key'
+        );
+        // A non-transferable keyid of another algorithm is unknown first.
+        const k1 = '1AAAAgABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4f';
+        expect(await code(resolveKeyid(k1, resolver, AGENT))).toBe(
+            'unknown-key'
+        );
+        expect(await code(resolveKeyid(k1, resolver))).toBe(
+            'unsupported-algorithm'
+        );
+    });
+
+    it('never asks a resolver about a B keyid', async () => {
+        const nt = new Signer({
+            raw: seed(9),
+            code: MtrDex.Ed25519_Seed,
+            transferable: false,
+        });
+        const never = () => {
+            throw new Error('the resolver was asked about a B keyid');
+        };
+        assert.equal(
+            (await resolveKeyid(nt.verfer.qb64, never)).qb64,
+            nt.verfer.qb64
+        );
+    });
+
+    it('recognizes every keripy PreDex code as an AID, Ed448 included', async () => {
+        const ed448 =
+            '1AADAAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4';
+        expect(await code(resolveKeyid(ed448, () => null))).toBe('unknown-key');
+        const sig448 = '1AAE' + 'A'.repeat(152);
+        expect(await code(resolveKeyid(sig448, () => null))).toBe(
+            'unknown-key'
+        );
+        expect(await code(resolveKeyid('1AAF' + 'A'.repeat(4)))).toBe(
+            'malformed-key'
+        );
     });
 });

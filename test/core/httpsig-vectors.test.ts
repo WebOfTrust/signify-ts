@@ -1,7 +1,7 @@
 /**
  * Runs every case of the shared KERI-profile RFC 9421 vectors in
- * test/vectors/keri-rfc9421/ (bakobo/fiki e8e553f, tag keri-profile-v1.1,
- * keri_vectors_format 7, profile version 1.1). The vectors are verbatim
+ * test/vectors/keri-rfc9421/ (bakobo/fiki 63821f7, tag keri-profile-v1.2,
+ * keri_vectors_format 8, profile version 1.2). The vectors are verbatim
  * copies; see the README beside them.
  */
 import { readFileSync } from 'node:fs';
@@ -17,7 +17,7 @@ import { decodeBase64Url } from '../../src/keri/core/base64.ts';
 import { KeyState } from '../../src/keri/core/keyState.ts';
 import { desiginput } from '../../src/keri/core/httping.ts';
 import { legacySignatureBase } from '../../src/keri/core/httping.ts';
-import { MtrDex } from '../../src/keri/core/matter.ts';
+import { Matter, MtrDex } from '../../src/keri/core/matter.ts';
 import { Signer } from '../../src/keri/core/signer.ts';
 import { Verfer } from '../../src/keri/core/verfer.ts';
 import { signatureBase } from '../../src/keri/core/httpsig.ts';
@@ -72,7 +72,8 @@ function signerFromSeed(seedHex: string): Signer {
  * Each transferable entry's key_state becomes a key state record, and
  * {@link keyStateResolver} reduces it to the single effective signer (R4),
  * so the table's effective_key is checked, not trusted. A non-transferable
- * keyid must yield its key from the prefix alone, so it has no key state.
+ * keyid must yield its key from the prefix alone, so it has no key state,
+ * and a B keyid the table does not list still verifies.
  */
 function keyTableResolver(keys: Json[]): HttpSigKeyResolver {
     const table = new Map<string, KeyState>();
@@ -157,13 +158,13 @@ beforeAll(async () => {
 });
 
 describe('vector files', () => {
-    it('are the frozen format 7 set, for profile version 1.1', () => {
+    it('are the frozen format 8 set, for profile version 1.2', () => {
         for (const file of [rfc9421, requests, responses, refusals, legacy]) {
-            assert.equal(file.keri_vectors_format, 7);
-            assert.equal(file.profile.version, '1.1');
+            assert.equal(file.keri_vectors_format, 8);
+            assert.equal(file.profile.version, '1.2');
             assert.equal(
                 file.profile.where,
-                'https://github.com/bakobo/fiki/blob/keri-profile-v1.1/docs/keri-profile.md'
+                'https://github.com/bakobo/fiki/blob/keri-profile-v1.2/docs/keri-profile.md'
             );
         }
     });
@@ -251,9 +252,18 @@ describe('requests.json', () => {
     });
 
     // The verify_only cases carry a digest member a sha-256-only signer
-    // does not emit; they test the verifier alone.
+    // does not emit, or a byte sequence without the padding a signer emits;
+    // they test the verifier alone. The two unpadded cases are ones fiki
+    // carries as data (verified_by_fiki false); signify-ts verifies them.
     it.each(
-        cases(requests).filter(([id]) => !requests.verify_only.includes(id))
+        // A B keyid the keys table does not list has no seed to sign with.
+        cases(requests).filter(
+            ([id, c]) =>
+                !requests.verify_only.includes(id) &&
+                requests.keys.some(
+                    (k: Json) => k.keyid === inputOf(c.request.headers).keyid
+                )
+        )
     )('%s is reproduced by the signer', (_id: string, c: Json) => {
         const headers = c.request.headers;
         const digest = headers['Content-Digest'];
@@ -400,38 +410,52 @@ describe('legacy.json', () => {
         const headers = new Headers(c.headers);
         assert.equal(detectMode(headers.get('Signature')!), 'legacy');
 
-        const [input] = desiginput(headers.get('Signature-Input')!).filter(
-            (i) => i.name === 'signify'
-        );
-        assert.equal(
-            legacySignatureBase(input, headers, c.method, c.path),
-            c.base
-        );
+        // A case whose Signature-Input was altered after signing carries
+        // the base of the message before that, so only the unaltered cases
+        // rebuild it from their headers.
+        const altered = c.error === 'malformed-signature-input';
+        if (!altered) {
+            const [input] = desiginput(headers.get('Signature-Input')!).filter(
+                (i) => i.name === 'signify'
+            );
+            assert.equal(
+                legacySignatureBase(input, headers, c.method, c.path),
+                c.base
+            );
+        }
 
         // Transcription check: the key that made the signature verifies it
         // over the stated base.
         const verfer = new Verfer({ qb64: c.key });
-        const v = verifyLegacy({
-            method: c.method,
-            path: c.path,
-            headers,
-            verfer,
-        });
-        assert.equal(v.mode, 'legacy');
-        assert.equal(v.base, c.base);
+        const [, sig] = /signify="([^"]+)"/.exec(c.headers.Signature)!;
+        assert.isTrue(
+            verfer.verify(new Matter({ qb64: sig }).raw, c.base),
+            'the stated key verifies the stated base'
+        );
+        if (!altered) {
+            const v = verifyLegacy({
+                method: c.method,
+                path: c.path,
+                headers,
+                verfer,
+            });
+            assert.equal(v.mode, 'legacy');
+            assert.equal(v.base, c.base);
+        }
 
         // Legacy verification resolves Signify-Resource (the case's own
         // keyid may be the signer's verfer rather than an AID). A pinned
-        // case is accepted under its key. A generated case (format 7)
-        // carries the key state held for Signify-Resource, which the
-        // legacy lookup reduces to its single effective signer (profile 1.1
-        // §8, R4), and is refused with its error, if it has one.
+        // case is accepted under its key. A generated case carries the key
+        // state held for Signify-Resource, or null when the verifier holds
+        // none, and sufficient_keys, every key that alone satisfies the
+        // threshold (profile §8); the legacy lookup must yield exactly
+        // those, and the case is refused with its error, if it has one.
         const resource = headers.get('Signify-Resource');
         const resolver: HttpSigKeyResolver =
             c.key_state === undefined
                 ? (k: string) => (k === resource ? verfer : null)
                 : keyStateResolver((aid) =>
-                      aid === resource
+                      aid === resource && c.key_state !== null
                           ? ({
                                 i: aid,
                                 k: c.key_state.keys,
@@ -439,20 +463,15 @@ describe('legacy.json', () => {
                             } as unknown as KeyState)
                           : null
                   );
-        if (c.key_state !== undefined) {
-            if (c.effective_key === null) {
-                expect(
-                    await refusalOf(
-                        Promise.resolve(resolver.legacy!(resource!))
-                    )
-                ).toBe('unsupported-signer');
-            } else {
-                const found = (await resolver.legacy!(resource!)) as Verfer;
-                assert.equal(
-                    Buffer.from(found.raw).toString('base64url'),
-                    c.effective_key
-                );
-            }
+        if (c.key_state === null) {
+            assert.isNull(c.sufficient_keys);
+            assert.isNull(await resolver.legacy!(resource!));
+        } else if (c.key_state !== undefined) {
+            const found = (await resolver.legacy!(resource!)) as Verfer[];
+            assert.deepEqual(
+                found.map((k) => Buffer.from(k.raw).toString('base64url')),
+                c.sufficient_keys
+            );
         }
         const url = c.url ?? `http://127.0.0.1${c.path}`;
         if (c.kind === 'request' && c.error !== undefined) {

@@ -354,7 +354,7 @@ describe('RFC 9421 §2.2 derived components', () => {
         assert.equal(line('@path', get('https://x.test?q')), '"@path": /');
     });
 
-    it('@authority from Host drops a default port, as from a URL (§2.2.3)', () => {
+    it('@authority from Host keeps its port, since Host carries no scheme (profile §2)', () => {
         const relative = (host: string) => ({
             method: 'GET',
             url: '/p',
@@ -362,12 +362,46 @@ describe('RFC 9421 §2.2 derived components', () => {
         });
         assert.equal(
             line('@authority', relative('API.example:443')),
+            '"@authority": api.example:443'
+        );
+        assert.equal(
+            line('@authority', relative(' api.example:80\t')),
+            '"@authority": api.example:80'
+        );
+    });
+
+    it("@authority from a URL drops only its own scheme's default port (profile §2)", () => {
+        assert.equal(
+            line('@authority', get('https://API.example:443/p')),
             '"@authority": api.example'
         );
         assert.equal(
-            line('@authority', relative('api.example:80')),
-            '"@authority": api.example'
+            line('@authority', get('https://api.example:80/p')),
+            '"@authority": api.example:80'
         );
+        assert.equal(
+            line('@authority', get('http://api.example:443/p')),
+            '"@authority": api.example:443'
+        );
+    });
+
+    it('@authority refuses a Host that is not a valid authority (profile §2)', () => {
+        for (const host of [
+            'api.example\u00a0',
+            'user@api.example',
+            'a.example, b.example',
+            'api.example:443 x',
+        ]) {
+            assert.throws(
+                () =>
+                    line('@authority', {
+                        method: 'GET',
+                        url: '/p',
+                        headers: { Host: host },
+                    }),
+                /not a valid authority/
+            );
+        }
     });
 
     it('@method is not case-normalized (§2.2.1)', () => {

@@ -161,9 +161,9 @@ export interface HttpSigAuthenticatorOptions {
     policy?: HttpSigPolicy;
     /**
      * The current time in seconds since the epoch (not milliseconds), used
-     * for `created` and for response freshness. A fractional value is
-     * floored for `created`, which RFC 9421 §2.3 makes an Integer. Default:
-     * the system clock.
+     * for `created` and for response freshness. It must return a finite
+     * number; a fractional value is rounded down to whole seconds for both
+     * (profile §6). Default: the system clock.
      */
     clock?: () => number;
 }

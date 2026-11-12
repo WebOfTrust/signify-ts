@@ -286,9 +286,28 @@ export function signatureParamsValue(
     return serializeInnerList([items, ordered]);
 }
 
+/**
+ * Whether `headers` behaves as a Fetch `Headers`: this realm's, or one from
+ * another realm or a polyfill (node-fetch, undici, jsdom), which fails an
+ * `instanceof Headers` test and must not be read as an empty record.
+ */
+export function isHeadersLike(headers: unknown): headers is Headers {
+    if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+        return true;
+    }
+    const h = headers as Headers | null | undefined;
+    return (
+        typeof h === 'object' &&
+        h !== null &&
+        typeof h.get === 'function' &&
+        typeof h.has === 'function' &&
+        typeof h.forEach === 'function'
+    );
+}
+
 /** Field lines of one name, in message order, each trimmed (RFC 9421 §2.1). */
 function fieldValues(headers: HttpSigHeaders, name: string): string[] | null {
-    if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+    if (isHeadersLike(headers)) {
         // Headers already combines repeated fields with ", " and strips
         // leading and trailing whitespace from each value.
         const value = headers.get(name);
@@ -314,7 +333,13 @@ function fieldValues(headers: HttpSigHeaders, name: string): string[] | null {
 function fieldValue(headers: HttpSigHeaders, name: string): string | null {
     const values = fieldValues(headers, name);
     if (values === null) return null;
-    return values.map((v) => v.replace(/\r?\n[ \t]+/g, ' ').trim()).join(', ');
+    // Only SP and HTAB are optional whitespace around a field value;
+    // String.prototype.trim would also strip a no-break space.
+    return values
+        .map((v) =>
+            v.replace(/\r?\n[ \t]+/g, ' ').replace(/^[ \t]+|[ \t]+$/g, '')
+        )
+        .join(', ');
 }
 
 /** A URL with a scheme, as opposed to a relative reference. */
@@ -371,21 +396,31 @@ export function rawTarget(url: string): RawTarget {
 }
 
 /**
- * An authority as the profile compares it: lowercased, with `:80` or `:443`
- * removed whatever the scheme.
+ * An authority read from a Host header, or configured as one a verifier
+ * serves: SP and HTAB trimmed and lowercased, and refused unless it is a
+ * plain `host` or `host:port` in printable ASCII. A Host header carries no
+ * scheme, so no port is a default one and none is removed (profile §2).
  */
-export function normalizeAuthority(authority: string): string {
-    return authority
-        .trim()
-        .toLowerCase()
-        .replace(/:(80|443)$/, '');
+export function hostAuthority(value: string): string {
+    const authority = value.replace(/^[ \t]+|[ \t]+$/g, '').toLowerCase();
+    // A registered name or IPv4 address, or a bracketed IP literal, then an
+    // optional port. Userinfo, a list of hosts, whitespace and anything
+    // outside ASCII are refused, so that the base cannot be built.
+    if (
+        !/^(?:\[[0-9a-f:.]+\]|[a-z0-9\-._~!$&'()*+;=%]+)(?::[0-9]*)?$/.test(
+            authority
+        )
+    ) {
+        fail(`"${value}" is not a valid authority.`);
+    }
+    return authority;
 }
 
 /**
- * The `@authority` of a request (RFC 9421 §2.2.3): an absolute URL's host,
- * lowercased with the scheme's default port omitted, else the Host header,
- * lowercased with `:80` or `:443` omitted ({@link normalizeAuthority}),
- * since a Host header carries no scheme; null when neither is there.
+ * The `@authority` of a request (RFC 9421 §2.2.3, profile §2): an absolute
+ * URL's host, lowercased, with the default port of the URL's own scheme
+ * removed, else the Host header as received, lowercased, with no port
+ * removed ({@link hostAuthority}); null when neither is there.
  */
 export function requestAuthority(
     url: string,
@@ -394,14 +429,15 @@ export function requestAuthority(
     if (isAbsoluteUrl(url)) {
         try {
             // WHATWG parsing lowercases the host, drops userinfo and the
-            // scheme's default port, and puts an IDN in ASCII form.
+            // default port of the URL's scheme only, and puts an IDN in
+            // ASCII form.
             return new URL(url).host.toLowerCase();
         } catch {
             fail(`Cannot parse the request URL "${url}".`);
         }
     }
     const host = fieldValue(headers, 'host');
-    return host === null || host === '' ? null : normalizeAuthority(host);
+    return host === null || host === '' ? null : hostAuthority(host);
 }
 
 function derivedValue(
