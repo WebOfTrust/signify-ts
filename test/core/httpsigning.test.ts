@@ -1336,6 +1336,30 @@ describe('peer input stays inside the refusal codes (profile §9)', () => {
         }
     });
 
+    it('refuses a legacy Signature whose kind is not CESR as malformed-signature', async () => {
+        const headers = new Headers({
+            'Signify-Resource': CONTROLLER,
+            'Signify-Timestamp': '2026-01-01T00:00:00.000000+00:00',
+        });
+        const prepared = await new SignedHeaderAuthenticator(
+            controller,
+            controller.verfer
+        ).prepare(new Request(URL_, { headers }), CONTROLLER, AGENT);
+        const legacy: Record<string, string> = {};
+        prepared.headers.forEach((value, name) => (legacy[name] = value));
+        legacy.signature = 'indexed="?0";kind="RAW";signify="bogus"';
+        expect(
+            await code(
+                verifyRequest({
+                    method: 'GET',
+                    url: URL_,
+                    headers: legacy,
+                    resolver,
+                })
+            )
+        ).toBe('malformed-signature');
+    });
+
     it('refuses a legacy response without Signify-Resource as missing-component', async () => {
         const headers = new Headers({
             'Signify-Resource': CONTROLLER,

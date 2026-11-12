@@ -587,6 +587,25 @@ function identifierOf(component: ComponentIdentifier): Item {
 }
 
 /**
+ * The legacy signature members of a Signature value, by label. The legacy
+ * parser accepts any kind and leaves the members of a kind other than CESR
+ * as strings, which carry no signature to verify, so such a header is not
+ * the legacy form of profile §8 and this throws.
+ */
+function legacyMarkers(signature: string): Map<string, Siger | Cigar> {
+    const [signage] = designature(signature);
+    const markers = signage.markers as Map<string, unknown>;
+    for (const [label, marker] of markers) {
+        if (!(marker instanceof Siger || marker instanceof Cigar)) {
+            throw new Error(
+                `Signature member ${label} is not a CESR signature (kind ${signage.kind}).`
+            );
+        }
+    }
+    return markers as Map<string, Siger | Cigar>;
+}
+
+/**
  * Tell canonical from legacy by the Signature header (profile §8): an RFC
  * 8941 Dictionary whose every member is a Byte Sequence is canonical; a
  * header the legacy parser accepts is legacy; anything else is refused as
@@ -607,7 +626,8 @@ export function detectMode(signature: string): HttpSigMode {
         // Not a Dictionary; try the legacy form.
     }
     try {
-        if (designature(signature).length > 0) return 'legacy';
+        legacyMarkers(signature);
+        return 'legacy';
     } catch {
         // Neither form.
     }
@@ -1296,10 +1316,7 @@ export function verifyLegacy(args: {
     }
     let markers: Map<string, Siger | Cigar>;
     try {
-        markers = designature(signature)[0].markers as Map<
-            string,
-            Siger | Cigar
-        >;
+        markers = legacyMarkers(signature);
     } catch (e) {
         refuse('malformed-signature', (e as Error).message);
     }
