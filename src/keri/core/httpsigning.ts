@@ -1526,7 +1526,12 @@ export async function verifyResponse(
         );
     }
     if (mode === 'legacy') {
+        // The profile's legacy order (§9): an absent Signify-Resource is
+        // missing-component before it is compared with the expected AID.
         const resource = headers.get(SIGNIFY_RESOURCE);
+        if (resource === null) {
+            refuse('missing-component', 'Signify-Resource is absent.');
+        }
         if (resource !== args.keyid) {
             refuse(
                 'unknown-key',

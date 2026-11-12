@@ -1335,4 +1335,53 @@ describe('peer input stays inside the refusal codes (profile §9)', () => {
             ).toBe('malformed-digest');
         }
     });
+
+    it('refuses a legacy response without Signify-Resource as missing-component', async () => {
+        const headers = new Headers({
+            'Signify-Resource': CONTROLLER,
+            'Signify-Timestamp': '2026-01-01T00:00:00.000000+00:00',
+        });
+        const request = await new SignedHeaderAuthenticator(
+            controller,
+            controller.verfer
+        ).prepare(new Request(URL_, { headers }), CONTROLLER, AGENT);
+        const sent: Record<string, string> = {};
+        request.headers.forEach((value, name) => (sent[name] = value));
+        // A legacy response signed by the agent, as KERIA signs one.
+        const response = await new SignedHeaderAuthenticator(
+            agent,
+            agent.verfer
+        ).prepare(
+            new Request(URL_, {
+                headers: new Headers({
+                    'Signify-Resource': AGENT,
+                    'Signify-Timestamp': '2026-01-01T00:00:00.000000+00:00',
+                }),
+            }),
+            AGENT,
+            AGENT
+        );
+        const fields: Record<string, string> = {};
+        response.headers.forEach((value, name) => (fields[name] = value));
+        const verify = (h: Record<string, string>) =>
+            code(
+                verifyResponse({
+                    status: 200,
+                    headers: h,
+                    body: '',
+                    request: {
+                        method: 'GET',
+                        url: URL_,
+                        headers: sent,
+                        body: '',
+                    },
+                    keyid: AGENT,
+                    resolver,
+                })
+            );
+        expect(await verify(fields)).toBe('accepted');
+        const without = { ...fields };
+        delete without['signify-resource'];
+        expect(await verify(without)).toBe('missing-component');
+    });
 });
