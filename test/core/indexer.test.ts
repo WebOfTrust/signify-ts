@@ -381,3 +381,98 @@ describe('Indexer', () => {
         });
     });
 });
+
+describe('Indexer lead bytes and pad bits', () => {
+    /** The raw size a code implies: every character after the hard and soft
+     * code carries 6 bits, less any pad bits, and lead bytes are not raw. */
+    const rawSizeOf = (code: string) => {
+        const x = Indexer.Sizes.get(code)!;
+        return Math.floor(((x.fs! - x.hs - x.ss) * 3) / 4) - x.ls;
+    };
+
+    it('computes _rawSize from the full size, the code size and the lead size', () => {
+        for (const [code, x] of Indexer.Sizes) {
+            if (x.fs == undefined) continue;
+            assert.equal(Indexer._rawSize(code), rawSizeOf(code), code);
+        }
+        assert.equal(Indexer._rawSize(IdrDex.Ed25519_Sig), 64);
+        assert.equal(Indexer._rawSize(IdrDex.Ed448_Big_Sig), 114);
+    });
+
+    it('round-trips a code that carries a lead byte', () => {
+        // 1z and 4z are keripy's test codes for indexed material with one
+        // lead byte. Before the lead size was subtracted from the expected raw
+        // size, neither could be built from raw or read back from qb64.
+        for (const code of ['1z', '4z']) {
+            const raw = new Uint8Array(rawSizeOf(code)).map((_, i) => i + 1);
+            const fs = Indexer.Sizes.get(code)!.fs!;
+            const indexer = new Indexer({ raw, code, index: 5, ondex: 5 });
+            assert.equal(indexer.qb64.length, fs, code);
+            const back = new Indexer({ qb64: indexer.qb64 });
+            assert.equal(back.code, code);
+            assert.equal(back.index, 5);
+            assert.deepStrictEqual(back.raw, raw);
+            assert.equal(back.qb64, indexer.qb64);
+        }
+    });
+
+    it('rejects a lead byte that is not zero', () => {
+        const raw = new Uint8Array(rawSizeOf('1z')).fill(7);
+        const qb64 = new Indexer({ raw, code: '1z', index: 1, ondex: 1 }).qb64;
+        // The two characters after the 4-character code hold the lead byte
+        // and the first 4 bits of raw; 'B' sets a bit inside the lead byte.
+        const bad = qb64.slice(0, 4) + 'B' + qb64.slice(5);
+        assert.throws(() => new Indexer({ qb64: bad }), /lead byte/);
+    });
+
+    it('checks every pad bit, not half of them', () => {
+        // A one-character code pads its 64-byte Ed25519 signature with two
+        // bytes, so the first character of material carries 4 pad bits on top.
+        // 'Q' is 0b010000: its top 4 bits, all pad, read 0b0100. A mask of
+        // ps = 2 bits instead of 2 * ps = 4 bits missed that set bit.
+        const sig = new Uint8Array(64).fill(1);
+        const qb64 = new Indexer({
+            raw: sig,
+            code: IdrDex.Ed25519_Sig,
+            index: 0,
+        }).qb64;
+        assert.ok('ABCD'.includes(qb64[2])); // a valid encoding has zero pad bits
+        const bad = qb64.slice(0, 2) + 'Q' + qb64.slice(3);
+        assert.throws(() => new Indexer({ qb64: bad }), /prepad bits/);
+    });
+});
+
+describe('Indexer dual-indexed ECDSA secp256r1 codes', () => {
+    it('defaults the ondex of E and 2E to the index, as for the other dual-indexed codes', () => {
+        // keripy lists E and 2E among the codes whose signature appears in
+        // both the current and prior next lists. Without them, a 2E signature
+        // at index 5 built with no ondex encoded ondex 0.
+        const sig = new Uint8Array(64).fill(1);
+        for (const code of [
+            IdrDex.ECDSA_256r1_Sig,
+            IdrDex.ECDSA_256r1_Big_Sig,
+        ]) {
+            const indexer = new Indexer({ raw: sig, code, index: 5 });
+            assert.equal(indexer.ondex, 5, code);
+            assert.equal(new Indexer({ qb64: indexer.qb64 }).ondex, 5, code);
+        }
+    });
+});
+
+describe('Indexer ondex validation', () => {
+    it('rejects an ondex that is not an integer', () => {
+        // The index was already required to be an integer; the ondex was only
+        // range-checked, so 1.5 was stored and then encoded.
+        const sig = new Uint8Array(114);
+        assert.throws(
+            () =>
+                new Indexer({
+                    raw: sig,
+                    code: IdrDex.Ed448_Big_Sig,
+                    index: 1,
+                    ondex: 1.5,
+                }),
+            /ondex/
+        );
+    });
+});
