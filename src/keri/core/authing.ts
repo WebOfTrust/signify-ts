@@ -8,7 +8,7 @@ import {
     HEADER_SIG_INPUT,
     HEADER_SIG_SENDER,
     HEADER_SIG_TIME,
-    normalize,
+    legacySignatureBase,
     siginput,
 } from './httping.ts';
 import { Signage, signature, designature } from '../end/ending.ts';
@@ -17,6 +17,7 @@ import { Siger } from './siger.ts';
 import { Diger } from './diger.ts';
 import { MtrDex } from './matter.ts';
 import { b, d } from './core.ts';
+import { HttpSigPolicy, signRequest, verifyResponse } from './httpsigning.ts';
 
 export abstract class Authenticator {
     protected verfer: Verfer;
@@ -115,42 +116,7 @@ export class SignedHeaderAuthenticator extends Authenticator {
             return false;
         }
         inputs.forEach((input) => {
-            const items = new Array<string>();
-            input.fields!.forEach((field: string) => {
-                if (field.startsWith('@')) {
-                    if (field == '@method') {
-                        items.push(`"${field}": ${method}`);
-                    } else if (field == '@path') {
-                        items.push(`"${field}": ${path}`);
-                    }
-                } else {
-                    if (headers.has(field)) {
-                        const value = normalize(headers.get(field) as string);
-                        items.push(`"${field}": ${value}`);
-                    }
-                }
-            });
-            const values = new Array<string>();
-            values.push(`(${input.fields!.join(' ')})`);
-            values.push(`created=${input.created}`);
-            if (input.expires != undefined) {
-                values.push(`expires=${input.expires}`);
-            }
-            if (input.nonce != undefined) {
-                values.push(`nonce=${input.nonce}`);
-            }
-            if (input.keyid != undefined) {
-                values.push(`keyid=${input.keyid}`);
-            }
-            if (input.context != undefined) {
-                values.push(`context=${input.context}`);
-            }
-            if (input.alg != undefined) {
-                values.push(`alg=${input.alg}`);
-            }
-            const params = values.join(';');
-            items.push(`"@signature-params: ${params}"`);
-            const ser = items.join('\n');
+            const ser = legacySignatureBase(input, headers, method, path);
             const signage = designature(signature!);
             const markers = signage[0].markers as Map<string, Siger | Cigar>;
             const cig = markers.get(input.name);
@@ -186,6 +152,120 @@ export class SignedHeaderAuthenticator extends Authenticator {
         });
 
         return headers;
+    }
+}
+
+/** Options for {@link HttpSigAuthenticator}. */
+export interface HttpSigAuthenticatorOptions {
+    /** Freshness and coverage policy for responses. Default profile §3, §6. */
+    policy?: HttpSigPolicy;
+    /**
+     * The current time in seconds since the epoch (not milliseconds), used
+     * for `created` and for response freshness. It must return a finite
+     * number; a fractional value is rounded down to whole seconds for both
+     * (profile §6). Default: the system clock.
+     */
+    clock?: () => number;
+}
+
+/**
+ * Canonical mode: signs requests and verifies responses under the KERI
+ * profile of RFC 9421 (see `httpsigning.ts`).
+ *
+ * `prepare` signs with `keyid` = `local`, the signer's AID, covering
+ * `@method @authority @path @query` and, for a non-empty body,
+ * `content-digest`. It does not use `Signify-Resource` or
+ * `Signify-Timestamp`. `verify` requires the response to be signed in
+ * canonical mode by `remote`, whose key is `verfer`; an unsigned 401 is
+ * refused as `unauthenticated`, and every other failure is an
+ * {@link HttpSigRefusal} carrying the profile's neutral code. Nothing here
+ * retries in legacy mode after a refusal (profile §8).
+ */
+export class HttpSigAuthenticator extends Authenticator {
+    private readonly options: HttpSigAuthenticatorOptions;
+    // The content each prepared request was signed over, so that verify can
+    // bind the response to exactly what was sent.
+    private readonly bodies = new WeakMap<Request, Uint8Array>();
+
+    constructor(
+        csig: Signer,
+        verfer: Verfer,
+        options: HttpSigAuthenticatorOptions = {}
+    ) {
+        super(csig, verfer);
+        this.options = options;
+    }
+
+    async prepare(
+        request: Request,
+        local: string,
+        _remote: string
+    ): Promise<Request> {
+        const body = new Uint8Array(await request.clone().arrayBuffer());
+        const fields = signRequest({
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
+            body,
+            signer: this.csig,
+            keyid: local,
+            created: this.created(),
+        });
+        for (const [name, value] of Object.entries(fields)) {
+            request.headers.set(name, value);
+        }
+        this.bodies.set(request, body);
+        return request;
+    }
+
+    /** `created` from the clock, in whole seconds; undefined for now. */
+    private created(): number | undefined {
+        const clock = this.options.clock;
+        return clock === undefined ? undefined : Math.floor(clock());
+    }
+
+    async verify(
+        request: Request,
+        response: Response,
+        _local: string,
+        remote: string
+    ): Promise<Response> {
+        // The exact content prepare signed over: the response is bound to it
+        // (profile §3), so a request this authenticator did not prepare is an
+        // error rather than a request assumed to have had no body.
+        const sent = this.bodies.get(request);
+        if (sent === undefined) {
+            throw new Error(
+                'HttpSigAuthenticator.verify needs the Request that prepare signed; its content is not known.'
+            );
+        }
+        // Read the body once and hand back a response rebuilt over the same
+        // bytes, rather than teeing it with clone().
+        const bytes = await response.arrayBuffer();
+        const body = new Uint8Array(bytes);
+        await verifyResponse({
+            status: response.status,
+            headers: response.headers,
+            body,
+            request: {
+                method: request.method,
+                url: request.url,
+                headers: request.headers,
+                body: sent,
+            },
+            keyid: remote,
+            resolver: (keyid) => (keyid === remote ? this.verfer : null),
+            policy: this.options.policy,
+            now: this.options.clock,
+        });
+        // A null-body status (204, 205, 304) cannot be constructed with a
+        // body, even an empty one.
+        const nullBody = [204, 205, 304].includes(response.status);
+        return new Response(nullBody ? null : bytes, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        });
     }
 }
 

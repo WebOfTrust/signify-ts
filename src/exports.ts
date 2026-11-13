@@ -23,6 +23,52 @@ export * from './keri/core/diger.ts';
 export * from './keri/core/encrypter.ts';
 export * from './keri/core/eventing.ts';
 export * from './keri/core/httping.ts';
+// The KERI profile of RFC 9421: a curated surface, so that the parsing and
+// canonicalization helpers inside these modules are not public API.
+export {
+    HttpSigError,
+    contentDigest,
+    signatureBase,
+    verifyContentDigest,
+} from './keri/core/httpsig.ts';
+export type {
+    ComponentIdentifier,
+    HttpSigHeaders,
+    HttpSigParams,
+    HttpSigRequest,
+    HttpSigResponse,
+    SignatureBaseArgs,
+} from './keri/core/httpsig.ts';
+export {
+    HTTPSIG_REFUSAL_CODES,
+    HTTPSIG_REQUEST_DEFAULT,
+    HTTPSIG_REQUEST_MINIMUM,
+    HttpSigRefusal,
+    checkBody,
+    keyStateResolver,
+    responseComponents,
+    signRequest,
+    signResponse,
+    verifyRequest,
+    verifyResponse,
+} from './keri/core/httpsigning.ts';
+export type {
+    HttpSigClock,
+    HttpSigCode,
+    HttpSigKeyLookup,
+    HttpSigKeyResolver,
+    HttpSigLegacyLookup,
+    HttpSigMessageRequest,
+    HttpSigMode,
+    HttpSigPolicy,
+    HttpSigSignArgs,
+    HttpSigSignRequestArgs,
+    HttpSigSignResponseArgs,
+    HttpSigSignedFields,
+    HttpSigVerified,
+    HttpSigVerifyRequestArgs,
+    HttpSigVerifyResponseArgs,
+} from './keri/core/httpsigning.ts';
 export * from './keri/core/indexer.ts';
 export * from './keri/core/keeping.ts';
 export * from './keri/core/kering.ts';

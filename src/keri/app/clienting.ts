@@ -1,8 +1,10 @@
 import {
     EssrAuthenticator,
+    HttpSigAuthenticator,
     SignedHeaderAuthenticator,
     Authenticator,
 } from '../core/authing.ts';
+import { HttpSigRefusal, effectiveKeyIndex } from '../core/httpsigning.ts';
 import { HEADER_SIG_SENDER, HEADER_SIG_TIME } from '../core/httping.ts';
 import { components } from '../../types/keria-api-schema.ts';
 import { ExternalModule, IdentifierManagerFactory } from '../core/keeping.ts';
@@ -45,8 +47,26 @@ class State {
 }
 
 export enum AuthMode {
+    /** The legacy Signify signed-header scheme. The default. */
     SignedHeaders = 'SIGNED_HEADERS',
     ESSR = 'ESSR',
+    /**
+     * Canonical RFC 9421 HTTP Message Signatures under the KERI profile:
+     * the query and body are covered, and responses are bound to their
+     * requests. Opt-in until a KERIA release verifies it; the agent must
+     * support it, and a refusal is never retried in legacy mode.
+     */
+    RFC9421 = 'RFC9421',
+}
+
+/** Options for {@link SignifyClient.createSignedRequest}. */
+export interface SignedRequestOptions {
+    /**
+     * `AuthMode.SignedHeaders` (legacy) or `AuthMode.RFC9421` (canonical).
+     * Default: canonical when the client itself uses `AuthMode.RFC9421`,
+     * legacy otherwise.
+     */
+    authMode?: AuthMode;
 }
 
 function jsonBody(data: unknown): string | null {
@@ -224,6 +244,11 @@ export class SignifyClient {
                 this.controller.signer,
                 this.agent.verfer!
             );
+        } else if (this.authMode === AuthMode.RFC9421) {
+            this.authn = new HttpSigAuthenticator(
+                this.controller.signer,
+                this.agent.verfer!
+            );
         } else {
             this.authn = new EssrAuthenticator(
                 this.controller.signer,
@@ -252,11 +277,14 @@ export class SignifyClient {
         }
 
         const headers = new Headers();
-        headers.set(HEADER_SIG_SENDER, this.controller.pre);
-        headers.set(
-            HEADER_SIG_TIME,
-            new Date().toISOString().replace('Z', '000+00:00')
-        );
+        // Canonical mode carries the AID in keyid and the time in created.
+        if (!(this.authn instanceof HttpSigAuthenticator)) {
+            headers.set(HEADER_SIG_SENDER, this.controller.pre);
+            headers.set(
+                HEADER_SIG_TIME,
+                new Date().toISOString().replace('Z', '000+00:00')
+            );
+        }
 
         if (extraHeaders) {
             extraHeaders.forEach((value, key) => {
@@ -309,15 +337,55 @@ export class SignifyClient {
      *              If the data is a FormData object then you should not set the contentType and the browser will set it to 'multipart/form-data'
      *              If the data is an object then you should use JSON.stringify to convert it to a string and set the contentType to 'application/json'
      *     - contentType Content type of the request.
+     * @param {SignedRequestOptions} [options] Signing mode. In canonical mode
+     *     (`AuthMode.RFC9421`) the request is signed under the KERI profile of
+     *     RFC 9421 with keyid = the AID, covering @method, @authority, @path,
+     *     @query and, when there is a body, content-digest.
      * @returns {Promise<Request>} A promise to the created Request
      */
     async createSignedRequest(
         aidName: string,
         url: string,
-        req: RequestInit
+        req: RequestInit,
+        options: SignedRequestOptions = {}
     ): Promise<Request> {
         const hab = await this.identifiers().get(aidName);
         const keeper = this.manager!.get(hab);
+        const mode =
+            options.authMode ??
+            (this.authMode === AuthMode.RFC9421
+                ? AuthMode.RFC9421
+                : AuthMode.SignedHeaders);
+
+        if (mode === AuthMode.RFC9421) {
+            // Profile R4: sign with the single effective signer, the one
+            // current key that satisfies the threshold alone.
+            const state = hab.state;
+            const index = effectiveKeyIndex(state.k, state.kt);
+            const signer = keeper.signers[index];
+            if (signer?.verfer.qb64 !== state.k[index]) {
+                throw new HttpSigRefusal(
+                    'unsupported-signer',
+                    `${hab.prefix}'s keeper does not hold its effective signing key ${state.k[index]}.`
+                );
+            }
+            const authenticator = new HttpSigAuthenticator(
+                signer,
+                signer.verfer
+            );
+            return await authenticator.prepare(
+                new Request(url, {
+                    headers: new Headers(req.headers),
+                    method: req.method ?? 'GET',
+                    body: req.body,
+                }),
+                hab.prefix,
+                hab.prefix
+            );
+        }
+        if (mode !== AuthMode.SignedHeaders) {
+            throw new Error(`createSignedRequest does not support ${mode}.`);
+        }
 
         const authenticator = new SignedHeaderAuthenticator(
             keeper.signers[0],
